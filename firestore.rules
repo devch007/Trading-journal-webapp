@@ -1,0 +1,120 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function isDocOwner() {
+      return isAuthenticated() && request.auth.uid == resource.data.userId;
+    }
+    
+    function uidUnchanged() {
+      return !('userId' in request.resource.data) || request.resource.data.userId == request.auth.uid;
+    }
+    
+    function uidNotModified() {
+      return !('userId' in request.resource.data) || request.resource.data.userId == resource.data.userId;
+    }
+    
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+    
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+    
+    // ===============================================================
+    // Domain Validators
+    // ===============================================================
+    
+    function isValidUser(data) {
+      return hasOnlyAllowedFields(['email', 'onboardingCompleted', 'experience', 'createdAt']) &&
+             data.email is string && data.email.size() > 0 && data.email.size() < 100 &&
+             data.onboardingCompleted is bool &&
+             (!('experience' in data) || (data.experience is string && data.experience in ['Beginner', 'Intermediate', 'Advanced'])) &&
+             data.createdAt is timestamp;
+    }
+
+    function isValidTrade(data) {
+      return hasOnlyAllowedFields(['userId', 'accountId', 'date', 'symbol', 'action', 'size', 'result', 'isPositive', 'pnl', 'createdAt']) &&
+             data.userId is string && data.userId.size() > 0 && data.userId.size() < 100 &&
+             (!('accountId' in data) || (data.accountId is string && data.accountId.size() > 0 && data.accountId.size() < 100)) &&
+             data.date is string && data.date.size() > 0 && data.date.size() < 50 &&
+             data.symbol is string && data.symbol.size() > 0 && data.symbol.size() < 20 &&
+             data.action is string && data.action in ['BUY', 'SELL'] &&
+             data.size is string && data.size.size() > 0 && data.size.size() < 20 &&
+             data.result is string && data.result.size() > 0 && data.result.size() < 50 &&
+             data.isPositive is bool &&
+             data.pnl is number &&
+             data.createdAt is timestamp;
+    }
+
+    function isValidAccount(data) {
+      return hasOnlyAllowedFields(['userId', 'name', 'firm', 'type', 'badge', 'initialCapital', 'status', 'maxDrawdown', 'dailyDrawdown', 'createdAt', 'dateClosed']) &&
+             data.userId is string && data.userId.size() > 0 && data.userId.size() < 100 &&
+             data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
+             data.firm is string && data.firm.size() > 0 && data.firm.size() < 100 &&
+             data.type is string && data.type.size() > 0 && data.type.size() < 100 &&
+             data.badge is string && data.badge.size() > 0 && data.badge.size() < 50 &&
+             data.initialCapital is number && data.initialCapital >= 0 &&
+             data.status is string && data.status in ['ACTIVE', 'SUCCESS', 'FAILED'] &&
+             data.maxDrawdown is number && data.maxDrawdown >= 0 &&
+             data.dailyDrawdown is number && data.dailyDrawdown >= 0 &&
+             data.createdAt is timestamp &&
+             (!('dateClosed' in data) || (data.dateClosed is string && data.dateClosed.size() < 50));
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /users/{userId} {
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidUser(request.resource.data);
+      allow update: if isOwner(userId) && 
+                    isValidUser(request.resource.data) && 
+                    request.resource.data.createdAt == resource.data.createdAt &&
+                    request.resource.data.email == resource.data.email;
+    }
+
+    match /accounts/{accountId} {
+      allow read: if isAuthenticated() && (resource == null || resource.data.userId == request.auth.uid);
+      allow create: if isAuthenticated() && 
+                    isValidAccount(request.resource.data) && 
+                    uidUnchanged() && 
+                    request.resource.data.userId == request.auth.uid;
+      allow update: if isAuthenticated() && 
+                    isDocOwner() && 
+                    isValidAccount(request.resource.data) && 
+                    uidNotModified() &&
+                    request.resource.data.createdAt == resource.data.createdAt;
+      allow delete: if isAuthenticated() && isDocOwner();
+    }
+
+    match /trades/{tradeId} {
+      allow read: if isAuthenticated() && (resource == null || resource.data.userId == request.auth.uid);
+      allow create: if isAuthenticated() && 
+                    isValidTrade(request.resource.data) && 
+                    uidUnchanged() && 
+                    request.resource.data.userId == request.auth.uid;
+      allow update: if isAuthenticated() && 
+                    isDocOwner() && 
+                    isValidTrade(request.resource.data) && 
+                    uidNotModified() &&
+                    request.resource.data.createdAt == resource.data.createdAt;
+      allow delete: if isAuthenticated() && isDocOwner();
+    }
+  }
+}
