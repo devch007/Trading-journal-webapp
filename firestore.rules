@@ -1,0 +1,148 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function isDocOwner() {
+      return isAuthenticated() && request.auth.uid == resource.data.userId;
+    }
+    
+    function uidUnchanged() {
+      return !('userId' in request.resource.data) || request.resource.data.userId == request.auth.uid;
+    }
+    
+    function uidNotModified() {
+      return !('userId' in request.resource.data) || request.resource.data.userId == resource.data.userId;
+    }
+    
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+    
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+    
+    // ===============================================================
+    // Domain Validators
+    // ===============================================================
+    
+    function isValidUser(data) {
+      let allowedFields = ['email', 'onboardingCompleted', 'experience', 'createdAt', 'id', 'uid'];
+      return hasOnlyAllowedFields(allowedFields) &&
+             data.email is string && data.email.size() > 0 && data.email.size() < 100 &&
+             data.onboardingCompleted is bool &&
+             (!('experience' in data) || data.experience == null || (data.experience is string && data.experience in ['Beginner', 'Intermediate', 'Advanced'])) &&
+             data.createdAt is timestamp &&
+             (!('id' in data) || data.id == null || data.id is string) &&
+             (!('uid' in data) || data.uid == null || data.uid is string);
+    }
+
+    function isValidTrade(data) {
+      let allowedFields = [
+        'id', 'userId', 'accountId', 'date', 'symbol', 'action', 'size', 'result', 
+        'isPositive', 'pnl', 'createdAt', 'entry', 'exit', 'duration', 'tag',
+        'strategy', 'notes', 'emotions', 'tags', 'proof', 'rating', 'checklist', 'tradeType'
+      ];
+      return hasOnlyAllowedFields(allowedFields) &&
+             data.userId is string && data.userId.size() > 0 && data.userId.size() < 100 &&
+             (!('id' in data) || data.id == null || data.id is string) &&
+             (!('accountId' in data) || data.accountId == null || data.accountId is string) &&
+             data.date is string && data.date.size() > 0 && data.date.size() < 50 &&
+             data.symbol is string && data.symbol.size() > 0 && data.symbol.size() < 20 &&
+             data.action is string && data.action in ['BUY', 'SELL'] &&
+             data.size is string && data.size.size() > 0 && data.size.size() < 20 &&
+             data.result is string && data.result.size() > 0 && data.result.size() < 50 &&
+             data.isPositive is bool &&
+             data.pnl is number &&
+             data.createdAt is timestamp &&
+             (!('entry' in data) || data.entry == null || data.entry is string) &&
+             (!('exit' in data) || data.exit == null || data.exit is string) &&
+             (!('duration' in data) || data.duration == null || data.duration is string) &&
+             (!('tag' in data) || data.tag == null || data.tag is string) &&
+             (!('strategy' in data) || data.strategy == null || data.strategy is string) &&
+             (!('notes' in data) || data.notes == null || data.notes is string) &&
+             (!('emotions' in data) || data.emotions == null || data.emotions is list) &&
+             (!('tags' in data) || data.tags == null || data.tags is list) &&
+             (!('proof' in data) || data.proof == null || data.proof is string) &&
+             (!('rating' in data) || data.rating == null || data.rating is number) &&
+             (!('checklist' in data) || data.checklist == null || data.checklist is list) &&
+             (!('tradeType' in data) || data.tradeType == null || data.tradeType is string);
+    }
+
+    function isValidAccount(data) {
+      let allowedFields = ['userId', 'name', 'firm', 'type', 'badge', 'initialCapital', 'currentEquity', 'status', 'maxDrawdown', 'dailyDrawdown', 'createdAt', 'dateClosed', 'id'];
+      return hasOnlyAllowedFields(allowedFields) &&
+             data.userId is string && data.userId.size() > 0 && data.userId.size() < 100 &&
+             data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
+             data.firm is string && data.firm.size() > 0 && data.firm.size() < 100 &&
+             data.type is string && data.type.size() > 0 && data.type.size() < 100 &&
+             data.badge is string && data.badge.size() >= 0 && data.badge.size() < 50 &&
+             data.initialCapital is number && data.initialCapital >= 0 &&
+             (!('currentEquity' in data) || data.currentEquity == null || data.currentEquity is number) &&
+             data.status is string && data.status in ['ACTIVE', 'SUCCESS', 'FAILED'] &&
+             data.maxDrawdown is number && data.maxDrawdown >= 0 &&
+             data.dailyDrawdown is number && data.dailyDrawdown >= 0 &&
+             data.createdAt is timestamp &&
+             (!('dateClosed' in data) || data.dateClosed == null || (data.dateClosed is string && data.dateClosed.size() < 50)) &&
+             (!('id' in data) || data.id == null || data.id is string);
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /test/{docId} {
+      allow read: if true;
+    }
+
+    match /users/{userId} {
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidUser(request.resource.data);
+      allow update: if isOwner(userId) && 
+                    isValidUser(request.resource.data) && 
+                    request.resource.data.createdAt == resource.data.createdAt &&
+                    request.resource.data.email == resource.data.email;
+    }
+
+    match /accounts/{accountId} {
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow create: if isAuthenticated() && 
+                    isValidAccount(request.resource.data) && 
+                    uidUnchanged() && 
+                    request.resource.data.userId == request.auth.uid;
+      allow update: if isAuthenticated() && 
+                    isDocOwner() && 
+                    isValidAccount(request.resource.data) && 
+                    uidNotModified() &&
+                    request.resource.data.createdAt == resource.data.createdAt;
+      allow delete: if isAuthenticated() && isDocOwner();
+    }
+
+    match /trades/{tradeId} {
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow create: if isAuthenticated() && 
+                    isValidTrade(request.resource.data) && 
+                    uidUnchanged() && 
+                    request.resource.data.userId == request.auth.uid;
+      allow update: if isAuthenticated() && 
+                    isDocOwner() && 
+                    isValidTrade(request.resource.data) && 
+                    uidNotModified() &&
+                    request.resource.data.createdAt == resource.data.createdAt;
+      allow delete: if isAuthenticated() && isDocOwner();
+    }
+  }
+}

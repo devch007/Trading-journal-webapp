@@ -1,0 +1,136 @@
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600&family=Epilogue:wght@700&family=Space+Grotesk:wght@500&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --color-on-tertiary-fixed-variant: #006545;
+  --color-surface-container-low: #13121c;
+  --color-secondary-container: #6001d1;
+  --color-background: #0d0d16;
+  --color-on-surface: #efecf9;
+  --color-tertiary-dim: #71e4b1;
+  --color-surface-dim: #0d0d16;
+  --color-secondary-dim: #8a4cfc;
+  --color-primary-container: #1d4ed8;
+  --color-outline-variant: #484751;
+  --color-tertiary: #9bffcf;
+  --color-secondary-fixed-dim: #93c5fd;
+  --color-surface-bright: #2b2b38;
+  --color-on-primary-fixed: #000000;
+  --color-on-tertiary-container: #005a3d;
+  --color-primary-dim: #2563eb;
+  --color-tertiary-fixed: #7ff3be;
+  --color-primary: #3b82f6;
+  --color-on-surface-variant: #aca9b6;
+  --color-error: #ff6e84;
+  --color-inverse-primary: #1e3a8a;
+  --color-surface-container-high: #1f1e2a;
+  --color-on-secondary-container: #dbeafe;
+  --color-surface: #0d0d16;
+  --color-on-secondary: #1e3a8a;
+  --color-surface-container-lowest: #000000;
+  --color-on-tertiary-fixed: #00452e;
+  --color-primary-fixed-dim: #3b82f6;
+  --color-inverse-on-surface: #55545e;
+  --color-surface-container: #191923;
+  --color-surface-tint: #3b82f6;
+  --color-on-secondary-fixed: #1e3a8a;
+  --color-outline: #76747f;
+  --color-on-error: #490013;
+  --color-secondary-fixed: #bfdbfe;
+  --color-on-secondary-fixed-variant: #2563eb;
+  --color-tertiary-fixed-dim: #71e4b1;
+  --color-error-dim: #d73357;
+  --color-on-primary-fixed-variant: #1e3a8a;
+  --color-on-primary: #eff6ff;
+  --color-surface-container-highest: #252531;
+  --color-primary-fixed: #60a5fa;
+  --color-on-primary-container: #eff6ff;
+  --color-secondary: #60a5fa;
+  --color-surface-variant: #252531;
+  --color-tertiary-container: #7ff3be;
+  --color-error-container: #a70138;
+  --color-on-tertiary: #006444;
+  --color-on-background: #efecf9;
+  --color-on-error-container: #ffb2b9;
+  --color-inverse-surface: #fcf8ff;
+
+  --font-headline: "Syne", "Epilogue", sans-serif;
+  --font-body: "Manrope", sans-serif;
+  --font-label: "Space Grotesk", sans-serif;
+  --font-data: "DM Mono", monospace;
+  --font-mono: "DM Mono", monospace;
+}
+
+.light {
+  --color-background: #fcf8ff;
+  --color-on-surface: #13121c;
+  --color-surface-container-high: #efecf9;
+  --color-on-surface-variant: #484751;
+  --color-surface-container: #efecf9;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-highest: #e0dce9;
+  --color-surface-variant: #e0dce9;
+  --color-on-background: #13121c;
+  --color-outline: #76747f;
+  --color-outline-variant: #c8c5d3;
+}
+
+@layer base {
+  body {
+    @apply bg-background text-on-surface font-body selection:bg-primary/30 selection:text-primary min-h-screen overflow-x-hidden transition-colors duration-300;
+  }
+}
+
+@layer utilities {
+  .glass-card {
+    background: rgba(255, 255, 255, 0.04);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .glass-card:hover {
+    transform: translateY(-4px);
+    border-color: rgba(255, 255, 255, 0.2);
+    background: linear-gradient(45deg, rgba(59, 130, 246, 0.1), rgba(59, 130, 246, 0.05));
+  }
+  .aurora-bg {
+    background: radial-gradient(circle at 20% 30%, rgba(59, 130, 246, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 80% 70%, rgba(155, 255, 207, 0.1) 0%, transparent 40%),
+                radial-gradient(circle at 50% 50%, rgba(96, 165, 250, 0.08) 0%, transparent 50%);
+    background-color: #0d0d16;
+  }
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+  .bg-moving-gradient {
+    background: linear-gradient(-45deg, #040B16, #0A1128, #0a1930, #040B16);
+    background-size: 400% 400%;
+    animation: gradientMove 15s ease infinite;
+  }
+
+  @keyframes gradientMove {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  .glow-effect {
+    box-shadow: 0 0 15px rgba(59, 130, 246, 0.3);
+  }
+
+  .glow-effect:hover {
+    box-shadow: 0 0 25px rgba(59, 130, 246, 0.6);
+  }
+
+  .google-glow {
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.05);
+  }
+
+  .google-glow:hover {
+    box-shadow: 0 0 25px rgba(255, 255, 255, 0.15);
+  }
+
+  @keyframes shimmer {
+    100% { transform: translateX(100%); }
+  }
+}

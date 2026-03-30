@@ -1,0 +1,101 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile and onboarding status",
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string",
+          "description": "User's email address"
+        },
+        "onboardingCompleted": {
+          "type": "boolean",
+          "description": "Whether the user has completed the onboarding flow"
+        },
+        "experience": {
+          "type": "string",
+          "description": "User's trading experience level",
+          "enum": ["Beginner", "Intermediate", "Advanced"]
+        },
+        "createdAt": {
+          "type": "timestamp",
+          "description": "When the user account was created"
+        }
+      },
+      "required": ["email", "onboardingCompleted", "createdAt"]
+    },
+    "Trade": {
+      "title": "Trade",
+      "description": "A trading execution record",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "The unique ID of the trade (often matches document ID)"
+        },
+        "userId": {
+          "type": "string",
+          "description": "The UID of the user who owns this trade"
+        },
+        "date": {
+          "type": "string",
+          "description": "The date string of the trade"
+        },
+        "symbol": {
+          "type": "string",
+          "description": "The trading symbol (e.g., EURUSD)"
+        },
+        "action": {
+          "type": "string",
+          "description": "BUY or SELL"
+        },
+        "size": {
+          "type": "string",
+          "description": "The size of the trade (e.g., 1.00 Lot)"
+        },
+        "result": {
+          "type": "string",
+          "description": "The formatted result string"
+        },
+        "isPositive": {
+          "type": "boolean",
+          "description": "Whether the trade was profitable"
+        },
+        "pnl": {
+          "type": "number",
+          "description": "The profit and loss amount"
+        },
+        "tag": {
+          "type": "string",
+          "description": "A tag for the trade (e.g., BREAKOUT)"
+        },
+        "entry": {
+          "type": "string",
+          "description": "The entry price of the trade"
+        },
+        "exit": {
+          "type": "string",
+          "description": "The exit price of the trade"
+        },
+        "duration": {
+          "type": "string",
+          "description": "The duration of the trade"
+        },
+        "createdAt": {
+          "type": "timestamp",
+          "description": "The timestamp when the trade was created"
+        }
+      },
+      "required": ["userId", "date", "symbol", "action", "size", "result", "isPositive", "pnl", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/trades/{tradeId}": {
+      "schema": {
+        "$ref": "#/entities/Trade"
+      },
+      "description": "Collection of all trades"
+    }
+  }
+}
