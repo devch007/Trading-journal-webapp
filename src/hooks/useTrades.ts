@@ -28,6 +28,7 @@ export interface Trade {
   rating?: number;
   checklist?: { label: string; checked: boolean }[];
   tradeType?: string;
+  sentiment?: 'positive' | 'negative' | 'neutral';
 }
 
 enum OperationType {

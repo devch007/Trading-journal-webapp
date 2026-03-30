@@ -89,6 +89,11 @@
           "type": "string",
           "description": "The duration of the trade"
         },
+        "sentiment": {
+          "type": "string",
+          "description": "The sentiment of the trade notes (positive, negative, neutral)",
+          "enum": ["positive", "negative", "neutral"]
+        },
         "createdAt": {
           "type": "timestamp",
           "description": "The timestamp when the trade was created"

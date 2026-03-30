@@ -16,19 +16,23 @@ import {
   Image as ImageIcon,
   ChevronRight,
   TrendingUp,
-  TrendingDown
+  TrendingDown,
+  BrainCircuit,
+  Loader2
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { TopBar } from "../lib/TopBar";
 import { cn } from "../lib/utils";
 import { TradeQualityMeter } from "../components/TradeQualityMeter";
 import { useTrades, Trade } from "../hooks/useTrades";
+import { GoogleGenAI, Type } from "@google/genai";
 
 export function Journal() {
   const { trades: allTrades, loading, updateTrades } = useTrades();
   const [activeTab, setActiveTab] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const entries = useMemo(() => {
@@ -89,6 +93,7 @@ export function Journal() {
       rating: selectedEntry.rating || 0,
       checklist: selectedEntry.checklist || defaultChecklist,
       tradeType: selectedEntry.tradeType || (selectedEntry.tag || "Scalp"),
+      sentiment: selectedEntry.sentiment || null,
       entryPrice: selectedEntry.entry || "0.0000",
       exitPrice: selectedEntry.exit || "0.0000",
       duration: selectedEntry.duration || "0h 0m",
@@ -114,6 +119,44 @@ export function Journal() {
       const reader = new FileReader();
       reader.onloadend = () => updateEntry({ proof: reader.result as string });
       reader.readAsDataURL(file);
+    }
+  };
+
+  const analyzeSentiment = async () => {
+    if (!normalizedEntry || !normalizedEntry.notes || isAnalyzing) return;
+    
+    setIsAnalyzing(true);
+    try {
+      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+      const response = await ai.models.generateContent({
+        model: "gemini-3-flash-preview",
+        contents: `Analyze the sentiment of the following trading journal notes. Categorize it as strictly one of: positive, negative, or neutral.
+        
+        Notes: "${normalizedEntry.notes}"`,
+        config: {
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              sentiment: {
+                type: Type.STRING,
+                enum: ["positive", "negative", "neutral"],
+                description: "The sentiment of the notes."
+              }
+            },
+            required: ["sentiment"]
+          }
+        }
+      });
+
+      const result = JSON.parse(response.text);
+      if (result.sentiment) {
+        updateEntry({ sentiment: result.sentiment });
+      }
+    } catch (error) {
+      console.error("Sentiment analysis failed:", error);
+    } finally {
+      setIsAnalyzing(false);
     }
   };
 
@@ -222,6 +265,17 @@ export function Journal() {
                       <span className="text-[10px] text-gray-500 font-label uppercase tracking-widest">
                         {entry.strategy || entry.tag || "SCALP"}
                       </span>
+                      {entry.sentiment && (
+                        <div className={cn(
+                          "px-1.5 py-0.5 rounded text-[8px] font-bold uppercase tracking-tighter flex items-center gap-1",
+                          entry.sentiment === 'positive' ? "bg-emerald-500/10 text-emerald-400" :
+                          entry.sentiment === 'negative' ? "bg-rose-500/10 text-rose-400" :
+                          "bg-gray-500/10 text-gray-400"
+                        )}>
+                          <BrainCircuit className="w-2 h-2" />
+                          {entry.sentiment}
+                        </div>
+                      )}
                       <div className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity">
                         <ChevronRight className="w-4 h-4 text-primary" />
                       </div>
@@ -458,9 +512,36 @@ export function Journal() {
 
             {/* Notes */}
             <div className="space-y-3">
-              <label className="text-[10px] text-on-surface-variant font-label uppercase tracking-widest flex items-center gap-2">
-                <MessageSquare className="w-3 h-3 text-primary" /> Trade Notes
-              </label>
+              <div className="flex items-center justify-between">
+                <label className="text-[10px] text-on-surface-variant font-label uppercase tracking-widest flex items-center gap-2">
+                  <MessageSquare className="w-3 h-3 text-primary" /> Trade Notes
+                </label>
+                <div className="flex items-center gap-3">
+                  {normalizedEntry.sentiment && (
+                    <div className={cn(
+                      "px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-widest flex items-center gap-1",
+                      normalizedEntry.sentiment === 'positive' ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" :
+                      normalizedEntry.sentiment === 'negative' ? "bg-rose-500/10 text-rose-400 border border-rose-500/20" :
+                      "bg-gray-500/10 text-gray-400 border border-gray-500/20"
+                    )}>
+                      <BrainCircuit className="w-3 h-3" />
+                      {normalizedEntry.sentiment}
+                    </div>
+                  )}
+                  <button 
+                    onClick={analyzeSentiment}
+                    disabled={isAnalyzing || !normalizedEntry.notes}
+                    className="flex items-center gap-1.5 px-3 py-1 bg-primary/10 hover:bg-primary/20 text-primary rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isAnalyzing ? (
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                    ) : (
+                      <BrainCircuit className="w-3 h-3" />
+                    )}
+                    {isAnalyzing ? "Analyzing..." : "Analyze Sentiment"}
+                  </button>
+                </div>
+              </div>
               <textarea 
                 value={normalizedEntry.notes}
                 onChange={e => updateEntry({ notes: e.target.value })}
