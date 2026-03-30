@@ -75,7 +75,7 @@ export function Login() {
                 <path d="M7 15L12 10L16 13L21 6" stroke="#3B82F6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
             </div>
-            <span className="text-2xl font-bold tracking-tight text-white">Edgr Trading Journal</span>
+            <span className="text-2xl font-bold tracking-tight text-white">Tradova Trading Journal</span>
           </div>
 
           <h1 className="text-[3.5rem] leading-[1.1] font-bold mb-6 tracking-tight text-white">

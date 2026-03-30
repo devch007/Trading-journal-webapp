@@ -44,7 +44,7 @@ export function Sidebar({ isExpanded, setIsExpanded }: SidebarProps) {
         </div>
         {isExpanded && (
           <span className="text-white font-bold text-lg tracking-tight font-headline">
-            TRADEX
+            TRADOVA
           </span>
         )}
       </div>

@@ -29,7 +29,11 @@ export function Trades() {
   const uniqueTags = useMemo(() => {
     const tags = new Set<string>();
     allTrades.forEach(t => {
-      if (t.tag) tags.add(t.tag);
+      if (t.tags && Array.isArray(t.tags)) {
+        t.tags.forEach(tag => tags.add(tag));
+      } else if (t.tag) {
+        tags.add(t.tag);
+      }
     });
     return Array.from(tags).sort();
   }, [allTrades]);
@@ -46,8 +50,12 @@ export function Trades() {
       filtered = filtered.filter(t => t.action === filterAction);
     }
     if (filterTradeType !== "ALL") {
-      if (filterTradeType === "WIN") filtered = filtered.filter(t => t.isPositive);
-      if (filterTradeType === "LOSS") filtered = filtered.filter(t => !t.isPositive);
+      filtered = filtered.filter(t => {
+        if (t.tags && Array.isArray(t.tags)) {
+          return t.tags.includes(filterTradeType);
+        }
+        return (t.tag || "BREAKOUT") === filterTradeType;
+      });
     }
     return filtered;
   }, [allTrades, selectedAccountId, filterSymbol, filterAction, filterTradeType]);
@@ -86,7 +94,8 @@ export function Trades() {
         entry: tradeData.entry || "0.0000",
         exit: tradeData.exit || "0.0000",
         duration: tradeData.duration || "1h 30m",
-        tag: tradeData.tag || "BREAKOUT"
+        tag: tradeData.tag || "BREAKOUT",
+        tags: tradeData.tags || ["BREAKOUT"]
       });
     }
   };
@@ -127,7 +136,23 @@ export function Trades() {
 
   const handleBulkTag = async () => {
     if (newTag.trim()) {
-      await updateTrades(selectedTradeIds, { tag: newTag.trim().toUpperCase() });
+      const tagToAdd = newTag.trim().toUpperCase();
+      
+      // For each selected trade, add the tag to its tags array
+      for (const id of selectedTradeIds) {
+        const trade = allTrades.find(t => t.id === id);
+        if (trade) {
+          const currentTags = trade.tags || (trade.tag ? [trade.tag] : []);
+          if (!currentTags.includes(tagToAdd)) {
+            const updatedTags = [...currentTags, tagToAdd];
+            await updateTrades([id], { 
+              tags: updatedTags,
+              tag: updatedTags[0] // Keep legacy tag field updated
+            });
+          }
+        }
+      }
+      
       setSelectedTradeIds([]);
       setIsTagging(false);
       setNewTag("");
@@ -371,9 +396,19 @@ export function Trades() {
                         </td>
                         <td className="py-4 text-gray-400 text-xs">{trade.duration || "1h 30m"}</td>
                         <td className="py-4 pr-4">
-                          <span className="px-2 py-1 rounded border border-white/10 text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-                            {trade.tag || "BREAKOUT"}
-                          </span>
+                          <div className="flex flex-wrap gap-1">
+                            {trade.tags && Array.isArray(trade.tags) && trade.tags.length > 0 ? (
+                              trade.tags.map((tag: string) => (
+                                <span key={tag} className="px-2 py-0.5 rounded border border-white/10 text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                                  {tag}
+                                </span>
+                              ))
+                            ) : (
+                              <span className="px-2 py-0.5 rounded border border-white/10 text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                                {trade.tag || "BREAKOUT"}
+                              </span>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     );

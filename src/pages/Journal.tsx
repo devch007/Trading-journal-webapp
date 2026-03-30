@@ -45,7 +45,8 @@ export function Journal() {
       filtered = filtered.filter(t => 
         t.symbol.toLowerCase().includes(q) || 
         (t.strategy && t.strategy.toLowerCase().includes(q)) ||
-        (t.tag && t.tag.toLowerCase().includes(q))
+        (t.tag && t.tag.toLowerCase().includes(q)) ||
+        (t.tags && Array.isArray(t.tags) && t.tags.some(tag => tag.toLowerCase().includes(q)))
       );
     }
 
@@ -348,12 +349,32 @@ export function Journal() {
                 <label className="text-[10px] text-on-surface-variant font-label uppercase tracking-widest flex items-center gap-2">
                   <Tag className="w-3 h-3 text-primary" /> Tags
                 </label>
+                <div className="flex flex-wrap gap-2 mb-2">
+                  {normalizedEntry.tags.map((tag: string) => (
+                    <span key={tag} className="flex items-center gap-1 px-2 py-1 bg-primary/10 border border-primary/20 rounded-lg text-[10px] font-bold text-primary uppercase tracking-wider">
+                      {tag}
+                      <button 
+                        onClick={() => updateEntry({ tags: normalizedEntry.tags.filter((t: string) => t !== tag) })}
+                        className="hover:text-white transition-colors"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </span>
+                  ))}
+                </div>
                 <div className="relative">
                   <input 
-                    value={normalizedEntry.tags.join(", ")}
-                    onChange={e => updateEntry({ tags: e.target.value.split(",").map(t => t.trim()) })}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        const val = (e.target as HTMLInputElement).value.trim().toUpperCase();
+                        if (val && !normalizedEntry.tags.includes(val)) {
+                          updateEntry({ tags: [...normalizedEntry.tags, val] });
+                          (e.target as HTMLInputElement).value = '';
+                        }
+                      }
+                    }}
                     className="w-full bg-black/40 border border-white/10 rounded-xl p-4 text-sm text-white focus:outline-none focus:border-primary/50 transition-all" 
-                    placeholder="breakout, trend, news" 
+                    placeholder="Add tag and press Enter..." 
                   />
                 </div>
               </div>

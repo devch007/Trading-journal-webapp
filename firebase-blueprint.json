@@ -70,6 +70,13 @@
           "type": "string",
           "description": "A tag for the trade (e.g., BREAKOUT)"
         },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "A list of tags for the trade"
+        },
         "entry": {
           "type": "string",
           "description": "The entry price of the trade"

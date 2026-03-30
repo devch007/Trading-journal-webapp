@@ -17,7 +17,8 @@ export function TradeModal({ isOpen, onClose, onSubmit, trade }: TradeModalProps
   const [size, setSize] = useState("1.00");
   const [stopLoss, setStopLoss] = useState("");
   const [takeProfit, setTakeProfit] = useState("");
-  const [tag, setTag] = useState("BREAKOUT");
+  const [tags, setTags] = useState<string[]>(["BREAKOUT"]);
+  const [tagInput, setTagInput] = useState("");
 
   useEffect(() => {
     if (isOpen) {
@@ -29,7 +30,7 @@ export function TradeModal({ isOpen, onClose, onSubmit, trade }: TradeModalProps
         setSize(trade.size?.replace(" Lot", "") || "1.00");
         setStopLoss(trade.entry || ""); // Using entry as SL for now if SL not in model
         setTakeProfit(trade.exit || ""); // Using exit as TP for now if TP not in model
-        setTag(trade.tag || "BREAKOUT");
+        setTags(trade.tags || (trade.tag ? [trade.tag] : ["BREAKOUT"]));
       } else {
         // New mode
         if (selectedAccountId) {
@@ -42,12 +43,27 @@ export function TradeModal({ isOpen, onClose, onSubmit, trade }: TradeModalProps
         setSize("1.00");
         setStopLoss("");
         setTakeProfit("");
-        setTag("BREAKOUT");
+        setTags(["BREAKOUT"]);
       }
     }
   }, [isOpen, trade, selectedAccountId, accounts]);
 
   if (!isOpen) return null;
+
+  const handleAddTag = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && tagInput.trim()) {
+      e.preventDefault();
+      const newTag = tagInput.trim().toUpperCase();
+      if (!tags.includes(newTag)) {
+        setTags([...tags, newTag]);
+      }
+      setTagInput("");
+    }
+  };
+
+  const removeTag = (tagToRemove: string) => {
+    setTags(tags.filter(t => t !== tagToRemove));
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -60,7 +76,8 @@ export function TradeModal({ isOpen, onClose, onSubmit, trade }: TradeModalProps
         symbol,
         action,
         size: `${parseFloat(size).toFixed(2)} Lot`,
-        tag: tag.toUpperCase()
+        tags,
+        tag: tags[0] || "" // Keep single tag for backward compatibility
       };
       onSubmit(updatedTrade);
     } else {
@@ -81,7 +98,8 @@ export function TradeModal({ isOpen, onClose, onSubmit, trade }: TradeModalProps
         result: `${isWin ? '+' : '-'}$${Math.abs(pnl).toFixed(2)}`,
         isPositive: isWin,
         pnl: pnl,
-        tag: tag.toUpperCase()
+        tags,
+        tag: tags[0] || "" // Keep single tag for backward compatibility
       };
       onSubmit(newTrade);
     }
@@ -159,7 +177,7 @@ export function TradeModal({ isOpen, onClose, onSubmit, trade }: TradeModalProps
             </div>
           </div>
 
-          {/* Size & Tag */}
+          {/* Size & Tags */}
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-2">
               <label className="text-xs font-label text-on-surface-variant uppercase tracking-wider">Size (Lots)</label>
@@ -175,16 +193,38 @@ export function TradeModal({ isOpen, onClose, onSubmit, trade }: TradeModalProps
               />
             </div>
             <div className="flex flex-col gap-2">
-              <label className="text-xs font-label text-on-surface-variant uppercase tracking-wider">Tag</label>
+              <label className="text-xs font-label text-on-surface-variant uppercase tracking-wider">Add Tag (Press Enter)</label>
               <input 
                 type="text" 
-                value={tag}
-                onChange={(e) => setTag(e.target.value)}
+                value={tagInput}
+                onChange={(e) => setTagInput(e.target.value)}
+                onKeyDown={handleAddTag}
                 className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-primary/50 transition-colors uppercase"
-                placeholder="BREAKOUT"
+                placeholder="E.G. BREAKOUT"
               />
             </div>
           </div>
+
+          {/* Tags Display */}
+          {tags.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {tags.map(t => (
+                <span 
+                  key={t} 
+                  className="flex items-center gap-1 px-2 py-1 bg-primary/10 border border-primary/20 rounded-lg text-[10px] font-bold text-primary group"
+                >
+                  {t}
+                  <button 
+                    type="button"
+                    onClick={() => removeTag(t)}
+                    className="hover:text-rose-400 transition-colors"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
 
           {/* SL & TP */}
           <div className="grid grid-cols-2 gap-4">
