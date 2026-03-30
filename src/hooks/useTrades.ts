@@ -19,6 +19,15 @@ export interface Trade {
   exit?: string;
   duration?: string;
   tag?: string;
+  // Journaling fields
+  strategy?: string;
+  notes?: string;
+  emotions?: string[];
+  tags?: string[];
+  proof?: string | null;
+  rating?: number;
+  checklist?: { label: string; checked: boolean }[];
+  tradeType?: string;
 }
 
 enum OperationType {

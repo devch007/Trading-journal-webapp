@@ -1,13 +1,13 @@
 import { Link, useLocation } from "react-router-dom";
 import { 
-  LayoutDashboard, 
-  BarChart2, 
-  BookOpen, 
-  Activity, 
-  Settings, 
-  UserCircle,
+  LayoutGrid, 
+  CandlestickChart, 
+  Notebook, 
+  TrendingUp, 
+  Settings2, 
+  CircleUser,
   Wallet,
-  Cpu,
+  BrainCircuit,
   ChevronRight,
   ChevronLeft
 } from "lucide-react";
@@ -22,18 +22,18 @@ export function Sidebar({ isExpanded, setIsExpanded }: SidebarProps) {
   const location = useLocation();
 
   const navItems = [
-    { icon: LayoutDashboard, path: "/", title: "Dashboard" },
+    { icon: LayoutGrid, path: "/", title: "Dashboard" },
     { icon: Wallet, path: "/accounts", title: "Accounts" },
-    { icon: BarChart2, path: "/trades", title: "Trades" },
-    { icon: Cpu, path: "/ai-engine", title: "AI Engine" },
-    { icon: BookOpen, path: "/journal", title: "Journal" },
-    { icon: Activity, path: "/market", title: "Market" },
-    { icon: Settings, path: "/settings", title: "Settings" },
+    { icon: CandlestickChart, path: "/trades", title: "Trades" },
+    { icon: BrainCircuit, path: "/ai-engine", title: "AI Engine" },
+    { icon: Notebook, path: "/journal", title: "Journal" },
+    { icon: TrendingUp, path: "/market", title: "Market" },
+    { icon: Settings2, path: "/settings", title: "Settings" },
   ];
 
   return (
     <aside className={cn(
-      "fixed left-0 top-0 h-screen border-r border-blue-500/20 bg-gradient-to-b from-blue-900/50 via-blue-950/30 to-[#0d0d16] flex flex-col py-8 z-50 transition-all duration-300 backdrop-blur-xl",
+      "fixed left-0 top-0 h-screen border-r border-blue-500/40 bg-gradient-to-b from-blue-900/50 via-blue-950/30 to-[#0d0d16] flex flex-col py-8 z-50 transition-all duration-300 backdrop-blur-xl shadow-[4px_0_24px_rgba(0,0,0,0.5)]",
       isExpanded ? "w-64 px-6" : "w-16 items-center"
     )}>
       <div className={cn("mb-12", isExpanded ? "flex items-center gap-3" : "flex justify-center")}>
@@ -57,9 +57,9 @@ export function Sidebar({ isExpanded, setIsExpanded }: SidebarProps) {
               key={item.path}
               to={item.path}
               className={cn(
-                "group relative flex items-center transition-all duration-300 active:scale-95 px-3 py-2.5 rounded-xl",
-                isExpanded ? "gap-4 hover:bg-blue-500/10" : "justify-center",
-                isActive ? "text-primary bg-primary/20" : "text-gray-500 hover:text-blue-300"
+                "group relative flex items-center transition-all duration-300 active:scale-95 px-3 py-2.5 rounded-xl border border-transparent",
+                isExpanded ? "gap-4 hover:bg-blue-500/10 hover:border-blue-500/20" : "justify-center",
+                isActive ? "text-primary bg-primary/20 border-primary/30" : "text-gray-500 hover:text-blue-300"
               )}
             >
               {isActive && !isExpanded && (
@@ -83,12 +83,12 @@ export function Sidebar({ isExpanded, setIsExpanded }: SidebarProps) {
         <Link
           to="/profile"
           className={cn(
-            "group relative flex items-center transition-all duration-300 active:scale-95 px-3 py-2.5 rounded-xl",
-            isExpanded ? "gap-4 hover:bg-blue-500/10" : "justify-center",
-            location.pathname === "/profile" ? "text-primary bg-primary/20" : "text-gray-500 hover:text-indigo-300"
+            "group relative flex items-center transition-all duration-300 active:scale-95 px-3 py-2.5 rounded-xl border border-transparent",
+            isExpanded ? "gap-4 hover:bg-blue-500/10 hover:border-blue-500/20" : "justify-center",
+            location.pathname === "/profile" ? "text-primary bg-primary/20 border-primary/30" : "text-gray-500 hover:text-indigo-300"
           )}
         >
-          <UserCircle className="w-6 h-6 shrink-0" />
+          <CircleUser className="w-6 h-6 shrink-0" />
           {isExpanded && (
             <span className="text-sm font-bold tracking-wide">
               Profile
@@ -99,7 +99,7 @@ export function Sidebar({ isExpanded, setIsExpanded }: SidebarProps) {
         <button
           onClick={() => setIsExpanded(!isExpanded)}
           className={cn(
-            "flex items-center transition-all duration-300 hover:text-primary active:scale-90 px-3 py-2.5 rounded-xl hover:bg-blue-500/10",
+            "flex items-center transition-all duration-300 hover:text-primary active:scale-90 px-3 py-2.5 rounded-xl hover:bg-blue-500/10 border border-transparent hover:border-blue-500/20",
             isExpanded ? "gap-4 text-gray-400" : "justify-center text-gray-500"
           )}
         >

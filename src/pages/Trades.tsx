@@ -10,6 +10,7 @@ export function Trades() {
   const { trades: allTrades, loading, addTrade, deleteTrades, updateTrades } = useTrades();
   const { selectedAccountId, accounts } = useAccountContext();
   const [isTradeModalOpen, setIsTradeModalOpen] = useState(false);
+  const [editingTrade, setEditingTrade] = useState<any>(null);
   const [selectedTradeIds, setSelectedTradeIds] = useState<string[]>([]);
   const [isTagging, setIsTagging] = useState(false);
   const [newTag, setNewTag] = useState("");
@@ -20,88 +21,44 @@ export function Trades() {
   const [filterRange, setFilterRange] = useState("30D");
 
   const uniqueSymbols = useMemo(() => {
-    const symbols = new Set((allTrades || []).map(t => t.symbol));
+    const symbols = new Set<string>();
+    allTrades.forEach(t => symbols.add(t.symbol));
     return Array.from(symbols).sort();
   }, [allTrades]);
 
   const uniqueTags = useMemo(() => {
-    const tags = new Set((allTrades || []).map(t => t.tag || "BREAKOUT"));
+    const tags = new Set<string>();
+    allTrades.forEach(t => {
+      if (t.tag) tags.add(t.tag);
+    });
     return Array.from(tags).sort();
   }, [allTrades]);
-  
-  // Filter trades by selected account and filters
+
   const trades = useMemo(() => {
     let filtered = allTrades;
-    
     if (selectedAccountId) {
       filtered = filtered.filter(t => t.accountId === selectedAccountId);
     }
-
     if (filterSymbol !== "ALL") {
       filtered = filtered.filter(t => t.symbol === filterSymbol);
     }
-
     if (filterAction !== "ALL") {
       filtered = filtered.filter(t => t.action === filterAction);
     }
-
     if (filterTradeType !== "ALL") {
-      filtered = filtered.filter(t => (t.tag || "BREAKOUT") === filterTradeType);
+      if (filterTradeType === "WIN") filtered = filtered.filter(t => t.isPositive);
+      if (filterTradeType === "LOSS") filtered = filtered.filter(t => !t.isPositive);
     }
-
-    if (filterRange !== "ALL") {
-      const now = new Date();
-      let daysToSubtract = 0;
-      if (filterRange === "7D") daysToSubtract = 7;
-      else if (filterRange === "30D") daysToSubtract = 30;
-      else if (filterRange === "90D") daysToSubtract = 90;
-
-      if (daysToSubtract > 0) {
-        const cutoffDate = new Date();
-        cutoffDate.setDate(now.getDate() - daysToSubtract);
-        
-        filtered = filtered.filter(t => {
-          let tradeDate = new Date();
-          if (t.createdAt && typeof t.createdAt.toDate === 'function') {
-            tradeDate = t.createdAt.toDate();
-          } else if (t.date && !t.date.startsWith('Today')) {
-            const parsed = new Date(t.date);
-            if (!isNaN(parsed.getTime())) tradeDate = parsed;
-          }
-          return tradeDate >= cutoffDate;
-        });
-      }
-    }
-
     return filtered;
-  }, [allTrades, selectedAccountId, filterSymbol, filterAction, filterRange]);
+  }, [allTrades, selectedAccountId, filterSymbol, filterAction, filterTradeType]);
 
   const stats = useMemo(() => {
-    if (!trades.length) return { totalPnl: 0, winRate: 0, totalTrades: 0, avgDuration: "0h 0m" };
-    const totalPnl = trades.reduce((sum, t) => sum + t.pnl, 0);
+    const total = trades.length;
     const wins = trades.filter(t => t.isPositive).length;
-    const winRate = (wins / trades.length) * 100;
-    
-    // Calculate average duration (mocked for now if not available)
-    let totalMinutes = 0;
-    let durationCount = 0;
-    trades.forEach(t => {
-      if (t.duration) {
-        const match = t.duration.match(/(\d+)h\s*(\d+)m/);
-        if (match) {
-          totalMinutes += parseInt(match[1]) * 60 + parseInt(match[2]);
-          durationCount++;
-        }
-      }
-    });
-    
-    let avgDuration = "0h 0m";
-    if (durationCount > 0) {
-      const avgMins = Math.round(totalMinutes / durationCount);
-      avgDuration = `${Math.floor(avgMins / 60)}h ${avgMins % 60}m`;
-    }
-
-    return { totalPnl, winRate, totalTrades: trades.length, avgDuration };
+    const losses = total - wins;
+    const winRate = total > 0 ? (wins / total) * 100 : 0;
+    const totalPnl = trades.reduce((sum, t) => sum + t.pnl, 0);
+    return { total, wins, losses, winRate, totalPnl };
   }, [trades]);
 
   const formatCurrency = (val: number) => {
@@ -109,21 +66,39 @@ export function Trades() {
     return val >= 0 ? `+$${absVal}` : `-$${absVal}`;
   };
 
-  const handleNewTrade = async (newTrade: any) => {
-    await addTrade({
-      accountId: newTrade.accountId,
-      date: newTrade.date,
-      symbol: newTrade.symbol,
-      action: newTrade.action,
-      size: newTrade.size,
-      result: newTrade.result,
-      isPositive: newTrade.isPositive,
-      pnl: newTrade.pnl,
-      entry: newTrade.entry || "0.0000",
-      exit: newTrade.exit || "0.0000",
-      duration: newTrade.duration || "1h 30m",
-      tag: newTrade.tag || "BREAKOUT"
-    });
+  const handleTradeSubmit = async (tradeData: any) => {
+    if (editingTrade) {
+      // Update existing trade
+      const { id, ...updates } = tradeData;
+      await updateTrades([id], updates);
+      setEditingTrade(null);
+    } else {
+      // Add new trade
+      await addTrade({
+        accountId: tradeData.accountId,
+        date: tradeData.date,
+        symbol: tradeData.symbol,
+        action: tradeData.action,
+        size: tradeData.size,
+        result: tradeData.result,
+        isPositive: tradeData.isPositive,
+        pnl: tradeData.pnl,
+        entry: tradeData.entry || "0.0000",
+        exit: tradeData.exit || "0.0000",
+        duration: tradeData.duration || "1h 30m",
+        tag: tradeData.tag || "BREAKOUT"
+      });
+    }
+  };
+
+  const handleOpenNewTrade = () => {
+    setEditingTrade(null);
+    setIsTradeModalOpen(true);
+  };
+
+  const handleOpenEditTrade = (trade: any) => {
+    setEditingTrade(trade);
+    setIsTradeModalOpen(true);
   };
 
   const toggleSelectAll = () => {
@@ -134,7 +109,8 @@ export function Trades() {
     }
   };
 
-  const toggleSelectTrade = (id: string) => {
+  const toggleSelectTrade = (id: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
     if (selectedTradeIds.includes(id)) {
       setSelectedTradeIds(selectedTradeIds.filter(i => i !== id));
     } else {
@@ -166,7 +142,7 @@ export function Trades() {
         showSearch={true}
         actionButton={
           <button 
-            onClick={() => setIsTradeModalOpen(true)}
+            onClick={handleOpenNewTrade}
             className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-background px-6 py-2.5 rounded-xl font-bold text-sm transition-all shadow-[0_0_15px_rgba(59,130,246,0.3)] hover:shadow-[0_0_25px_rgba(59,130,246,0.5)]"
           >
             <Plus className="w-4 h-4" />
@@ -177,8 +153,12 @@ export function Trades() {
       
       <TradeModal 
         isOpen={isTradeModalOpen} 
-        onClose={() => setIsTradeModalOpen(false)} 
-        onSubmit={handleNewTrade} 
+        onClose={() => {
+          setIsTradeModalOpen(false);
+          setEditingTrade(null);
+        }} 
+        onSubmit={handleTradeSubmit}
+        trade={editingTrade}
       />
 
       {/* Bulk Actions Bar */}
@@ -361,12 +341,11 @@ export function Trades() {
                     return (
                       <tr 
                         key={trade.id} 
-                        className={`border-b border-white/5 hover:bg-white/[0.02] transition-colors group ${isSelected ? 'bg-primary/5' : ''}`}
-                        onClick={() => toggleSelectTrade(trade.id)}
+                        className={`border-b border-white/5 hover:bg-white/[0.02] transition-colors group cursor-pointer ${isSelected ? 'bg-primary/5' : ''}`}
+                        onClick={() => handleOpenEditTrade(trade)}
                       >
-                        <td className="py-4 pl-4" onClick={(e) => e.stopPropagation()}>
+                        <td className="py-4 pl-4" onClick={(e) => toggleSelectTrade(trade.id, e)}>
                           <button 
-                            onClick={() => toggleSelectTrade(trade.id)}
                             className="p-1 hover:bg-white/5 rounded transition-colors"
                           >
                             {isSelected ? (

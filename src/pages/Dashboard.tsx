@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { TopBar } from "../lib/TopBar";
 import { TradeModal } from "../components/TradeModal";
 import { ImportTradesModal } from "../components/ImportTradesModal";
@@ -69,11 +70,13 @@ const CustomTooltip = ({ active, payload, label, data }: any) => {
 
 export function Dashboard() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const { trades: allTrades, loading, addTrade } = useTrades();
   const { selectedAccountId, selectedAccount } = useAccountContext();
   const [isTradeModalOpen, setIsTradeModalOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [equityData, setEquityData] = useState(initialEquityData);
+  const [period, setPeriod] = useState('ALL');
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isExtracting, setIsExtracting] = useState(false);
@@ -145,30 +148,66 @@ export function Dashboard() {
     }).sort((a, b) => b.winRate - a.winRate).slice(0, 5);
   }, [trades]);
 
-  // Update equity curve when trades change
+  // Update equity curve when trades or period change
   useEffect(() => {
     if (!trades.length) {
       setEquityData(initialEquityData);
       return;
     }
     
+    // Filter trades by period
+    const now = new Date();
+    let cutoff = new Date(0); // Default to beginning of time for 'ALL'
+    
+    if (period === '1D') {
+      cutoff = new Date();
+      cutoff.setHours(0, 0, 0, 0);
+    } else if (period === '1W') {
+      cutoff = new Date();
+      cutoff.setDate(now.getDate() - 7);
+    } else if (period === '1M') {
+      cutoff = new Date();
+      cutoff.setMonth(now.getMonth() - 1);
+    }
+
+    const periodFilteredTrades = trades.filter(t => {
+      const tradeDate = t.createdAt?.toMillis ? new Date(t.createdAt.toMillis()) : new Date();
+      return tradeDate >= cutoff;
+    });
+
+    if (periodFilteredTrades.length === 0) {
+      setEquityData([{ name: 'No Data', value: selectedAccount ? selectedAccount.initialCapital : 10000 }]);
+      return;
+    }
+    
     // Simple equity curve calculation
     let currentEquity = selectedAccount ? selectedAccount.initialCapital : 10000;
-    const newEquityData = [...trades].reverse().map((trade, index) => {
-      currentEquity += trade.pnl;
+    
+    // To calculate the equity at the start of the period, we need to sum PnL of trades BEFORE the cutoff
+    const tradesBeforeCutoff = trades.filter(t => {
+      const tradeDate = t.createdAt?.toMillis ? new Date(t.createdAt.toMillis()) : new Date();
+      return tradeDate < cutoff;
+    });
+    
+    const startingEquity = currentEquity + tradesBeforeCutoff.reduce((sum, t) => sum + t.pnl, 0);
+    let runningEquity = startingEquity;
+
+    const newEquityData = [...periodFilteredTrades].reverse().map((trade, index) => {
+      runningEquity += trade.pnl;
       return {
         name: trade.date.split(', ')[1] || `T${index + 1}`,
-        value: currentEquity
+        value: runningEquity
       };
     });
     
-    // Ensure we have at least some points for the chart
-    if (newEquityData.length < 2) {
-      newEquityData.unshift({ name: 'Start', value: selectedAccount ? selectedAccount.initialCapital : 10000 });
-    }
+    // Add starting point
+    newEquityData.unshift({ 
+      name: period === '1D' ? 'Start' : cutoff.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }), 
+      value: startingEquity 
+    });
     
     setEquityData(newEquityData);
-  }, [trades, selectedAccount]);
+  }, [trades, selectedAccount, period]);
 
   const formatCurrency = (val: number) => {
     const absVal = Math.abs(val).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -423,9 +462,13 @@ export function Dashboard() {
                   <h3 className="font-headline text-lg text-white">Equity Curve</h3>
                 </div>
                 <div className="flex gap-2">
-                  {['1D', '1W', '1M', 'ALL'].map(period => (
-                    <button key={period} className={`px-3 py-1 text-xs font-label rounded-lg transition-colors ${period === '1D' ? 'bg-white/10 text-white' : 'bg-white/5 hover:bg-white/10 text-on-surface-variant hover:text-white'}`}>
-                      {period}
+                  {['1D', '1W', '1M', 'ALL'].map(p => (
+                    <button 
+                      key={p} 
+                      onClick={() => setPeriod(p)}
+                      className={`px-3 py-1 text-xs font-label rounded-lg transition-colors ${period === p ? 'bg-primary text-background font-bold' : 'bg-white/5 hover:bg-white/10 text-on-surface-variant hover:text-white'}`}
+                    >
+                      {p}
                     </button>
                   ))}
                 </div>
@@ -460,7 +503,12 @@ export function Dashboard() {
             <div className="glass-card p-6 rounded-2xl flex flex-col gap-6">
               <div className="flex justify-between items-center">
                 <h3 className="font-headline text-lg text-white">Recent Execution History</h3>
-                <button className="text-sm text-primary hover:text-primary/80 transition-colors font-label">View All</button>
+                <button 
+                  onClick={() => navigate('/trades')}
+                  className="text-sm text-primary hover:text-primary/80 transition-colors font-label"
+                >
+                  View All
+                </button>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse">

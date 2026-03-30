@@ -30,6 +30,10 @@
       "description": "A trading execution record",
       "type": "object",
       "properties": {
+        "id": {
+          "type": "string",
+          "description": "The unique ID of the trade (often matches document ID)"
+        },
         "userId": {
           "type": "string",
           "description": "The UID of the user who owns this trade"
@@ -61,6 +65,22 @@
         "pnl": {
           "type": "number",
           "description": "The profit and loss amount"
+        },
+        "tag": {
+          "type": "string",
+          "description": "A tag for the trade (e.g., BREAKOUT)"
+        },
+        "entry": {
+          "type": "string",
+          "description": "The entry price of the trade"
+        },
+        "exit": {
+          "type": "string",
+          "description": "The exit price of the trade"
+        },
+        "duration": {
+          "type": "string",
+          "description": "The duration of the trade"
         },
         "createdAt": {
           "type": "timestamp",
