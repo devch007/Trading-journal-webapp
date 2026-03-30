@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { X } from "lucide-react";
-import { useAccounts } from "../hooks/useAccounts";
+import { useAccountContext } from "../contexts/AccountContext";
 
 interface TradeModalProps {
   isOpen: boolean;
@@ -9,8 +9,8 @@ interface TradeModalProps {
 }
 
 export function TradeModal({ isOpen, onClose, onSubmit }: TradeModalProps) {
-  const { accounts } = useAccounts();
-  const [accountId, setAccountId] = useState("");
+  const { accounts, selectedAccountId } = useAccountContext();
+  const [accountId, setAccountId] = useState(selectedAccountId || "");
   const [symbol, setSymbol] = useState("EURUSD");
   const [action, setAction] = useState("BUY");
   const [size, setSize] = useState("1.00");
@@ -18,10 +18,14 @@ export function TradeModal({ isOpen, onClose, onSubmit }: TradeModalProps) {
   const [takeProfit, setTakeProfit] = useState("");
 
   useEffect(() => {
-    if (accounts.length > 0 && !accountId) {
-      setAccountId(accounts[0].id);
+    if (isOpen) {
+      if (selectedAccountId) {
+        setAccountId(selectedAccountId);
+      } else if (accounts.length > 0 && !accountId) {
+        setAccountId(accounts[0].id);
+      }
     }
-  }, [accounts, accountId]);
+  }, [isOpen, selectedAccountId, accounts, accountId]);
 
   if (!isOpen) return null;
 

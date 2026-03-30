@@ -1,10 +1,13 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { TopBar } from "../lib/TopBar";
 import { TradeModal } from "../components/TradeModal";
-import { TrendingUp, TrendingDown, Target, Activity, ArrowUpRight, ArrowDownRight, Plus } from "lucide-react";
+import { ImportTradesModal } from "../components/ImportTradesModal";
+import { TrendingUp, TrendingDown, Target, Activity, ArrowUpRight, ArrowDownRight, Plus, Upload, Loader2, AlertCircle } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useTrades } from "../hooks/useTrades";
 import { useAuth } from "../contexts/AuthContext";
+import { useAccountContext } from "../contexts/AccountContext";
+import { MonthlyPnLCalendar } from "../components/MonthlyPnLCalendar";
 
 // Initial static data
 const initialEquityData = [
@@ -33,9 +36,9 @@ const initialQuantInsights = [
 ];
 
 const initialPerformance = [
-  { pair: "EURUSD", winRate: 82, color: "bg-[#3b82f6]" },
-  { pair: "XAUUSD", winRate: 65, color: "bg-[#3b82f6]" },
-  { pair: "GBPUSD", winRate: 58, color: "bg-[#3b82f6]" },
+  { pair: "EURUSD", winRate: 82, color: "bg-primary" },
+  { pair: "XAUUSD", winRate: 65, color: "bg-primary" },
+  { pair: "GBPUSD", winRate: 58, color: "bg-primary" },
   { pair: "USDJPY", winRate: 42, color: "bg-rose-500" },
   { pair: "USDCAD", winRate: 50, color: "bg-gray-500" },
 ];
@@ -66,9 +69,22 @@ const CustomTooltip = ({ active, payload, label, data }: any) => {
 
 export function Dashboard() {
   const { user } = useAuth();
-  const { trades, loading, addTrade } = useTrades();
+  const { trades: allTrades, loading, addTrade } = useTrades();
+  const { selectedAccountId, selectedAccount } = useAccountContext();
   const [isTradeModalOpen, setIsTradeModalOpen] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [equityData, setEquityData] = useState(initialEquityData);
+  
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isExtracting, setIsExtracting] = useState(false);
+  const [extractionError, setExtractionError] = useState<string | null>(null);
+  const [extractedData, setExtractedData] = useState<{ trades: any[] } | null>(null);
+  
+  // Filter trades by selected account
+  const trades = useMemo(() => {
+    if (!selectedAccountId) return allTrades;
+    return allTrades.filter(t => t.accountId === selectedAccountId);
+  }, [allTrades, selectedAccountId]);
   
   // Calculate stats based on real trades
   const stats = useMemo(() => {
@@ -113,16 +129,16 @@ export function Dashboard() {
   }, [trades]);
 
   const performanceByPair = useMemo(() => {
-    if (!trades.length) return initialPerformance;
+    if (!trades || trades.length === 0) return initialPerformance;
     
-    const pairs = Array.from(new Set(trades.map(t => t.symbol)));
+    const pairs = Array.from(new Set((trades || []).map(t => t.symbol)));
     return pairs.map(pair => {
       const pairTrades = trades.filter(t => t.symbol === pair);
       const wins = pairTrades.filter(t => t.isPositive).length;
       const winRate = (wins / pairTrades.length) * 100;
       
       let color = "bg-gray-500";
-      if (winRate >= 60) color = "bg-[#3b82f6]";
+      if (winRate >= 60) color = "bg-primary";
       else if (winRate < 50) color = "bg-rose-500";
       
       return { pair, winRate, color };
@@ -136,8 +152,8 @@ export function Dashboard() {
       return;
     }
     
-    // Simple equity curve calculation (starting from 10000)
-    let currentEquity = 10000;
+    // Simple equity curve calculation
+    let currentEquity = selectedAccount ? selectedAccount.initialCapital : 10000;
     const newEquityData = [...trades].reverse().map((trade, index) => {
       currentEquity += trade.pnl;
       return {
@@ -148,11 +164,11 @@ export function Dashboard() {
     
     // Ensure we have at least some points for the chart
     if (newEquityData.length < 2) {
-      newEquityData.unshift({ name: 'Start', value: 10000 });
+      newEquityData.unshift({ name: 'Start', value: selectedAccount ? selectedAccount.initialCapital : 10000 });
     }
     
     setEquityData(newEquityData);
-  }, [trades]);
+  }, [trades, selectedAccount]);
 
   const formatCurrency = (val: number) => {
     const absVal = Math.abs(val).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -161,6 +177,7 @@ export function Dashboard() {
 
   const handleNewTrade = async (newTrade: any) => {
     await addTrade({
+      accountId: newTrade.accountId,
       date: newTrade.date,
       symbol: newTrade.symbol,
       action: newTrade.action,
@@ -169,6 +186,114 @@ export function Dashboard() {
       isPositive: newTrade.isPositive,
       pnl: newTrade.pnl
     });
+  };
+
+  const handleSaveImportedTrades = async (extractedTrades: any[]) => {
+    for (const t of extractedTrades) {
+      const pnl = parseFloat(t.profit) || 0;
+      await addTrade({
+        accountId: selectedAccountId || '',
+        date: new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+        symbol: t.symbol,
+        action: t.type,
+        size: `${t.volume} Lot`,
+        result: pnl >= 0 ? `+$${pnl.toFixed(2)}` : `-$${Math.abs(pnl).toFixed(2)}`,
+        isPositive: pnl >= 0,
+        pnl: pnl
+      });
+    }
+  };
+
+  const handleImportClick = () => {
+    setExtractionError(null);
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setIsExtracting(true);
+    setExtractionError(null);
+
+    try {
+      // Convert file to base64
+      const reader = new FileReader();
+      const base64Promise = new Promise<string>((resolve, reject) => {
+        reader.onload = () => {
+          const base64String = (reader.result as string).split(',')[1];
+          resolve(base64String);
+        };
+        reader.onerror = reject;
+      });
+      reader.readAsDataURL(file);
+      const base64Data = await base64Promise;
+
+      // Call Groq API
+      const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${process.env.GROQ_API_KEY || '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'}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "meta-llama/llama-4-scout-17b-16e-instruct",
+          messages: [
+            {
+              role: "user",
+              content: [
+                {
+                  type: "text",
+                  text: "Extract the trades from this MT5/trading screenshot. Return ONLY a valid JSON object with a 'trades' array. Each trade should have: symbol (string), type ('BUY' or 'SELL'), volume (number), entry_price (number), exit_price (number), profit (number), commission (number, default 0), and confidence ('High', 'Medium', or 'Low' based on how clearly you can read the row). Do not include any markdown formatting or explanations."
+                },
+                {
+                  type: "image_url",
+                  image_url: {
+                    url: `data:${file.type};base64,${base64Data}`
+                  }
+                }
+              ]
+            }
+          ],
+          temperature: 0.1
+        })
+      });
+
+      if (!response.ok) {
+        let errorDetails = "";
+        try {
+          const errorData = await response.json();
+          errorDetails = JSON.stringify(errorData);
+        } catch (e) {
+          errorDetails = await response.text();
+        }
+        console.error("Groq API Error Details:", errorDetails);
+        throw new Error(`Groq API Error: ${response.status} - ${errorDetails}`);
+      }
+
+      const result = await response.json();
+      let jsonStr = result.choices?.[0]?.message?.content || "{}";
+      
+      // Clean up potential markdown formatting
+      jsonStr = jsonStr.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+      
+      const data = JSON.parse(jsonStr);
+      
+      if (data.trades && data.trades.length > 0) {
+        setExtractedData(data);
+        setIsImportModalOpen(true);
+      } else {
+        setExtractionError("Could not detect trades");
+      }
+    } catch (error) {
+      console.error("Extraction error:", error);
+      setExtractionError("Could not detect trades");
+    } finally {
+      setIsExtracting(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
   };
 
   return (
@@ -193,8 +318,67 @@ export function Dashboard() {
         onClose={() => setIsTradeModalOpen(false)} 
         onSubmit={handleNewTrade} 
       />
+
+      <ImportTradesModal
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+        onSave={handleSaveImportedTrades}
+        initialData={extractedData}
+      />
       
       <div className="px-8 flex flex-col gap-8">
+        {/* Quick Actions */}
+        <div className="flex flex-col gap-4">
+          <h3 className="font-headline text-lg text-white">Quick Actions</h3>
+          <div className="flex gap-4 flex-wrap">
+            <button 
+              onClick={() => setIsTradeModalOpen(true)}
+              className="glass-card px-6 py-4 rounded-2xl flex items-center gap-4 hover:bg-white/5 transition-all group cursor-pointer border border-white/5 hover:border-primary/50"
+            >
+              <div className="p-3 bg-primary/10 rounded-xl group-hover:bg-primary/20 transition-colors">
+                <Plus className="w-5 h-5 text-primary" />
+              </div>
+              <div className="flex flex-col items-start">
+                <span className="font-bold text-white text-sm">Log New Trade</span>
+                <span className="text-xs text-on-surface-variant">Manually enter trade details</span>
+              </div>
+            </button>
+
+            <div className="relative">
+              <input 
+                type="file" 
+                accept="image/png, image/jpeg, image/jpg" 
+                className="hidden" 
+                ref={fileInputRef}
+                onChange={handleFileChange}
+              />
+              <button 
+                onClick={handleImportClick}
+                disabled={isExtracting}
+                className={`glass-card px-6 py-4 rounded-2xl flex items-center gap-4 transition-all group border border-white/5 ${isExtracting ? 'opacity-80 cursor-not-allowed' : 'hover:bg-white/5 cursor-pointer hover:border-primary/50'}`}
+              >
+                <div className={`p-3 rounded-xl transition-colors ${isExtracting ? 'bg-white/10' : 'bg-primary/10 group-hover:bg-primary/20'}`}>
+                  {isExtracting ? (
+                    <Loader2 className="w-5 h-5 text-white animate-spin" />
+                  ) : (
+                    <Upload className="w-5 h-5 text-primary" />
+                  )}
+                </div>
+                <div className="flex flex-col items-start">
+                  <span className="font-bold text-white text-sm">{isExtracting ? 'Analyzing screenshot...' : 'Import Trades'}</span>
+                  <span className="text-xs text-on-surface-variant">{isExtracting ? 'Please wait' : 'Extract from MT5 screenshot'}</span>
+                </div>
+              </button>
+              {extractionError && (
+                <div className="absolute top-full mt-2 left-0 flex items-center gap-1 text-xs text-rose-400 bg-rose-500/10 px-3 py-1.5 rounded-lg border border-rose-500/20 whitespace-nowrap">
+                  <AlertCircle className="w-3 h-3" />
+                  {extractionError}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
         {/* Stats Row */}
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
           <StatCard 
@@ -251,8 +435,8 @@ export function Dashboard() {
                   <AreaChart data={equityData} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
                     <defs>
                       <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
-                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                        <stop offset="5%" stopColor="var(--color-primary)" stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor="var(--color-primary)" stopOpacity={0}/>
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
@@ -263,11 +447,14 @@ export function Dashboard() {
                       cursor={{ stroke: 'rgba(255,255,255,0.1)', strokeWidth: 1, strokeDasharray: '3 3' }}
                       isAnimationActive={false}
                     />
-                    <Area type="monotone" dataKey="value" stroke="#3b82f6" strokeWidth={3} fillOpacity={1} fill="url(#colorValue)" isAnimationActive={true} animationDuration={500} />
+                    <Area type="monotone" dataKey="value" stroke="var(--color-primary)" strokeWidth={3} fillOpacity={1} fill="url(#colorValue)" isAnimationActive={true} animationDuration={500} />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
             </div>
+
+            {/* Monthly P&L Calendar */}
+            <MonthlyPnLCalendar trades={trades} />
 
             {/* Recent Execution History */}
             <div className="glass-card p-6 rounded-2xl flex flex-col gap-6">

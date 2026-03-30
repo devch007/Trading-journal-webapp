@@ -62,13 +62,14 @@ service cloud.firestore {
     }
 
     function isValidAccount(data) {
-      return hasOnlyAllowedFields(['userId', 'name', 'firm', 'type', 'badge', 'initialCapital', 'status', 'maxDrawdown', 'dailyDrawdown', 'createdAt', 'dateClosed']) &&
+      return hasOnlyAllowedFields(['userId', 'name', 'firm', 'type', 'badge', 'initialCapital', 'currentEquity', 'status', 'maxDrawdown', 'dailyDrawdown', 'createdAt', 'dateClosed']) &&
              data.userId is string && data.userId.size() > 0 && data.userId.size() < 100 &&
              data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
              data.firm is string && data.firm.size() > 0 && data.firm.size() < 100 &&
              data.type is string && data.type.size() > 0 && data.type.size() < 100 &&
-             data.badge is string && data.badge.size() > 0 && data.badge.size() < 50 &&
+             data.badge is string && data.badge.size() >= 0 && data.badge.size() < 50 &&
              data.initialCapital is number && data.initialCapital >= 0 &&
+             (!('currentEquity' in data) || data.currentEquity is number) &&
              data.status is string && data.status in ['ACTIVE', 'SUCCESS', 'FAILED'] &&
              data.maxDrawdown is number && data.maxDrawdown >= 0 &&
              data.dailyDrawdown is number && data.dailyDrawdown >= 0 &&
@@ -90,7 +91,7 @@ service cloud.firestore {
     }
 
     match /accounts/{accountId} {
-      allow read: if isAuthenticated() && (resource == null || resource.data.userId == request.auth.uid);
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
       allow create: if isAuthenticated() && 
                     isValidAccount(request.resource.data) && 
                     uidUnchanged() && 
@@ -104,7 +105,7 @@ service cloud.firestore {
     }
 
     match /trades/{tradeId} {
-      allow read: if isAuthenticated() && (resource == null || resource.data.userId == request.auth.uid);
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
       allow create: if isAuthenticated() && 
                     isValidTrade(request.resource.data) && 
                     uidUnchanged() && 

@@ -61,9 +61,23 @@
   --font-mono: "DM Mono", monospace;
 }
 
+.light {
+  --color-background: #fcf8ff;
+  --color-on-surface: #13121c;
+  --color-surface-container-high: #efecf9;
+  --color-on-surface-variant: #484751;
+  --color-surface-container: #efecf9;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-highest: #e0dce9;
+  --color-surface-variant: #e0dce9;
+  --color-on-background: #13121c;
+  --color-outline: #76747f;
+  --color-outline-variant: #c8c5d3;
+}
+
 @layer base {
   body {
-    @apply bg-background text-on-surface font-body selection:bg-primary/30 selection:text-primary min-h-screen overflow-x-hidden;
+    @apply bg-background text-on-surface font-body selection:bg-primary/30 selection:text-primary min-h-screen overflow-x-hidden transition-colors duration-300;
   }
 }
 

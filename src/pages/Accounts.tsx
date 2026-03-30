@@ -44,8 +44,8 @@ export function Accounts() {
 
   // Calculate dynamic account data
   const processedAccounts = useMemo(() => {
-    return accounts.map(account => {
-      const accountTrades = trades.filter(t => t.accountId === account.id);
+    return (accounts || []).map(account => {
+      const accountTrades = (trades || []).filter(t => t.accountId === account.id);
       const totalPnl = accountTrades.reduce((sum, t) => sum + t.pnl, 0);
       const currentEquity = account.initialCapital + totalPnl;
       const isPositive = currentEquity >= account.initialCapital;
@@ -110,7 +110,7 @@ export function Accounts() {
               
               <div className="flex justify-between items-start mb-6 relative z-10">
                 <div>
-                  <p className="text-[#3b82f6] text-xs font-bold tracking-wider mb-1 uppercase">{account.type}</p>
+                  <p className="text-primary text-xs font-bold tracking-wider mb-1 uppercase">{account.type}</p>
                   <h2 className="text-white text-2xl font-headline font-bold">{account.firm}</h2>
                   <h3 className="text-white text-xl font-headline">{account.name}</h3>
                 </div>
@@ -162,10 +162,10 @@ export function Accounts() {
           {/* Add New Account Card */}
           <button 
             onClick={() => { setEditingAccount(null); setIsModalOpen(true); }}
-            className="glass-card p-6 rounded-2xl flex flex-col items-center justify-center gap-4 border-dashed border-2 border-white/10 hover:border-[#3b82f6]/50 hover:bg-[#3b82f6]/5 transition-all group min-h-[280px]"
+            className="glass-card p-6 rounded-2xl flex flex-col items-center justify-center gap-4 border-dashed border-2 border-white/10 hover:border-primary/50 hover:bg-primary/5 transition-all group min-h-[280px]"
           >
-            <div className="w-14 h-14 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-[#3b82f6]/20 transition-colors">
-              <Plus className="w-6 h-6 text-white/50 group-hover:text-[#3b82f6] transition-colors" />
+            <div className="w-14 h-14 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+              <Plus className="w-6 h-6 text-white/50 group-hover:text-primary transition-colors" />
             </div>
             <div className="text-center">
               <h3 className="text-white font-headline font-bold text-lg mb-1">Add New Account</h3>
@@ -178,7 +178,7 @@ export function Accounts() {
         <div className="glass-card rounded-2xl flex flex-col overflow-hidden">
           <div className="p-6 flex justify-between items-center border-b border-white/5">
             <h3 className="font-headline text-xl text-white font-bold">Account History</h3>
-            <button className="text-xs text-[#3b82f6] hover:text-[#2563eb] transition-colors font-bold tracking-wider uppercase">View Full Archive</button>
+            <button className="text-xs text-primary hover:text-primary/80 transition-colors font-bold tracking-wider uppercase">View Full Archive</button>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
@@ -198,7 +198,7 @@ export function Accounts() {
                     <td className="px-6 py-5">
                       <div className="flex items-center gap-3">
                         {history.status === 'SUCCESS' ? (
-                          <CheckCircle2 className="w-4 h-4 text-[#3b82f6]" />
+                          <CheckCircle2 className="w-4 h-4 text-primary" />
                         ) : (
                           <XCircle className="w-4 h-4 text-rose-400" />
                         )}
@@ -248,11 +248,11 @@ export function Accounts() {
           <div className="glass-card p-6 rounded-2xl flex flex-col justify-between min-h-[160px]">
             <div className="flex justify-between items-end mb-6">
               <h3 className="font-headline text-lg text-white font-bold">Global Win Rate</h3>
-              <span className="text-[#3b82f6] font-mono text-3xl font-bold">{globalStats.winRate.toFixed(1)}%</span>
+              <span className="text-primary font-mono text-3xl font-bold">{globalStats.winRate.toFixed(1)}%</span>
             </div>
             <div>
               <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden mb-3">
-                <div className="h-full bg-[#3b82f6] rounded-full" style={{ width: `${globalStats.winRate}%` }} />
+                <div className="h-full bg-primary rounded-full" style={{ width: `${globalStats.winRate}%` }} />
               </div>
               <div className="flex justify-between text-xs text-on-surface-variant">
                 <span>{globalStats.wins} Wins</span>
@@ -262,7 +262,7 @@ export function Accounts() {
           </div>
 
           <div className="glass-card p-6 rounded-2xl flex flex-col justify-between min-h-[160px] relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-br from-[#3b82f6]/5 to-transparent pointer-events-none" />
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent pointer-events-none" />
             <div className="relative z-10">
               <div className="flex justify-between items-start mb-2">
                 <h3 className="font-headline text-lg text-white font-bold">Total Funding Secured</h3>

@@ -11,6 +11,7 @@ export interface Account {
   type: string;
   badge: string;
   initialCapital: number;
+  currentEquity?: number;
   status: 'ACTIVE' | 'SUCCESS' | 'FAILED';
   maxDrawdown: number;
   dailyDrawdown: number;

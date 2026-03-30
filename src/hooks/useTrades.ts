@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { collection, query, orderBy, where, onSnapshot, addDoc, serverTimestamp, getDocs } from 'firebase/firestore';
+import { collection, query, orderBy, where, onSnapshot, addDoc, serverTimestamp, getDocs, deleteDoc, doc, writeBatch } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -15,6 +15,10 @@ export interface Trade {
   isPositive: boolean;
   pnl: number;
   createdAt: any;
+  entry?: string;
+  exit?: string;
+  duration?: string;
+  tag?: string;
 }
 
 enum OperationType {
@@ -102,5 +106,31 @@ export function useTrades() {
     }
   };
 
-  return { trades, loading, addTrade };
+  const deleteTrades = async (tradeIds: string[]) => {
+    if (!user) return;
+    try {
+      const batch = writeBatch(db);
+      tradeIds.forEach(id => {
+        batch.delete(doc(db, 'trades', id));
+      });
+      await batch.commit();
+    } catch (error) {
+      handleFirestoreError(error, OperationType.DELETE, 'trades', { currentUser: user });
+    }
+  };
+
+  const updateTrades = async (tradeIds: string[], data: Partial<Trade>) => {
+    if (!user) return;
+    try {
+      const batch = writeBatch(db);
+      tradeIds.forEach(id => {
+        batch.update(doc(db, 'trades', id), data);
+      });
+      await batch.commit();
+    } catch (error) {
+      handleFirestoreError(error, OperationType.UPDATE, 'trades', { currentUser: user });
+    }
+  };
+
+  return { trades, loading, addTrade, deleteTrades, updateTrades };
 }
