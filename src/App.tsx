@@ -67,6 +67,7 @@ export default function App() {
             <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
             <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
               <Route index element={<Dashboard />} />
+              <Route path="dashboard" element={<Navigate to="/" replace />} />
               <Route path="accounts" element={<Accounts />} />
               <Route path="trades" element={<Trades />} />
               <Route path="ai-engine" element={<AIEngine />} />

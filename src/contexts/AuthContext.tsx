@@ -96,7 +96,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signInWithGoogle = async () => {
     try {
       const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google'
+        provider: 'google',
+        options: {
+          redirectTo: "https://tradingjournalwebapp.vercel.app/dashboard"
+        }
       });
       if (error) throw error;
     } catch (error) {
