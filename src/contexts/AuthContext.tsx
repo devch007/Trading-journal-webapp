@@ -1,20 +1,12 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { 
-  User, 
-  onAuthStateChanged, 
-  signInWithPopup, 
-  signOut,
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword
-} from 'firebase/auth';
-import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { auth, googleProvider, db } from '../lib/firebase';
+import { User } from '@supabase/supabase-js';
+import { supabase } from '../lib/supabase';
 
 interface UserProfile {
   email: string;
   onboardingCompleted: boolean;
   experience?: string;
-  createdAt: any;
+  createdAt: string;
 }
 
 interface AuthContextType {
@@ -36,32 +28,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (firebaseUser) {
-        setLoading(true);
-        setUser(firebaseUser);
-        
-        // Fetch or create user profile
-        try {
-          const userDocRef = doc(db, 'users', firebaseUser.uid);
-          const userDoc = await getDoc(userDocRef);
-          
-          if (userDoc.exists()) {
-            setUserProfile(userDoc.data() as UserProfile);
-          } else {
-            // Create default profile for new users (e.g., from Google Sign-In)
-            const newProfile: UserProfile = {
-              email: firebaseUser.email || 'no-email@example.com',
-              onboardingCompleted: false,
-              createdAt: serverTimestamp()
-            };
-            await setDoc(userDocRef, newProfile);
-            setUserProfile(newProfile);
-          }
-        } catch (error) {
-          console.error("Error fetching user profile:", error);
-        }
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        setUser(session.user);
+        fetchProfile(session.user.id);
+      } else {
         setLoading(false);
+      }
+    });
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (session) {
+        setUser(session.user);
+        await fetchProfile(session.user.id);
       } else {
         setUser(null);
         setUserProfile(null);
@@ -69,12 +50,58 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     });
 
-    return unsubscribe;
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
+
+  const fetchProfile = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      if (error && error.code === 'PGRST116') {
+        // Profile doesn't exist, create it
+        const { data: userData } = await supabase.auth.getUser();
+        if (userData.user) {
+          const newProfile = {
+            id: userId,
+            email: userData.user.email || '',
+            onboardingCompleted: false,
+            createdAt: new Date().toISOString()
+          };
+          const { data: createdProfile, error: createError } = await supabase
+            .from('users')
+            .insert([newProfile])
+            .select()
+            .single();
+          
+          if (!createError) {
+            setUserProfile(createdProfile as UserProfile);
+          }
+        }
+      } else if (data) {
+        setUserProfile(data as UserProfile);
+      }
+    } catch (error) {
+      console.error("Error fetching user profile:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const signInWithGoogle = async () => {
     try {
-      await signInWithPopup(auth, googleProvider);
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: window.location.origin
+        }
+      });
+      if (error) throw error;
     } catch (error) {
       console.error("Error signing in with Google", error);
       throw error;
@@ -83,7 +110,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signInWithEmail = async (email: string, pass: string) => {
     try {
-      await signInWithEmailAndPassword(auth, email, pass);
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password: pass,
+      });
+      if (error) throw error;
     } catch (error) {
       console.error("Error signing in with email", error);
       throw error;
@@ -92,8 +123,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signUpWithEmail = async (email: string, pass: string) => {
     try {
-      await createUserWithEmailAndPassword(auth, email, pass);
-      // Profile creation is handled by onAuthStateChanged to prevent race conditions
+      const { error } = await supabase.auth.signUp({
+        email,
+        password: pass,
+      });
+      if (error) throw error;
     } catch (error) {
       console.error("Error signing up with email", error);
       throw error;
@@ -109,7 +143,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         onboardingCompleted: true
       };
       
-      await setDoc(doc(db, 'users', user.uid), updates, { merge: true });
+      const { error } = await supabase
+        .from('users')
+        .update(updates)
+        .eq('id', user.id);
+      
+      if (error) throw error;
       
       if (userProfile) {
         setUserProfile({
@@ -125,7 +164,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = async () => {
     try {
-      await signOut(auth);
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
     } catch (error) {
       console.error("Error signing out", error);
       throw error;

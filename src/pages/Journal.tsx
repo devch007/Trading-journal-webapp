@@ -99,15 +99,18 @@ export function Journal() {
       duration: selectedEntry.duration || "0h 0m",
       date: selectedEntry.date && !selectedEntry.date.startsWith('Today') 
         ? selectedEntry.date 
-        : (selectedEntry.createdAt?.toDate ? selectedEntry.createdAt.toDate().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase() : "UNKNOWN DATE"),
+        : (selectedEntry.createdAt ? new Date(selectedEntry.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase() : "UNKNOWN DATE"),
       type: selectedEntry.action === "BUY" ? "LONG" : "SHORT"
     };
   }, [selectedEntry]);
 
   const formatDate = (trade: Trade) => {
     if (trade.date && !trade.date.startsWith('Today')) return trade.date;
-    if (trade.createdAt && typeof trade.createdAt.toDate === 'function') {
-      return trade.createdAt.toDate().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase();
+    if (trade.createdAt) {
+      const parsed = new Date(trade.createdAt);
+      if (!isNaN(parsed.getTime())) {
+        return parsed.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase();
+      }
     }
     return "UNKNOWN DATE";
   };

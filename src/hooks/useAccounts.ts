@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
-import { collection, query, where, onSnapshot, addDoc, updateDoc, doc, serverTimestamp, deleteDoc } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 
 export interface Account {
@@ -15,40 +14,8 @@ export interface Account {
   status: 'ACTIVE' | 'SUCCESS' | 'FAILED';
   maxDrawdown: number;
   dailyDrawdown: number;
-  createdAt: any;
+  createdAt: string;
   dateClosed?: string;
-}
-
-enum OperationType {
-  CREATE = 'create',
-  UPDATE = 'update',
-  DELETE = 'delete',
-  LIST = 'list',
-  GET = 'get',
-  WRITE = 'write',
-}
-
-interface FirestoreErrorInfo {
-  error: string;
-  operationType: OperationType;
-  path: string | null;
-  authInfo: any;
-}
-
-function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null, auth: any) {
-  const errInfo: FirestoreErrorInfo = {
-    error: error instanceof Error ? error.message : String(error),
-    authInfo: {
-      userId: auth?.currentUser?.uid,
-      email: auth?.currentUser?.email,
-      emailVerified: auth?.currentUser?.emailVerified,
-      isAnonymous: auth?.currentUser?.isAnonymous,
-    },
-    operationType,
-    path
-  };
-  console.error('Firestore Error: ', JSON.stringify(errInfo));
-  throw new Error(JSON.stringify(errInfo));
 }
 
 export function useAccounts() {
@@ -63,43 +30,57 @@ export function useAccounts() {
       return;
     }
 
-    const q = query(
-      collection(db, 'accounts'),
-      where('userId', '==', user.uid)
-    );
+    const fetchAccounts = async () => {
+      const { data, error } = await supabase
+        .from('accounts')
+        .select('*')
+        .eq('userId', user.id)
+        .order('createdAt', { ascending: false });
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const accountsData: Account[] = [];
-      snapshot.forEach((doc) => {
-        accountsData.push({ id: doc.id, ...doc.data() } as Account);
-      });
-      
-      accountsData.sort((a, b) => {
-        const timeA = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
-        const timeB = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
-        return timeB - timeA;
-      });
-      
-      setAccounts(accountsData);
+      if (error) {
+        console.error('Error fetching accounts:', error);
+      } else {
+        setAccounts(data as Account[]);
+      }
       setLoading(false);
-    }, (error) => {
-      handleFirestoreError(error, OperationType.LIST, 'accounts', { currentUser: user });
-    });
+    };
 
-    return () => unsubscribe();
+    fetchAccounts();
+
+    // Subscribe to changes
+    const channel = supabase
+      .channel('accounts_changes')
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'accounts',
+        filter: `userId=eq.${user.id}`
+      }, () => {
+        fetchAccounts();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [user]);
 
   const addAccount = async (accountData: Omit<Account, 'id' | 'createdAt' | 'userId'>) => {
     if (!user) return;
     
     try {
-      await addDoc(collection(db, 'accounts'), {
-        ...accountData,
-        userId: user.uid,
-        createdAt: serverTimestamp()
-      });
+      const { error } = await supabase
+        .from('accounts')
+        .insert([{
+          ...accountData,
+          userId: user.id,
+          createdAt: new Date().toISOString()
+        }]);
+      
+      if (error) throw error;
     } catch (error) {
-      handleFirestoreError(error, OperationType.CREATE, 'accounts', { currentUser: user });
+      console.error('Error adding account:', error);
+      throw error;
     }
   };
 
@@ -107,10 +88,15 @@ export function useAccounts() {
     if (!user) return;
     
     try {
-      const accountRef = doc(db, 'accounts', accountId);
-      await updateDoc(accountRef, accountData);
+      const { error } = await supabase
+        .from('accounts')
+        .update(accountData)
+        .eq('id', accountId);
+      
+      if (error) throw error;
     } catch (error) {
-      handleFirestoreError(error, OperationType.UPDATE, `accounts/${accountId}`, { currentUser: user });
+      console.error('Error updating account:', error);
+      throw error;
     }
   };
 
@@ -118,10 +104,15 @@ export function useAccounts() {
     if (!user) return;
     
     try {
-      const accountRef = doc(db, 'accounts', accountId);
-      await deleteDoc(accountRef);
+      const { error } = await supabase
+        .from('accounts')
+        .delete()
+        .eq('id', accountId);
+      
+      if (error) throw error;
     } catch (error) {
-      handleFirestoreError(error, OperationType.DELETE, `accounts/${accountId}`, { currentUser: user });
+      console.error('Error deleting account:', error);
+      throw error;
     }
   };
 

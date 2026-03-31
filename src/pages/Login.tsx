@@ -31,11 +31,7 @@ export function Login() {
         await signInWithEmail(email, password);
       }
     } catch (err: any) {
-      let msg = err.message || 'Failed to authenticate';
-      if (err.code === 'auth/invalid-credential') msg = 'Invalid email or password.';
-      if (err.code === 'auth/email-already-in-use') msg = 'Email is already in use.';
-      if (err.code === 'auth/weak-password') msg = 'Password is too weak.';
-      setError(msg);
+      setError(err.message || 'Failed to authenticate');
     } finally {
       setIsSubmitting(false);
     }

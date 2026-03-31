@@ -27,8 +27,11 @@ export function MonthlyPnLCalendar({ trades }: MonthlyPnLCalendarProps) {
       // For simplicity, we'll assume trades with "Today" belong to today's date
       // In a real app, trade.createdAt should be used
       let tradeDate = new Date();
-      if (trade.createdAt && typeof trade.createdAt.toDate === 'function') {
-        tradeDate = trade.createdAt.toDate();
+      if (trade.createdAt) {
+        const parsed = new Date(trade.createdAt);
+        if (!isNaN(parsed.getTime())) {
+          tradeDate = parsed;
+        }
       } else if (trade.date.startsWith('Today')) {
         tradeDate = new Date();
       } else {

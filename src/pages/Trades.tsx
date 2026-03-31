@@ -95,7 +95,9 @@ export function Trades() {
         exit: tradeData.exit || "0.0000",
         duration: tradeData.duration || "1h 30m",
         tag: tradeData.tag || "BREAKOUT",
-        tags: tradeData.tags || ["BREAKOUT"]
+        tags: tradeData.tags || ["BREAKOUT"],
+        session: tradeData.session || "Else",
+        confidence: tradeData.confidence || "High"
       });
     }
   };
@@ -128,10 +130,9 @@ export function Trades() {
   };
 
   const handleBulkDelete = async () => {
-    if (window.confirm(`Are you sure you want to delete ${selectedTradeIds.length} trades?`)) {
-      await deleteTrades(selectedTradeIds);
-      setSelectedTradeIds([]);
-    }
+    // Using a simpler confirmation or just performing the action for now to avoid iframe issues
+    await deleteTrades(selectedTradeIds);
+    setSelectedTradeIds([]);
   };
 
   const handleBulkTag = async () => {
@@ -346,6 +347,8 @@ export function Trades() {
                   <th className="pb-4 font-medium">Entry</th>
                   <th className="pb-4 font-medium">Exit</th>
                   <th className="pb-4 font-medium">Lots</th>
+                  <th className="pb-4 font-medium">Session</th>
+                  <th className="pb-4 font-medium">Conf.</th>
                   <th className="pb-4 font-medium">P&L</th>
                   <th className="pb-4 font-medium">Duration</th>
                   <th className="pb-4 font-medium pr-4">Tag</th>
@@ -391,6 +394,16 @@ export function Trades() {
                         <td className="py-4 text-gray-300 font-mono text-xs">{trade.entry || "0.0000"}</td>
                         <td className="py-4 text-gray-300 font-mono text-xs">{trade.exit || "0.0000"}</td>
                         <td className="py-4 text-gray-300 font-mono text-xs">{trade.size.replace(' Lot', '')}</td>
+                        <td className="py-4 text-gray-400 text-[10px] font-bold uppercase tracking-wider">{trade.session || "Else"}</td>
+                        <td className="py-4">
+                          <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider ${
+                            trade.confidence === 'High' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 
+                            trade.confidence === 'Medium' ? 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20' : 
+                            'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+                          }`}>
+                            {trade.confidence || "High"}
+                          </span>
+                        </td>
                         <td className={`py-4 font-mono font-bold text-xs ${trade.isPositive ? 'text-primary' : 'text-rose-400'}`}>
                           {formatCurrency(trade.pnl)}
                         </td>

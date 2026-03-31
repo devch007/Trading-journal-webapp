@@ -9,6 +9,7 @@ export interface ExtractedTrade {
   entry_price: number | string;
   exit_price: number | string;
   profit: number | string;
+  session: 'Asian' | 'London' | 'NY' | 'Else';
   commission?: number | string;
   confidence?: 'High' | 'Medium' | 'Low';
 }
@@ -35,6 +36,7 @@ export function ImportTradesModal({ isOpen, onClose, onSave, initialData }: Impo
             entry_price: t.entry_price || '',
             exit_price: t.exit_price || '',
             profit: t.profit || '',
+            session: t.session || 'Else',
             commission: t.commission || 0,
             confidence: t.confidence || 'High',
           }))
@@ -56,6 +58,7 @@ export function ImportTradesModal({ isOpen, onClose, onSave, initialData }: Impo
         entry_price: '',
         exit_price: '',
         profit: '',
+        session: 'Else',
         commission: 0,
       }
     ]);
@@ -92,6 +95,7 @@ export function ImportTradesModal({ isOpen, onClose, onSave, initialData }: Impo
       entry_price: parseFloat(t.entry_price as string) || 0,
       exit_price: parseFloat(t.exit_price as string) || 0,
       profit: parseFloat(t.profit as string) || 0,
+      session: t.session,
       commission: parseFloat(t.commission as string) || 0,
     }));
     onSave(cleanedTrades);
@@ -120,14 +124,15 @@ export function ImportTradesModal({ isOpen, onClose, onSave, initialData }: Impo
 
         {/* Table Content */}
         <div className="flex-1 overflow-auto p-6">
-          <div className="min-w-[800px]">
-            <div className="grid grid-cols-[1.5fr_1fr_1fr_1fr_1fr_1fr_1fr_auto] gap-4 mb-4 px-4 text-xs font-bold text-gray-500 uppercase tracking-wider">
+          <div className="min-w-[900px]">
+            <div className="grid grid-cols-[1.5fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_auto] gap-4 mb-4 px-4 text-xs font-bold text-gray-500 uppercase tracking-wider">
               <div>Symbol</div>
               <div>Type</div>
               <div>Volume</div>
               <div>Entry Price</div>
               <div>Exit Price</div>
               <div>Profit</div>
+              <div>Session</div>
               <div>Commission</div>
               <div className="w-10 text-center">Act</div>
             </div>
@@ -139,7 +144,7 @@ export function ImportTradesModal({ isOpen, onClose, onSave, initialData }: Impo
                 return (
                   <div 
                     key={trade.id} 
-                    className={`grid grid-cols-[1.5fr_1fr_1fr_1fr_1fr_1fr_1fr_auto] gap-4 items-center p-3 rounded-xl border bg-[#12121A] transition-colors ${isInvalid ? 'border-rose-500/50' : 'border-white/5 hover:border-white/20'}`}
+                    className={`grid grid-cols-[1.5fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_auto] gap-4 items-center p-3 rounded-xl border bg-[#12121A] transition-colors ${isInvalid ? 'border-rose-500/50' : 'border-white/5 hover:border-white/20'}`}
                   >
                     {/* Symbol */}
                     <div className="relative">
@@ -148,17 +153,22 @@ export function ImportTradesModal({ isOpen, onClose, onSave, initialData }: Impo
                         value={trade.symbol}
                         onChange={(e) => handleChange(trade.id, 'symbol', e.target.value.toUpperCase())}
                         placeholder="EURUSD"
-                        className="w-full bg-black/50 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-primary transition-colors"
+                        className={`w-full bg-black/50 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-primary transition-colors ${trade.confidence ? 'pr-16' : ''}`}
                       />
                       {trade.confidence && (
-                        <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-black/50 border border-white/10 pointer-events-none">
-                          {trade.confidence === 'High' ? (
-                            <><CheckCircle2 className="w-3 h-3 text-emerald-400" /><span className="text-emerald-400">High</span></>
-                          ) : trade.confidence === 'Medium' ? (
-                            <><div className="w-2 h-2 rounded-full bg-yellow-400" /><span className="text-yellow-400">Med</span></>
-                          ) : (
-                            <><AlertCircle className="w-3 h-3 text-rose-400" /><span className="text-rose-400">Low</span></>
-                          )}
+                        <div className="absolute right-2 top-1/2 -translate-y-1/2 z-10">
+                          <select 
+                            value={trade.confidence}
+                            onChange={(e) => handleChange(trade.id, 'confidence', e.target.value)}
+                            className={`bg-black/50 border border-white/10 rounded px-1.5 py-0.5 text-[10px] font-medium cursor-pointer focus:outline-none hover:bg-white/10 transition-colors appearance-none text-center min-w-[45px] ${
+                              trade.confidence === 'High' ? 'text-emerald-400' : 
+                              trade.confidence === 'Medium' ? 'text-yellow-400' : 'text-rose-400'
+                            }`}
+                          >
+                            <option value="High" className="bg-[#1a1a24] text-emerald-400">High</option>
+                            <option value="Medium" className="bg-[#1a1a24] text-yellow-400">Med</option>
+                            <option value="Low" className="bg-[#1a1a24] text-rose-400">Low</option>
+                          </select>
                         </div>
                       )}
                     </div>
@@ -221,6 +231,20 @@ export function ImportTradesModal({ isOpen, onClose, onSave, initialData }: Impo
                         placeholder="0.00"
                         className={`w-full bg-black/50 border border-white/10 rounded-lg px-3 py-2 text-sm font-bold focus:outline-none focus:border-primary transition-colors font-mono ${parseFloat(trade.profit as string) >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}
                       />
+                    </div>
+
+                    {/* Session */}
+                    <div>
+                      <select 
+                        value={trade.session}
+                        onChange={(e) => handleChange(trade.id, 'session', e.target.value)}
+                        className="w-full bg-black/50 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-primary transition-colors appearance-none"
+                      >
+                        <option value="Asian">Asian</option>
+                        <option value="London">London</option>
+                        <option value="NY">NY</option>
+                        <option value="Else">Else</option>
+                      </select>
                     </div>
 
                     {/* Commission */}

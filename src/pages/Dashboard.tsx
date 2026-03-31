@@ -171,7 +171,7 @@ export function Dashboard() {
     }
 
     const periodFilteredTrades = trades.filter(t => {
-      const tradeDate = t.createdAt?.toMillis ? new Date(t.createdAt.toMillis()) : new Date();
+      const tradeDate = new Date(t.createdAt || Date.now());
       return tradeDate >= cutoff;
     });
 
@@ -185,7 +185,7 @@ export function Dashboard() {
     
     // To calculate the equity at the start of the period, we need to sum PnL of trades BEFORE the cutoff
     const tradesBeforeCutoff = trades.filter(t => {
-      const tradeDate = t.createdAt?.toMillis ? new Date(t.createdAt.toMillis()) : new Date();
+      const tradeDate = new Date(t.createdAt || Date.now());
       return tradeDate < cutoff;
     });
     
@@ -272,7 +272,7 @@ export function Dashboard() {
       const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
         method: "POST",
         headers: {
-          "Authorization": `Bearer ${process.env.GROQ_API_KEY || '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'}`,
+          "Authorization": `Bearer ${import.meta.env.VITE_GROQ_API_KEY || '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'}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({

@@ -17,6 +17,8 @@ export function TradeModal({ isOpen, onClose, onSubmit, trade }: TradeModalProps
   const [size, setSize] = useState("1.00");
   const [stopLoss, setStopLoss] = useState("");
   const [takeProfit, setTakeProfit] = useState("");
+  const [session, setSession] = useState<'Asian' | 'London' | 'NY' | 'Else'>("Else");
+  const [confidence, setConfidence] = useState<'High' | 'Medium' | 'Low'>("High");
   const [tags, setTags] = useState<string[]>(["BREAKOUT"]);
   const [tagInput, setTagInput] = useState("");
 
@@ -30,6 +32,8 @@ export function TradeModal({ isOpen, onClose, onSubmit, trade }: TradeModalProps
         setSize(trade.size?.replace(" Lot", "") || "1.00");
         setStopLoss(trade.entry || ""); // Using entry as SL for now if SL not in model
         setTakeProfit(trade.exit || ""); // Using exit as TP for now if TP not in model
+        setSession(trade.session || "Else");
+        setConfidence(trade.confidence || "High");
         setTags(trade.tags || (trade.tag ? [trade.tag] : ["BREAKOUT"]));
       } else {
         // New mode
@@ -43,6 +47,8 @@ export function TradeModal({ isOpen, onClose, onSubmit, trade }: TradeModalProps
         setSize("1.00");
         setStopLoss("");
         setTakeProfit("");
+        setSession("Else");
+        setConfidence("High");
         setTags(["BREAKOUT"]);
       }
     }
@@ -76,6 +82,8 @@ export function TradeModal({ isOpen, onClose, onSubmit, trade }: TradeModalProps
         symbol,
         action,
         size: `${parseFloat(size).toFixed(2)} Lot`,
+        session,
+        confidence,
         tags,
         tag: tags[0] || "" // Keep single tag for backward compatibility
       };
@@ -98,6 +106,8 @@ export function TradeModal({ isOpen, onClose, onSubmit, trade }: TradeModalProps
         result: `${isWin ? '+' : '-'}$${Math.abs(pnl).toFixed(2)}`,
         isPositive: isWin,
         pnl: pnl,
+        session,
+        confidence,
         tags,
         tag: tags[0] || "" // Keep single tag for backward compatibility
       };
@@ -193,16 +203,42 @@ export function TradeModal({ isOpen, onClose, onSubmit, trade }: TradeModalProps
               />
             </div>
             <div className="flex flex-col gap-2">
-              <label className="text-xs font-label text-on-surface-variant uppercase tracking-wider">Add Tag (Press Enter)</label>
-              <input 
-                type="text" 
-                value={tagInput}
-                onChange={(e) => setTagInput(e.target.value)}
-                onKeyDown={handleAddTag}
-                className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-primary/50 transition-colors uppercase"
-                placeholder="E.G. BREAKOUT"
-              />
+              <label className="text-xs font-label text-on-surface-variant uppercase tracking-wider">Session</label>
+              <select 
+                value={session}
+                onChange={(e) => setSession(e.target.value as any)}
+                className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-primary/50 transition-colors appearance-none"
+              >
+                <option value="Asian" className="bg-[#1a1a24]">Asian</option>
+                <option value="London" className="bg-[#1a1a24]">London</option>
+                <option value="NY" className="bg-[#1a1a24]">NY</option>
+                <option value="Else" className="bg-[#1a1a24]">Else</option>
+              </select>
             </div>
+            <div className="flex flex-col gap-2">
+              <label className="text-xs font-label text-on-surface-variant uppercase tracking-wider">Confidence</label>
+              <select 
+                value={confidence}
+                onChange={(e) => setConfidence(e.target.value as any)}
+                className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-primary/50 transition-colors appearance-none"
+              >
+                <option value="High" className="bg-[#1a1a24] text-emerald-400">High</option>
+                <option value="Medium" className="bg-[#1a1a24] text-yellow-400">Medium</option>
+                <option value="Low" className="bg-[#1a1a24] text-rose-400">Low</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <label className="text-xs font-label text-on-surface-variant uppercase tracking-wider">Add Tag (Press Enter)</label>
+            <input 
+              type="text" 
+              value={tagInput}
+              onChange={(e) => setTagInput(e.target.value)}
+              onKeyDown={handleAddTag}
+              className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-primary/50 transition-colors uppercase"
+              placeholder="E.G. BREAKOUT"
+            />
           </div>
 
           {/* Tags Display */}

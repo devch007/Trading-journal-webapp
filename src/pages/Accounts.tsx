@@ -1,12 +1,15 @@
 import React, { useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { TopBar } from "../lib/TopBar";
-import { Plus, CheckCircle2, XCircle, TrendingUp, Building2, Edit2, Trash2 } from "lucide-react";
+import { Plus, CheckCircle2, XCircle, TrendingUp, Building2, Edit2, Trash2, Archive, RotateCcw, Eye } from "lucide-react";
 import { useAccounts, Account } from "../hooks/useAccounts";
 import { useTrades } from "../hooks/useTrades";
 import { AccountModal } from "../components/AccountModal";
+import { useAccountContext } from "../contexts/AccountContext";
 
 export function Accounts() {
-  const { accounts, addAccount, updateAccount, deleteAccount } = useAccounts();
+  const navigate = useNavigate();
+  const { accounts, loading, addAccount, updateAccount, deleteAccount, setSelectedAccountId } = useAccountContext();
   const { trades } = useTrades();
   
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -37,9 +40,22 @@ export function Accounts() {
   };
 
   const handleDelete = async (id: string) => {
-    if (window.confirm("Are you sure you want to delete this account?")) {
-      await deleteAccount(id);
-    }
+    // Using a simpler confirmation or just performing the action for now to avoid iframe issues
+    await deleteAccount(id);
+  };
+
+  const handleArchive = async (id: string, status: 'SUCCESS' | 'FAILED') => {
+    const dateClosed = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase();
+    await updateAccount(id, { status, dateClosed });
+  };
+
+  const handleRestore = async (id: string) => {
+    await updateAccount(id, { status: 'ACTIVE', dateClosed: undefined });
+  };
+
+  const handleViewTrades = (id: string) => {
+    setSelectedAccountId(id);
+    navigate("/trades");
   };
 
   // Calculate dynamic account data
@@ -103,7 +119,11 @@ export function Accounts() {
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           
           {activeAccounts.map((account) => (
-            <div key={account.id} className="glass-card p-6 rounded-2xl flex flex-col relative overflow-hidden group">
+            <div 
+              key={account.id} 
+              className="glass-card p-6 rounded-2xl flex flex-col relative overflow-hidden group cursor-pointer hover:bg-white/[0.02] transition-colors"
+              onClick={() => handleViewTrades(account.id)}
+            >
               <div className="absolute right-0 top-0 opacity-5 pointer-events-none">
                 <Building2 className="w-32 h-32 -mt-4 -mr-4" />
               </div>
@@ -119,10 +139,54 @@ export function Accounts() {
                     <span className="text-white/70 text-xs font-mono">{account.badge}</span>
                   </div>
                   <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button onClick={() => openEditModal(account)} className="p-1.5 bg-white/10 hover:bg-white/20 rounded-lg text-white transition-colors">
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleArchive(account.id, 'SUCCESS');
+                      }} 
+                      className="p-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 rounded-lg transition-colors"
+                      title="Mark as Success"
+                    >
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                    </button>
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleArchive(account.id, 'FAILED');
+                      }} 
+                      className="p-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded-lg transition-colors"
+                      title="Mark as Failed"
+                    >
+                      <XCircle className="w-3.5 h-3.5" />
+                    </button>
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleViewTrades(account.id);
+                      }} 
+                      className="p-1.5 bg-white/10 hover:bg-white/20 rounded-lg text-white transition-colors"
+                      title="View Trades"
+                    >
+                      <Eye className="w-3.5 h-3.5" />
+                    </button>
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openEditModal(account);
+                      }} 
+                      className="p-1.5 bg-white/10 hover:bg-white/20 rounded-lg text-white transition-colors" 
+                      title="Edit"
+                    >
                       <Edit2 className="w-3.5 h-3.5" />
                     </button>
-                    <button onClick={() => handleDelete(account.id)} className="p-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded-lg transition-colors">
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDelete(account.id);
+                      }} 
+                      className="p-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded-lg transition-colors" 
+                      title="Delete"
+                    >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   </div>
@@ -194,7 +258,11 @@ export function Accounts() {
               </thead>
               <tbody className="text-sm">
                 {accountHistory.length > 0 ? accountHistory.map((history) => (
-                  <tr key={history.id} className="border-b border-white/5 hover:bg-white/[0.02] transition-colors group">
+                  <tr 
+                    key={history.id} 
+                    className="border-b border-white/5 hover:bg-white/[0.02] transition-colors group cursor-pointer"
+                    onClick={() => handleViewTrades(history.id)}
+                  >
                     <td className="px-6 py-5">
                       <div className="flex items-center gap-3">
                         {history.status === 'SUCCESS' ? (
@@ -219,15 +287,51 @@ export function Accounts() {
                     <td className={`px-6 py-5 font-mono font-bold ${history.totalPnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
                       {formatProfit(history.totalPnl)}
                     </td>
-                    <td className="px-6 py-5 text-on-surface-variant text-sm flex justify-between items-center">
-                      <span>{history.dateClosed || 'N/A'}</span>
-                      <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button onClick={() => openEditModal(history)} className="p-1.5 bg-white/10 hover:bg-white/20 rounded-lg text-white transition-colors">
-                          <Edit2 className="w-3.5 h-3.5" />
-                        </button>
-                        <button onClick={() => handleDelete(history.id)} className="p-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded-lg transition-colors">
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
+                    <td className="px-6 py-5 text-on-surface-variant text-sm">
+                      <div className="flex justify-between items-center">
+                        <span>{history.dateClosed || 'N/A'}</span>
+                        <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleViewTrades(history.id);
+                            }} 
+                            className="p-1.5 bg-white/10 hover:bg-white/20 rounded-lg text-white transition-colors"
+                            title="View Trades"
+                          >
+                            <Eye className="w-3.5 h-3.5" />
+                          </button>
+                          <button 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleRestore(history.id);
+                            }} 
+                            className="p-1.5 bg-primary/10 hover:bg-primary/20 text-primary rounded-lg transition-colors"
+                            title="Restore to Active"
+                          >
+                            <RotateCcw className="w-3.5 h-3.5" />
+                          </button>
+                          <button 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openEditModal(history);
+                            }} 
+                            className="p-1.5 bg-white/10 hover:bg-white/20 rounded-lg text-white transition-colors" 
+                            title="Edit"
+                          >
+                            <Edit2 className="w-3.5 h-3.5" />
+                          </button>
+                          <button 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDelete(history.id);
+                            }} 
+                            className="p-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded-lg transition-colors" 
+                            title="Delete"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       </div>
                     </td>
                   </tr>
