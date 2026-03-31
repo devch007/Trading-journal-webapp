@@ -57,6 +57,7 @@ function PlaceholderPage({ title, subtitle }: { title: string, subtitle: string 
 }
 
 export default function App() {
+  // force update to check github sync
   return (
     <AuthProvider>
       <AccountProvider>
