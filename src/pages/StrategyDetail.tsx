@@ -47,6 +47,10 @@ export function StrategyDetail() {
     };
   }, [strategyTrades]);
 
+  const journaledTrades = useMemo(() => {
+    return strategyTrades.filter(t => t.notes || (t.emotions && t.emotions.length > 0));
+  }, [strategyTrades]);
+
   if (!strategy) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center min-h-[400px]">
@@ -210,18 +214,45 @@ export function StrategyDetail() {
                 <h3 className="text-sm font-bold text-white">Trading Journal</h3>
              </div>
              <div className="p-5 flex-1 flex flex-col">
-                <button className="w-full py-3 rounded-xl bg-green-500/10 text-emerald-400 border border-green-500/20 font-bold text-sm mb-6 hover:bg-green-500/20 transition-colors">
+                <button 
+                  onClick={() => navigate('/journal')}
+                  className="w-full py-3 rounded-xl bg-green-500/10 text-emerald-400 border border-green-500/20 font-bold text-sm mb-6 hover:bg-green-500/20 transition-colors"
+                >
                   + Write New Entry
                 </button>
                 <div className="flex justify-between items-center mb-4">
                   <span className="text-xs font-bold text-white">Recent Entries</span>
-                  <span className="text-xs text-gray-500">0 of 0</span>
+                  <span className="text-xs text-gray-500">{journaledTrades.length} of {stats.total}</span>
                 </div>
-                <div className="flex-1 flex flex-col items-center justify-center text-center p-6 border border-dashed border-white/10 rounded-xl">
-                  <BookOpen className="w-8 h-8 text-gray-600 mb-3" />
-                  <p className="text-sm font-bold text-white/50 mb-1">No entries yet</p>
-                  <p className="text-xs text-gray-500">Start journaling your trading experience</p>
-                </div>
+                
+                {journaledTrades.length === 0 ? (
+                  <div className="flex-1 flex flex-col items-center justify-center text-center p-6 border border-dashed border-white/10 rounded-xl">
+                    <BookOpen className="w-8 h-8 text-gray-600 mb-3" />
+                    <p className="text-sm font-bold text-white/50 mb-1">No entries yet</p>
+                    <p className="text-xs text-gray-500">Start journaling your trading experience</p>
+                  </div>
+                ) : (
+                  <div className="flex-1 flex flex-col gap-3 overflow-y-auto max-h-[300px]">
+                    {journaledTrades.slice(0, 3).map(trade => (
+                      <div key={trade.id} className="p-4 bg-white/[0.02] border border-white/5 rounded-xl hover:border-white/10 transition-all cursor-pointer" onClick={() => navigate('/journal')}>
+                        <div className="flex justify-between items-start mb-2">
+                          <span className="text-xs font-bold text-white">{trade.symbol} • {trade.action}</span>
+                          <span className="text-[10px] text-gray-500">{trade.date.replace('Today, ', '')}</span>
+                        </div>
+                        {trade.notes && (
+                          <p className="text-xs text-gray-400 line-clamp-2">{trade.notes}</p>
+                        )}
+                        {(!trade.notes && trade.emotions && trade.emotions.length > 0) && (
+                          <div className="flex gap-1 mt-2">
+                            {trade.emotions.slice(0, 2).map((emo: string) => (
+                              <span key={emo} className="text-[10px] bg-white/5 px-2 py-0.5 rounded text-gray-400">{emo}</span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
              </div>
           </div>
 
