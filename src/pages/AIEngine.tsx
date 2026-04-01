@@ -566,7 +566,9 @@ Please give me a specific, casual breakdown of my execution, psychology, and wha
                         ? "bg-primary text-white rounded-tr-none" 
                         : "bg-white/5 border border-white/10 text-gray-200 rounded-tl-none"
                     )}>
-                      {msg.content}
+                      <div className="whitespace-pre-wrap">
+                        {msg.content.replace(/\*\*/g, '')}
+                      </div>
                       <div className={cn(
                         "text-[10px] mt-2 opacity-50",
                         msg.role === 'user' ? "text-right" : "text-left"
