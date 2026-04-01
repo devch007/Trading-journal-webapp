@@ -252,6 +252,11 @@ export function Dashboard() {
     const file = event.target.files?.[0];
     if (!file) return;
 
+    if (!selectedAccountId) {
+      setExtractionError("Please select a trading account first");
+      return;
+    }
+
     setIsExtracting(true);
     setExtractionError(null);
 
@@ -272,11 +277,11 @@ export function Dashboard() {
       const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
         method: "POST",
         headers: {
-          "Authorization": `Bearer ${import.meta.env.VITE_GROQ_API_KEY || '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'}`,
+          "Authorization": `Bearer ${import.meta.env.VITE_GROQ_API_KEY}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "meta-llama/llama-4-scout-17b-16e-instruct",
+          model: "llama-3.2-11b-vision-preview",
           messages: [
             {
               role: "user",

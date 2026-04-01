@@ -332,7 +332,7 @@ export function AIEngine() {
       const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
         method: "POST",
         headers: {
-          "Authorization": `Bearer ${import.meta.env.VITE_GROQ_API_KEY || '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'}`,
+          "Authorization": `Bearer ${import.meta.env.VITE_GROQ_API_KEY}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
