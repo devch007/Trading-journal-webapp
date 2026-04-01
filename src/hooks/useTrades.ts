@@ -37,27 +37,29 @@ export function useTrades() {
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
 
+  const fetchTrades = useCallback(async () => {
+    if (!user) return;
+    
+    const { data, error } = await supabase
+      .from('trades')
+      .select('*')
+      .eq('userId', user.id)
+      .order('createdAt', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching trades:', error);
+    } else {
+      setTrades(data as Trade[]);
+    }
+    setLoading(false);
+  }, [user]);
+
   useEffect(() => {
     if (!user) {
       setTrades([]);
       setLoading(false);
       return;
     }
-
-    const fetchTrades = async () => {
-      const { data, error } = await supabase
-        .from('trades')
-        .select('*')
-        .eq('userId', user.id)
-        .order('createdAt', { ascending: false });
-
-      if (error) {
-        console.error('Error fetching trades:', error);
-      } else {
-        setTrades(data as Trade[]);
-      }
-      setLoading(false);
-    };
 
     fetchTrades();
 
@@ -104,11 +106,14 @@ export function useTrades() {
         }]);
       
       if (error) throw error;
+      
+      // Instantly trigger a re-fetch to update UI without relying on websocket
+      fetchTrades();
     } catch (error) {
       console.error('Error adding trade:', error);
       throw error;
     }
-  }, [user]);
+  }, [user, fetchTrades]);
 
   const deleteTrades = useCallback(async (tradeIds: string[]) => {
     if (!user) return;
@@ -119,11 +124,14 @@ export function useTrades() {
         .in('id', tradeIds);
       
       if (error) throw error;
+      
+      // Instantly trigger a re-fetch to update UI without relying on websocket
+      fetchTrades();
     } catch (error) {
       console.error('Error deleting trades:', error);
       throw error;
     }
-  }, [user]);
+  }, [user, fetchTrades]);
 
   const updateTrades = useCallback(async (tradeIds: string[], data: Partial<Trade>) => {
     if (!user) return;
@@ -134,11 +142,14 @@ export function useTrades() {
         .in('id', tradeIds);
       
       if (error) throw error;
+
+      // Instantly trigger a re-fetch to update UI without relying on websocket
+      fetchTrades();
     } catch (error) {
       console.error('Error updating trades:', error);
       throw error;
     }
-  }, [user]);
+  }, [user, fetchTrades]);
 
   return { trades, loading, addTrade, deleteTrades, updateTrades };
 }

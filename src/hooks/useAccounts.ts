@@ -23,27 +23,29 @@ export function useAccounts() {
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
 
+  const fetchAccounts = useCallback(async () => {
+    if (!user) return;
+    
+    const { data, error } = await supabase
+      .from('accounts')
+      .select('*')
+      .eq('userId', user.id)
+      .order('createdAt', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching accounts:', error);
+    } else {
+      setAccounts(data as Account[]);
+    }
+    setLoading(false);
+  }, [user]);
+
   useEffect(() => {
     if (!user) {
       setAccounts([]);
       setLoading(false);
       return;
     }
-
-    const fetchAccounts = async () => {
-      const { data, error } = await supabase
-        .from('accounts')
-        .select('*')
-        .eq('userId', user.id)
-        .order('createdAt', { ascending: false });
-
-      if (error) {
-        console.error('Error fetching accounts:', error);
-      } else {
-        setAccounts(data as Account[]);
-      }
-      setLoading(false);
-    };
 
     fetchAccounts();
 
@@ -90,11 +92,13 @@ export function useAccounts() {
         }]);
       
       if (error) throw error;
+      
+      fetchAccounts();
     } catch (error) {
       console.error('Error adding account:', error);
       throw error;
     }
-  }, [user]);
+  }, [user, fetchAccounts]);
 
   const updateAccount = useCallback(async (accountId: string, accountData: Partial<Omit<Account, 'id' | 'createdAt' | 'userId'>>) => {
     if (!user) return;
@@ -106,11 +110,13 @@ export function useAccounts() {
         .eq('id', accountId);
       
       if (error) throw error;
+      
+      fetchAccounts();
     } catch (error) {
       console.error('Error updating account:', error);
       throw error;
     }
-  }, [user]);
+  }, [user, fetchAccounts]);
 
   const deleteAccount = useCallback(async (accountId: string) => {
     if (!user) return;
@@ -122,11 +128,13 @@ export function useAccounts() {
         .eq('id', accountId);
       
       if (error) throw error;
+      
+      fetchAccounts();
     } catch (error) {
       console.error('Error deleting account:', error);
       throw error;
     }
-  }, [user]);
+  }, [user, fetchAccounts]);
 
   return { accounts, loading, addAccount, updateAccount, deleteAccount };
 }
