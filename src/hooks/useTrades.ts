@@ -62,8 +62,9 @@ export function useTrades() {
     fetchTrades();
 
     // Subscribe to changes
+    const channelName = `trades_changes_${user.id}_${Date.now()}`;
     const channel = supabase
-      .channel('trades_changes')
+      .channel(channelName)
       .on('postgres_changes', { 
         event: '*', 
         schema: 'public', 

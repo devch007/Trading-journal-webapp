@@ -48,8 +48,9 @@ export function useAccounts() {
     fetchAccounts();
 
     // Subscribe to changes
+    const channelName = `accounts_changes_${user.id}_${Date.now()}`;
     const channel = supabase
-      .channel('accounts_changes')
+      .channel(channelName)
       .on('postgres_changes', { 
         event: '*', 
         schema: 'public', 
