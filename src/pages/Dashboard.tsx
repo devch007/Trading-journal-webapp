@@ -230,15 +230,25 @@ export function Dashboard() {
   const handleSaveImportedTrades = async (extractedTrades: any[]) => {
     for (const t of extractedTrades) {
       const pnl = parseFloat(t.profit) || 0;
+      const now = new Date();
+      const dateStr = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + 
+        ', ' + now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
       await addTrade({
         accountId: selectedAccountId || '',
-        date: new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+        date: dateStr,
         symbol: t.symbol,
         action: t.type,
         size: `${t.volume} Lot`,
+        entry: t.entry_price?.toString() || "",
+        exit: t.exit_price?.toString() || "",
         result: pnl >= 0 ? `+$${pnl.toFixed(2)}` : `-$${Math.abs(pnl).toFixed(2)}`,
         isPositive: pnl >= 0,
-        pnl: pnl
+        pnl: pnl,
+        session: "Else",
+        confidence: t.confidence || "Medium",
+        duration: "",
+        tag: "",
+        tags: [],
       });
     }
   };

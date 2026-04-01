@@ -15,28 +15,32 @@ export function TradeModal({ isOpen, onClose, onSubmit, trade }: TradeModalProps
   const [symbol, setSymbol] = useState("EURUSD");
   const [action, setAction] = useState("BUY");
   const [size, setSize] = useState("1.00");
-  const [stopLoss, setStopLoss] = useState("");
-  const [takeProfit, setTakeProfit] = useState("");
+  const [entry, setEntry] = useState("");
+  const [exit, setExit] = useState("");
+  const [pnl, setPnl] = useState("");
   const [session, setSession] = useState<'Asian' | 'London' | 'NY' | 'Else'>("Else");
   const [confidence, setConfidence] = useState<'High' | 'Medium' | 'Low'>("High");
+  const [duration, setDuration] = useState("");
   const [tags, setTags] = useState<string[]>(["BREAKOUT"]);
   const [tagInput, setTagInput] = useState("");
 
   useEffect(() => {
     if (isOpen) {
       if (trade) {
-        // Edit mode
+        // Edit mode — load trade data
         setAccountId(trade.accountId || "");
         setSymbol(trade.symbol || "EURUSD");
         setAction(trade.action || "BUY");
         setSize(trade.size?.replace(" Lot", "") || "1.00");
-        setStopLoss(trade.entry || ""); // Using entry as SL for now if SL not in model
-        setTakeProfit(trade.exit || ""); // Using exit as TP for now if TP not in model
+        setEntry(trade.entry || "");
+        setExit(trade.exit || "");
+        setPnl(trade.pnl?.toString() || "0");
         setSession(trade.session || "Else");
         setConfidence(trade.confidence || "High");
+        setDuration(trade.duration || "");
         setTags(trade.tags || (trade.tag ? [trade.tag] : ["BREAKOUT"]));
       } else {
-        // New mode
+        // New trade mode — reset fields
         if (selectedAccountId) {
           setAccountId(selectedAccountId);
         } else if (accounts.length > 0 && !accountId) {
@@ -45,10 +49,12 @@ export function TradeModal({ isOpen, onClose, onSubmit, trade }: TradeModalProps
         setSymbol("EURUSD");
         setAction("BUY");
         setSize("1.00");
-        setStopLoss("");
-        setTakeProfit("");
+        setEntry("");
+        setExit("");
+        setPnl("");
         setSession("Else");
         setConfidence("High");
+        setDuration("");
         setTags(["BREAKOUT"]);
       }
     }
@@ -74,42 +80,52 @@ export function TradeModal({ isOpen, onClose, onSubmit, trade }: TradeModalProps
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
+    const pnlNum = parseFloat(pnl) || 0;
+    const sizeFormatted = `${parseFloat(size).toFixed(2)} Lot`;
+    const isPositive = pnlNum >= 0;
+
     if (trade) {
-      // Update existing trade
-      const updatedTrade = {
-        ...trade,
-        accountId: accountId || undefined,
+      // EDIT: only send the fields we want to update - not the entire trade object
+      const updates: Record<string, any> = {
+        id: trade.id, // needed to identify which trade
+        accountId: accountId || trade.accountId,
         symbol,
         action,
-        size: `${parseFloat(size).toFixed(2)} Lot`,
+        size: sizeFormatted,
+        entry: entry || trade.entry || "",
+        exit: exit || trade.exit || "",
+        pnl: pnlNum,
+        result: `${isPositive ? '+' : '-'}$${Math.abs(pnlNum).toFixed(2)}`,
+        isPositive,
         session,
         confidence,
+        duration: duration || trade.duration || "",
         tags,
-        tag: tags[0] || "" // Keep single tag for backward compatibility
+        tag: tags[0] || "",
       };
-      onSubmit(updatedTrade);
+      onSubmit(updates);
     } else {
-      // Create new trade
+      // NEW trade
       const now = new Date();
-      const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-      
-      const isWin = Math.random() > 0.5;
-      const pnlAmount = Math.random() * 500;
-      const pnl = isWin ? pnlAmount : -pnlAmount;
+      const dateStr = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + 
+        ', ' + now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
       const newTrade = {
         accountId: accountId || undefined,
-        date: `Today, ${timeString}`,
+        date: dateStr,
         symbol,
         action,
-        size: `${parseFloat(size).toFixed(2)} Lot`,
-        result: `${isWin ? '+' : '-'}$${Math.abs(pnl).toFixed(2)}`,
-        isPositive: isWin,
-        pnl: pnl,
+        size: sizeFormatted,
+        entry: entry || "0.0000",
+        exit: exit || "0.0000",
+        result: `${isPositive ? '+' : '-'}$${Math.abs(pnlNum).toFixed(2)}`,
+        isPositive,
+        pnl: pnlNum,
         session,
         confidence,
+        duration: duration || "",
         tags,
-        tag: tags[0] || "" // Keep single tag for backward compatibility
+        tag: tags[0] || "",
       };
       onSubmit(newTrade);
     }
@@ -119,7 +135,7 @@ export function TradeModal({ isOpen, onClose, onSubmit, trade }: TradeModalProps
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="glass-card w-full max-w-md rounded-2xl border border-white/10 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+      <div className="glass-card w-full max-w-md rounded-2xl border border-white/10 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center p-6 border-b border-white/5">
           <h2 className="font-headline text-xl text-white">{trade ? 'Edit Trade' : 'New Trade'}</h2>
           <button 
@@ -164,6 +180,11 @@ export function TradeModal({ isOpen, onClose, onSubmit, trade }: TradeModalProps
                 <option value="GBPUSD" className="bg-[#1a1a24]">GBPUSD</option>
                 <option value="USDJPY" className="bg-[#1a1a24]">USDJPY</option>
                 <option value="USDCAD" className="bg-[#1a1a24]">USDCAD</option>
+                <option value="GBPJPY" className="bg-[#1a1a24]">GBPJPY</option>
+                <option value="EURJPY" className="bg-[#1a1a24]">EURJPY</option>
+                <option value="AUDUSD" className="bg-[#1a1a24]">AUDUSD</option>
+                <option value="NZDUSD" className="bg-[#1a1a24]">NZDUSD</option>
+                <option value="USDCHF" className="bg-[#1a1a24]">USDCHF</option>
               </select>
             </div>
             <div className="flex flex-col gap-2">
@@ -187,7 +208,33 @@ export function TradeModal({ isOpen, onClose, onSubmit, trade }: TradeModalProps
             </div>
           </div>
 
-          {/* Size & Tags */}
+          {/* Entry & Exit */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="flex flex-col gap-2">
+              <label className="text-xs font-label text-on-surface-variant uppercase tracking-wider">Entry Price</label>
+              <input 
+                type="number" 
+                step="0.00001"
+                value={entry}
+                onChange={(e) => setEntry(e.target.value)}
+                className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-data focus:outline-none focus:border-primary/50 transition-colors"
+                placeholder="e.g. 1.08500"
+              />
+            </div>
+            <div className="flex flex-col gap-2">
+              <label className="text-xs font-label text-on-surface-variant uppercase tracking-wider">Exit Price</label>
+              <input 
+                type="number" 
+                step="0.00001"
+                value={exit}
+                onChange={(e) => setExit(e.target.value)}
+                className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-data focus:outline-none focus:border-primary/50 transition-colors"
+                placeholder="e.g. 1.09000"
+              />
+            </div>
+          </div>
+
+          {/* Size & P&L */}
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-2">
               <label className="text-xs font-label text-on-surface-variant uppercase tracking-wider">Size (Lots)</label>
@@ -202,6 +249,22 @@ export function TradeModal({ isOpen, onClose, onSubmit, trade }: TradeModalProps
                 required
               />
             </div>
+            <div className="flex flex-col gap-2">
+              <label className="text-xs font-label text-on-surface-variant uppercase tracking-wider">P&L ($)</label>
+              <input 
+                type="number" 
+                step="0.01"
+                value={pnl}
+                onChange={(e) => setPnl(e.target.value)}
+                className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-data focus:outline-none focus:border-primary/50 transition-colors"
+                placeholder="e.g. 150.00 or -50.00"
+                required
+              />
+            </div>
+          </div>
+
+          {/* Session, Confidence, Duration */}
+          <div className="grid grid-cols-3 gap-4">
             <div className="flex flex-col gap-2">
               <label className="text-xs font-label text-on-surface-variant uppercase tracking-wider">Session</label>
               <select 
@@ -222,10 +285,20 @@ export function TradeModal({ isOpen, onClose, onSubmit, trade }: TradeModalProps
                 onChange={(e) => setConfidence(e.target.value as any)}
                 className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-primary/50 transition-colors appearance-none"
               >
-                <option value="High" className="bg-[#1a1a24] text-emerald-400">High</option>
-                <option value="Medium" className="bg-[#1a1a24] text-yellow-400">Medium</option>
-                <option value="Low" className="bg-[#1a1a24] text-rose-400">Low</option>
+                <option value="High" className="bg-[#1a1a24]">High</option>
+                <option value="Medium" className="bg-[#1a1a24]">Medium</option>
+                <option value="Low" className="bg-[#1a1a24]">Low</option>
               </select>
+            </div>
+            <div className="flex flex-col gap-2">
+              <label className="text-xs font-label text-on-surface-variant uppercase tracking-wider">Duration</label>
+              <input 
+                type="text" 
+                value={duration}
+                onChange={(e) => setDuration(e.target.value)}
+                className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-data focus:outline-none focus:border-primary/50 transition-colors"
+                placeholder="e.g. 1h 30m"
+              />
             </div>
           </div>
 
@@ -261,32 +334,6 @@ export function TradeModal({ isOpen, onClose, onSubmit, trade }: TradeModalProps
               ))}
             </div>
           )}
-
-          {/* SL & TP */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="flex flex-col gap-2">
-              <label className="text-xs font-label text-on-surface-variant uppercase tracking-wider">Stop Loss</label>
-              <input 
-                type="number" 
-                step="0.00001"
-                value={stopLoss}
-                onChange={(e) => setStopLoss(e.target.value)}
-                className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-data focus:outline-none focus:border-primary/50 transition-colors"
-                placeholder="Optional"
-              />
-            </div>
-            <div className="flex flex-col gap-2">
-              <label className="text-xs font-label text-on-surface-variant uppercase tracking-wider">Take Profit</label>
-              <input 
-                type="number" 
-                step="0.00001"
-                value={takeProfit}
-                onChange={(e) => setTakeProfit(e.target.value)}
-                className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-data focus:outline-none focus:border-primary/50 transition-colors"
-                placeholder="Optional"
-              />
-            </div>
-          </div>
 
           {/* Submit Button */}
           <button 

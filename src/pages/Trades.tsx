@@ -66,7 +66,12 @@ export function Trades() {
     const losses = total - wins;
     const winRate = total > 0 ? (wins / total) * 100 : 0;
     const totalPnl = trades.reduce((sum, t) => sum + t.pnl, 0);
-    return { total, wins, losses, winRate, totalPnl };
+    
+    // Calculate average duration from trades that have it
+    const tradesWithDuration = trades.filter(t => t.duration);
+    const avgDuration = tradesWithDuration.length > 0 ? tradesWithDuration[0].duration : '—';
+    
+    return { total, wins, losses, winRate, totalPnl, avgDuration, totalTrades: total };
   }, [trades]);
 
   const formatCurrency = (val: number) => {
@@ -76,9 +81,16 @@ export function Trades() {
 
   const handleTradeSubmit = async (tradeData: any) => {
     if (editingTrade) {
-      // Update existing trade
-      const { id, ...updates } = tradeData;
-      await updateTrades([id], updates);
+      // Update existing trade — only send safe, updatable fields
+      const { id } = tradeData;
+      const cleanUpdates: Record<string, any> = {};
+      const allowedFields = ['accountId','symbol','action','size','entry','exit','pnl','result','isPositive','session','confidence','duration','tags','tag'];
+      for (const key of allowedFields) {
+        if (tradeData[key] !== undefined) {
+          cleanUpdates[key] = tradeData[key];
+        }
+      }
+      await updateTrades([id], cleanUpdates);
       setEditingTrade(null);
     } else {
       // Add new trade
@@ -91,11 +103,11 @@ export function Trades() {
         result: tradeData.result,
         isPositive: tradeData.isPositive,
         pnl: tradeData.pnl,
-        entry: tradeData.entry || "0.0000",
-        exit: tradeData.exit || "0.0000",
-        duration: tradeData.duration || "1h 30m",
-        tag: tradeData.tag || "BREAKOUT",
-        tags: tradeData.tags || ["BREAKOUT"],
+        entry: tradeData.entry || "",
+        exit: tradeData.exit || "",
+        duration: tradeData.duration || "",
+        tag: tradeData.tag || "",
+        tags: tradeData.tags || [],
         session: tradeData.session || "Else",
         confidence: tradeData.confidence || "High"
       });
