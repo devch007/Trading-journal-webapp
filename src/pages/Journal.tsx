@@ -374,8 +374,9 @@ export function Journal() {
                       </div>
                       {item.field ? (
                         <input 
-                          value={item.value} 
-                          onChange={e => updateEntry({ [item.field!]: e.target.value })} 
+                          key={`${normalizedEntry.id}-${item.field}`}
+                          defaultValue={item.value as string} 
+                          onBlur={e => updateEntry({ [item.field!]: e.target.value })} 
                           className="bg-transparent font-data font-bold text-lg text-white w-full focus:outline-none border-b border-transparent focus:border-primary/50 transition-all" 
                         />
                       ) : (
@@ -445,8 +446,11 @@ export function Journal() {
                 </div>
                 <div className="pt-2">
                   <input 
-                    type="range" min="1" max="10" value={normalizedEntry.rating}
-                    onChange={e => updateEntry({ rating: parseInt(e.target.value) })}
+                    type="range" min="1" max="10" 
+                    key={`${normalizedEntry.id}-rating`}
+                    defaultValue={normalizedEntry.rating}
+                    onMouseUp={e => updateEntry({ rating: parseInt((e.target as HTMLInputElement).value) })}
+                    onTouchEnd={e => updateEntry({ rating: parseInt((e.target as HTMLInputElement).value) })}
                     className="w-full h-1.5 bg-white/10 rounded-full appearance-none cursor-pointer accent-primary"
                   />
                 </div>
@@ -546,8 +550,9 @@ export function Journal() {
                 </div>
               </div>
               <textarea 
-                value={normalizedEntry.notes}
-                onChange={e => updateEntry({ notes: e.target.value })}
+                key={`${normalizedEntry.id}-notes`}
+                defaultValue={normalizedEntry.notes}
+                onBlur={e => updateEntry({ notes: e.target.value })}
                 className="w-full h-40 bg-black/40 border border-white/10 rounded-2xl p-5 text-sm text-gray-300 focus:outline-none focus:border-primary/50 transition-all resize-none leading-relaxed" 
                 placeholder="Describe your mindset, market conditions, and why you took this setup..." 
               />
