@@ -26,9 +26,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [profileLoading, setProfileLoading] = useState(false);
 
   useEffect(() => {
-    // Get initial session
+    // Get initial session first
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
         setUser(session.user);
@@ -38,16 +39,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     });
 
-    // Listen for auth changes
+    // Listen for auth changes - only react to real sign in/out events
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (session) {
+      if (event === 'SIGNED_IN' && session) {
         setUser(session.user);
         await fetchProfile(session.user.id);
-      } else {
+      } else if (event === 'SIGNED_OUT') {
+        // Only clear state on explicit sign out
         setUser(null);
         setUserProfile(null);
         setLoading(false);
+        setProfileLoading(false);
+      } else if (event === 'TOKEN_REFRESHED' && session) {
+        // Token refresh - just update user, don't re-fetch profile
+        setUser(session.user);
       }
+      // Ignore INITIAL_SESSION and other events to avoid races
     });
 
     return () => {
@@ -56,6 +63,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const fetchProfile = async (userId: string) => {
+    setProfileLoading(true);
     try {
       const { data, error } = await supabase
         .from('users')
@@ -79,7 +87,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             .select()
             .single();
           
-          if (!createError) {
+          if (!createError && createdProfile) {
             setUserProfile(createdProfile as UserProfile);
           }
         }
@@ -90,6 +98,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.error("Error fetching user profile:", error);
     } finally {
       setLoading(false);
+      setProfileLoading(false);
     }
   };
 
@@ -175,7 +184,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const value = {
     user,
     userProfile,
-    loading,
+    loading: loading || profileLoading,
     signInWithGoogle,
     signInWithEmail,
     signUpWithEmail,

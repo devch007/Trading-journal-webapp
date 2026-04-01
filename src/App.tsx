@@ -21,17 +21,26 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, userProfile, loading } = useAuth();
   const location = useLocation();
 
+  // Always show a loading screen while auth state is being resolved.
+  // This covers: initial session check, profile fetch, and token refresh.
   if (loading) {
-    return <div className="min-h-screen bg-background flex items-center justify-center text-on-surface">Loading...</div>;
+    return (
+      <div className="min-h-screen bg-[#0d0d16] flex flex-col items-center justify-center gap-4">
+        <div className="w-10 h-10 border-2 border-blue-500/30 border-t-blue-500 rounded-full animate-spin"></div>
+        <p className="text-gray-500 text-sm font-medium tracking-wide">Loading session...</p>
+      </div>
+    );
   }
 
   if (!user) {
     return <Navigate to="/login" replace />;
   }
 
-  // If user is logged in but hasn't completed onboarding, and they aren't already on the onboarding page
-  // We also check if userProfile is null (e.g. failed to load due to permissions) and force them to onboarding to try and create it
-  if ((!userProfile || !userProfile.onboardingCompleted) && location.pathname !== '/onboarding') {
+  // Only redirect to onboarding when we are CERTAIN the profile has loaded
+  // and onboarding is NOT yet completed. If userProfile is null here (after
+  // loading is false), it means DB query failed, so lets not redirect and
+  // instead drive user to create it only if they are NOT on onboarding.
+  if (userProfile !== null && !userProfile.onboardingCompleted && location.pathname !== '/onboarding') {
     return <Navigate to="/onboarding" replace />;
   }
 
