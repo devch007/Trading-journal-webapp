@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { TopBar } from '../lib/TopBar';
 import { cn } from '../lib/utils';
+import { useNavigate } from 'react-router-dom';
 import { useStrategies, Strategy } from '../contexts/StrategyContext';
 import { useTrades } from '../hooks/useTrades';
 
@@ -272,13 +273,15 @@ interface StrategyCardProps {
 
 const StrategyCard: React.FC<StrategyCardProps> = ({ strategy, onEdit, onDelete, tradesCount, pnl, winRate }) => {
   const [expanded, setExpanded] = useState(false);
+  const navigate = useNavigate();
 
   return (
     <motion.div
       layout
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="relative group"
+      onClick={() => navigate(`/strategies/${strategy.id}`)}
+      className="relative group cursor-pointer"
     >
       {/* Glow */}
       <div
@@ -308,10 +311,16 @@ const StrategyCard: React.FC<StrategyCardProps> = ({ strategy, onEdit, onDelete,
               </div>
             </div>
             <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-              <button onClick={onEdit} className="p-2 rounded-lg hover:bg-white/5 text-gray-500 hover:text-white transition-all">
+              <button 
+                onClick={(e) => { e.stopPropagation(); onEdit(); }} 
+                className="p-2 rounded-lg hover:bg-white/5 text-gray-500 hover:text-white transition-all"
+              >
                 <Edit3 className="w-4 h-4" />
               </button>
-              <button onClick={onDelete} className="p-2 rounded-lg hover:bg-rose-500/10 text-gray-500 hover:text-rose-400 transition-all">
+              <button 
+                onClick={(e) => { e.stopPropagation(); onDelete(); }} 
+                className="p-2 rounded-lg hover:bg-rose-500/10 text-gray-500 hover:text-rose-400 transition-all"
+              >
                 <Trash2 className="w-4 h-4" />
               </button>
             </div>
@@ -365,7 +374,7 @@ const StrategyCard: React.FC<StrategyCardProps> = ({ strategy, onEdit, onDelete,
           {strategy.rules && strategy.rules.length > 0 && (
             <>
               <button
-                onClick={() => setExpanded(e => !e)}
+                onClick={(e) => { e.stopPropagation(); setExpanded(e => !e); }}
                 className="flex items-center gap-1.5 text-xs font-bold text-gray-500 hover:text-gray-300 transition-colors mt-2"
               >
                 <BookOpen className="w-3.5 h-3.5" />

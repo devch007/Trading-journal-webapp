@@ -19,6 +19,7 @@ import { Onboarding } from './pages/Onboarding';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { StrategyProvider } from './contexts/StrategyContext';
 import { Strategies } from './pages/Strategies';
+import { StrategyDetail } from './pages/StrategyDetail';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, userProfile, loading } = useAuth();
@@ -84,6 +85,7 @@ export default function App() {
                   <Route path="ai-engine" element={<AIEngine />} />
                   <Route path="journal" element={<Journal />} />
                   <Route path="strategies" element={<Strategies />} />
+                  <Route path="strategies/:id" element={<StrategyDetail />} />
                   <Route path="market" element={<PlaceholderPage title="Market" subtitle="Live market data and analysis" />} />
                   <Route path="settings" element={<PlaceholderPage title="Settings" subtitle="Application preferences" />} />
                   <Route path="profile" element={<PlaceholderPage title="Profile" subtitle="User profile and security" />} />
