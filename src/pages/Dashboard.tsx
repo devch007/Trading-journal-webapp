@@ -298,7 +298,7 @@ export function Dashboard() {
               content: [
                 {
                   type: "text",
-                  text: "Extract the trades from this MT5/trading screenshot. Return ONLY a valid JSON object with a 'trades' array. Each trade should have: symbol (string), type ('BUY' or 'SELL'), volume (number), entry_price (number), exit_price (number), profit (number), commission (number, default 0), and confidence ('High', 'Medium', or 'Low' based on how clearly you can read the row). Do not include any markdown formatting or explanations."
+                  text: "Extract the trades from this MT5/trading screenshot. Return ONLY a valid JSON object with a 'trades' array. Each trade should have: symbol (string), type ('BUY' or 'SELL'), volume (number), entry_price (string), exit_price (string), profit (number), commission (number, default 0), and confidence ('High', 'Medium', or 'Low' based on how clearly you can read the row). Keep in mind that MT5 usually has two 'Price' columns: the first one is the entry_price, and the second one (further to the right) is the exit_price. Ensure you extract the exact prices as strings (e.g., '145.200'). Do not include any markdown formatting or explanations."
                 },
                 {
                   type: "image_url",
