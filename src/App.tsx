@@ -17,6 +17,8 @@ import { AccountProvider } from './contexts/AccountContext';
 import { Login } from './pages/Login';
 import { Onboarding } from './pages/Onboarding';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { StrategyProvider } from './contexts/StrategyContext';
+import { Strategies } from './pages/Strategies';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, userProfile, loading } = useAuth();
@@ -69,25 +71,29 @@ export default function App() {
     <ErrorBoundary>
       <AuthProvider>
         <AccountProvider>
-          <BrowserRouter>
-            <Routes>
-              <Route path="/login" element={<Login />} />
-              <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
-              <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
-                <Route index element={<Navigate to="/dashboard" replace />} />
-                <Route path="dashboard" element={<Dashboard />} />
-                <Route path="accounts" element={<Accounts />} />
-                <Route path="trades" element={<Trades />} />
-                <Route path="ai-engine" element={<AIEngine />} />
-                <Route path="journal" element={<Journal />} />
-                <Route path="market" element={<PlaceholderPage title="Market" subtitle="Live market data and analysis" />} />
-                <Route path="settings" element={<PlaceholderPage title="Settings" subtitle="Application preferences" />} />
-                <Route path="profile" element={<PlaceholderPage title="Profile" subtitle="User profile and security" />} />
-              </Route>
-            </Routes>
-          </BrowserRouter>
+          <StrategyProvider>
+            <BrowserRouter>
+              <Routes>
+                <Route path="/login" element={<Login />} />
+                <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
+                <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
+                  <Route index element={<Navigate to="/dashboard" replace />} />
+                  <Route path="dashboard" element={<Dashboard />} />
+                  <Route path="accounts" element={<Accounts />} />
+                  <Route path="trades" element={<Trades />} />
+                  <Route path="ai-engine" element={<AIEngine />} />
+                  <Route path="journal" element={<Journal />} />
+                  <Route path="strategies" element={<Strategies />} />
+                  <Route path="market" element={<PlaceholderPage title="Market" subtitle="Live market data and analysis" />} />
+                  <Route path="settings" element={<PlaceholderPage title="Settings" subtitle="Application preferences" />} />
+                  <Route path="profile" element={<PlaceholderPage title="Profile" subtitle="User profile and security" />} />
+                </Route>
+              </Routes>
+            </BrowserRouter>
+          </StrategyProvider>
         </AccountProvider>
       </AuthProvider>
     </ErrorBoundary>
   );
 }
+

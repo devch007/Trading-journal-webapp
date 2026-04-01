@@ -9,7 +9,8 @@ import {
   Wallet,
   Sparkles,
   ChevronRight,
-  ChevronLeft
+  ChevronLeft,
+  Layers
 } from "lucide-react";
 import { cn } from "./utils";
 
@@ -27,6 +28,7 @@ export function Sidebar({ isExpanded, setIsExpanded }: SidebarProps) {
     { icon: CandlestickChart, path: "/trades", title: "Trades" },
     { icon: Sparkles, path: "/ai-engine", title: "AI Engine" },
     { icon: Notebook, path: "/journal", title: "Journal" },
+    { icon: Layers, path: "/strategies", title: "Strategies" },
     { icon: TrendingUp, path: "/market", title: "Market" },
     { icon: Settings2, path: "/settings", title: "Settings" },
   ];
