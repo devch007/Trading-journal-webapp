@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { User } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 
@@ -26,36 +26,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
-  const [profileLoading, setProfileLoading] = useState(false);
+
+  // Use a ref to track which user ID we've already fetched a profile for
+  // This prevents duplicate fetches when onAuthStateChange fires multiple times
+  const fetchedProfileForRef = useRef<string | null>(null);
 
   useEffect(() => {
-    // Get initial session first
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        setUser(session.user);
-        fetchProfile(session.user.id);
-      } else {
-        setLoading(false);
-      }
-    });
+    // The recommended Supabase pattern: rely solely on onAuthStateChange.
+    // It fires immediately with INITIAL_SESSION on page load, which also
+    // handles the OAuth hash token from Google redirect.
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (session) {
+          setUser(session.user);
 
-    // Listen for auth changes - only react to real sign in/out events
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_IN' && session) {
-        setUser(session.user);
-        await fetchProfile(session.user.id);
-      } else if (event === 'SIGNED_OUT') {
-        // Only clear state on explicit sign out
-        setUser(null);
-        setUserProfile(null);
-        setLoading(false);
-        setProfileLoading(false);
-      } else if (event === 'TOKEN_REFRESHED' && session) {
-        // Token refresh - just update user, don't re-fetch profile
-        setUser(session.user);
+          // Only fetch profile once per unique user ID to prevent duplicate calls
+          if (fetchedProfileForRef.current !== session.user.id) {
+            fetchedProfileForRef.current = session.user.id;
+            await fetchProfile(session.user.id);
+          } else {
+            // Profile was already fetched, just ensure loading is false
+            setLoading(false);
+          }
+        } else {
+          // Clear state only when session is truly gone (e.g. SIGNED_OUT)
+          if (event === 'SIGNED_OUT') {
+            fetchedProfileForRef.current = null;
+            setUser(null);
+            setUserProfile(null);
+          }
+          setLoading(false);
+        }
       }
-      // Ignore INITIAL_SESSION and other events to avoid races
-    });
+    );
 
     return () => {
       subscription.unsubscribe();
@@ -63,7 +66,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const fetchProfile = async (userId: string) => {
-    setProfileLoading(true);
     try {
       const { data, error } = await supabase
         .from('users')
@@ -72,7 +74,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .single();
 
       if (error && error.code === 'PGRST116') {
-        // Profile doesn't exist, create it
+        // Profile doesn't exist yet - create it
         const { data: userData } = await supabase.auth.getUser();
         if (userData.user) {
           const newProfile = {
@@ -86,7 +88,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             .insert([newProfile])
             .select()
             .single();
-          
+
           if (!createError && createdProfile) {
             setUserProfile(createdProfile as UserProfile);
           }
@@ -95,10 +97,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUserProfile(data as UserProfile);
       }
     } catch (error) {
-      console.error("Error fetching user profile:", error);
+      console.error('Error fetching user profile:', error);
     } finally {
       setLoading(false);
-      setProfileLoading(false);
     }
   };
 
@@ -112,7 +113,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
       if (error) throw error;
     } catch (error) {
-      console.error("Error signing in with Google", error);
+      console.error('Error signing in with Google', error);
       throw error;
     }
   };
@@ -125,7 +126,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
       if (error) throw error;
     } catch (error) {
-      console.error("Error signing in with email", error);
+      console.error('Error signing in with email', error);
       throw error;
     }
   };
@@ -138,27 +139,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
       if (error) throw error;
     } catch (error) {
-      console.error("Error signing up with email", error);
+      console.error('Error signing up with email', error);
       throw error;
     }
   };
 
   const completeOnboarding = async (data: { experience: string }) => {
     if (!user) return;
-    
+
     try {
       const updates = {
         experience: data.experience,
         onboardingCompleted: true
       };
-      
+
       const { error } = await supabase
         .from('users')
         .update(updates)
         .eq('id', user.id);
-      
+
       if (error) throw error;
-      
+
       if (userProfile) {
         setUserProfile({
           ...userProfile,
@@ -166,35 +167,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } as UserProfile);
       }
     } catch (error) {
-      console.error("Error completing onboarding", error);
+      console.error('Error completing onboarding', error);
       throw error;
     }
   };
 
   const logout = async () => {
     try {
+      fetchedProfileForRef.current = null;
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
     } catch (error) {
-      console.error("Error signing out", error);
+      console.error('Error signing out', error);
       throw error;
     }
   };
 
-  const value = {
-    user,
-    userProfile,
-    loading: loading || profileLoading,
-    signInWithGoogle,
-    signInWithEmail,
-    signUpWithEmail,
-    logout,
-    completeOnboarding
-  };
-
   return (
-    <AuthContext.Provider value={value}>
-      {!loading && children}
+    <AuthContext.Provider value={{
+      user,
+      userProfile,
+      loading,
+      signInWithGoogle,
+      signInWithEmail,
+      signUpWithEmail,
+      logout,
+      completeOnboarding
+    }}>
+      {children}
     </AuthContext.Provider>
   );
 }
