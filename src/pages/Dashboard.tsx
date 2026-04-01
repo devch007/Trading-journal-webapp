@@ -331,9 +331,9 @@ export function Dashboard() {
       } else {
         setExtractionError("Could not detect trades");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Extraction error:", error);
-      setExtractionError("Could not detect trades");
+      setExtractionError(error.message || "Failed to parse API response");
     } finally {
       setIsExtracting(false);
       if (fileInputRef.current) {
