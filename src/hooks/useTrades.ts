@@ -61,22 +61,33 @@ export function useTrades() {
 
     fetchTrades();
 
-    // Subscribe to changes
-    const channelName = `trades_changes_${user.id}_${Date.now()}`;
-    const channel = supabase
-      .channel(channelName)
-      .on('postgres_changes', { 
-        event: '*', 
-        schema: 'public', 
-        table: 'trades',
-        filter: `userId=eq.${user.id}`
-      }, () => {
-        fetchTrades();
-      })
-      .subscribe();
+    // Subscribe to changes (wrapped in try-catch to prevent fatal React crashes during WS disconnects)
+    let channel: any = null;
+    try {
+      const channelName = `trades_changes_${user.id}_${Math.random().toString(36).substring(7)}`;
+      channel = supabase
+        .channel(channelName)
+        .on('postgres_changes', { 
+          event: '*', 
+          schema: 'public', 
+          table: 'trades',
+          filter: `userId=eq.${user.id}`
+        }, () => {
+          fetchTrades();
+        })
+        .subscribe();
+    } catch (err) {
+      console.warn('Realtime subscription failed, falling back to manual fetch', err);
+    }
 
     return () => {
-      supabase.removeChannel(channel);
+      if (channel) {
+        try {
+          supabase.removeChannel(channel);
+        } catch (e) {
+          // ignore cleanup errors
+        }
+      }
     };
   }, [user]);
 
