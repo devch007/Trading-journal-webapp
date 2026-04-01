@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 
@@ -6,7 +6,7 @@ interface UserProfile {
   email: string;
   onboardingCompleted: boolean;
   experience?: string;
-  createdAt: string;
+  createdAt?: string;
 }
 
 interface AuthContextType {
@@ -26,191 +26,128 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
-  const fetchedProfileForRef = useRef<string | null>(null);
 
-  useEffect(() => {
-    let isMounted = true;
-
-    // Safety timeout: if loading hasn't resolved in 5 seconds, force it to false.
-    // This prevents the app from being permanently stuck on "Loading session..."
-    const timeout = setTimeout(() => {
-      if (isMounted && loading) {
-        console.warn('[Auth] Loading timeout reached (5s). Forcing loading=false.');
-        setLoading(false);
-      }
-    }, 5000);
-
-    // Use onAuthStateChange — it fires INITIAL_SESSION synchronously
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        console.log('[Auth] onAuthStateChange:', event, session ? 'has session' : 'no session');
-
-        if (session) {
-          setUser(session.user);
-
-          // Only fetch profile once per unique user to prevent duplicate calls
-          if (fetchedProfileForRef.current !== session.user.id) {
-            fetchedProfileForRef.current = session.user.id;
-            // Use setTimeout(0) to avoid blocking the auth state change callback
-            // This is critical because Supabase can hang if the callback is async
-            setTimeout(() => {
-              if (isMounted) {
-                fetchProfile(session.user.id);
-              }
-            }, 0);
-          } else {
-            // Already fetched profile for this user
-            if (isMounted) setLoading(false);
-          }
-        } else {
-          // No session
-          if (event === 'SIGNED_OUT') {
-            fetchedProfileForRef.current = null;
-            if (isMounted) {
-              setUser(null);
-              setUserProfile(null);
-            }
-          }
-          if (isMounted) setLoading(false);
-        }
-      }
-    );
-
-    return () => {
-      isMounted = false;
-      clearTimeout(timeout);
-      subscription.unsubscribe();
-    };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const fetchProfile = async (userId: string) => {
-    console.log('[Auth] Fetching profile for', userId);
+  // Helper to fetch or create profile
+  const fetchProfile = async (sessionUser: User) => {
     try {
       const { data, error } = await supabase
         .from('users')
         .select('*')
-        .eq('id', userId)
+        .eq('id', sessionUser.id)
         .single();
 
-      console.log('[Auth] Profile query result:', { data: !!data, error: error?.code });
-
       if (error && error.code === 'PGRST116') {
-        // Profile doesn't exist yet - create it
-        console.log('[Auth] Creating new profile...');
-        const { data: userData } = await supabase.auth.getUser();
-        if (userData.user) {
-          const newProfile = {
-            id: userId,
-            email: userData.user.email || '',
-            onboardingCompleted: false,
-            createdAt: new Date().toISOString()
-          };
-          const { data: createdProfile, error: createError } = await supabase
-            .from('users')
-            .insert([newProfile])
-            .select()
-            .single();
+        // Not found, let's create a default profile
+        const defaultProfile = {
+          id: sessionUser.id,
+          email: sessionUser.email || '',
+          onboardingCompleted: false,
+        };
+        const { data: inserted, error: insertError } = await supabase
+          .from('users')
+          .insert([defaultProfile])
+          .select()
+          .single();
 
-          if (!createError && createdProfile) {
-            console.log('[Auth] Profile created successfully');
-            setUserProfile(createdProfile as UserProfile);
-          } else {
-            console.error('[Auth] Failed to create profile:', createError);
-          }
+        if (insertError) {
+          console.error('[Auth] Failed to insert new user profile, using local fallback:', insertError);
+          // Set local fallback so user isn't stuck
+          setUserProfile(defaultProfile as UserProfile);
+        } else {
+          setUserProfile(inserted as UserProfile);
         }
-      } else if (error) {
-        // Some other error (not "row not found")
-        console.error('[Auth] Profile fetch error:', error.message, error.code);
       } else if (data) {
-        console.log('[Auth] Profile loaded, onboardingCompleted:', data.onboardingCompleted);
         setUserProfile(data as UserProfile);
+      } else if (error) {
+        console.error('[Auth] Database error when fetching profile:', error);
       }
-    } catch (error) {
-      console.error('[Auth] fetchProfile exception:', error);
+    } catch (err) {
+      console.error('[Auth] Exception in fetchProfile:', err);
     } finally {
-      console.log('[Auth] Setting loading=false');
+      // Very important: finally unblock the UI
       setLoading(false);
     }
   };
 
-  const signInWithGoogle = async () => {
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/dashboard`
+  useEffect(() => {
+    let isMounted = true;
+
+    // Safety timeout in case Supabase hangs
+    const safetyTimeout = setTimeout(() => {
+      if (isMounted && loading) {
+        console.warn('[Auth] Safety timeout triggered. Forcing loading to false to prevent blank screen.');
+        setLoading(false);
+      }
+    }, 4000);
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('[Auth Event]', event);
+      if (session) {
+        setUser(session.user);
+        // Dispatch profile fetch asynchronously to prevent blocking Supabase event handler
+        setTimeout(() => {
+          if (isMounted) fetchProfile(session.user);
+        }, 0);
+      } else {
+        if (event === 'SIGNED_OUT') {
+          setUser(null);
+          setUserProfile(null);
         }
-      });
-      if (error) throw error;
-    } catch (error) {
-      console.error('Error signing in with Google', error);
-      throw error;
-    }
+        if (isMounted) setLoading(false);
+      }
+    });
+
+    return () => {
+      isMounted = false;
+      clearTimeout(safetyTimeout);
+      subscription.unsubscribe();
+    };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const signInWithGoogle = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: `${window.location.origin}/dashboard` }
+    });
+    if (error) throw error;
   };
 
   const signInWithEmail = async (email: string, pass: string) => {
-    try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password: pass,
-      });
-      if (error) throw error;
-    } catch (error) {
-      console.error('Error signing in with email', error);
-      throw error;
-    }
+    const { error } = await supabase.auth.signInWithPassword({ email, password: pass });
+    if (error) throw error;
   };
 
   const signUpWithEmail = async (email: string, pass: string) => {
-    try {
-      const { error } = await supabase.auth.signUp({
-        email,
-        password: pass,
-      });
-      if (error) throw error;
-    } catch (error) {
-      console.error('Error signing up with email', error);
-      throw error;
-    }
+    const { error } = await supabase.auth.signUp({ email, password: pass });
+    if (error) throw error;
   };
 
   const completeOnboarding = async (data: { experience: string }) => {
     if (!user) return;
+    
+    const payload = {
+      id: user.id,
+      email: user.email || '',
+      experience: data.experience,
+      onboardingCompleted: true,
+    };
 
-    try {
-      const updates = {
-        experience: data.experience,
-        onboardingCompleted: true
-      };
-
-      const { error } = await supabase
-        .from('users')
-        .update(updates)
-        .eq('id', user.id);
-
-      if (error) throw error;
-
-      if (userProfile) {
-        setUserProfile({
-          ...userProfile,
-          ...updates
-        } as UserProfile);
-      }
-    } catch (error) {
-      console.error('Error completing onboarding', error);
+    // Upsert so if the row didn't exist it gets created anyway!
+    const { error } = await supabase.from('users').upsert([payload]);
+    if (error) {
+      console.error('[Auth] completeOnboarding upsert failed:', error);
       throw error;
     }
+
+    // Force local state update
+    setUserProfile(prev => ({
+      ...prev,
+      ...payload,
+    }) as UserProfile);
   };
 
   const logout = async () => {
-    try {
-      fetchedProfileForRef.current = null;
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-    } catch (error) {
-      console.error('Error signing out', error);
-      throw error;
-    }
+    await supabase.auth.signOut();
   };
 
   return (

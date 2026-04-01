@@ -16,6 +16,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { AccountProvider } from './contexts/AccountContext';
 import { Login } from './pages/Login';
 import { Onboarding } from './pages/Onboarding';
+import { ErrorBoundary } from './components/ErrorBoundary';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, userProfile, loading } = useAuth();
@@ -37,10 +38,8 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   }
 
   // Only redirect to onboarding when we are CERTAIN the profile has loaded
-  // and onboarding is NOT yet completed. If userProfile is null here (after
-  // loading is false), it means DB query failed, so lets not redirect and
-  // instead drive user to create it only if they are NOT on onboarding.
-  if (userProfile !== null && !userProfile.onboardingCompleted && location.pathname !== '/onboarding') {
+  // and onboarding is NOT yet completed.
+  if (userProfile && !userProfile.onboardingCompleted && location.pathname !== '/onboarding') {
     return <Navigate to="/onboarding" replace />;
   }
 
@@ -66,28 +65,29 @@ function PlaceholderPage({ title, subtitle }: { title: string, subtitle: string 
 }
 
 export default function App() {
-  // force update to check github sync
   return (
-    <AuthProvider>
-      <AccountProvider>
-        <BrowserRouter>
-          <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
-            <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
-              <Route index element={<Navigate to="/dashboard" replace />} />
-              <Route path="dashboard" element={<Dashboard />} />
-              <Route path="accounts" element={<Accounts />} />
-              <Route path="trades" element={<Trades />} />
-              <Route path="ai-engine" element={<AIEngine />} />
-              <Route path="journal" element={<Journal />} />
-              <Route path="market" element={<PlaceholderPage title="Market" subtitle="Live market data and analysis" />} />
-              <Route path="settings" element={<PlaceholderPage title="Settings" subtitle="Application preferences" />} />
-              <Route path="profile" element={<PlaceholderPage title="Profile" subtitle="User profile and security" />} />
-            </Route>
-          </Routes>
-        </BrowserRouter>
-      </AccountProvider>
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <AccountProvider>
+          <BrowserRouter>
+            <Routes>
+              <Route path="/login" element={<Login />} />
+              <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
+              <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
+                <Route index element={<Navigate to="/dashboard" replace />} />
+                <Route path="dashboard" element={<Dashboard />} />
+                <Route path="accounts" element={<Accounts />} />
+                <Route path="trades" element={<Trades />} />
+                <Route path="ai-engine" element={<AIEngine />} />
+                <Route path="journal" element={<Journal />} />
+                <Route path="market" element={<PlaceholderPage title="Market" subtitle="Live market data and analysis" />} />
+                <Route path="settings" element={<PlaceholderPage title="Settings" subtitle="Application preferences" />} />
+                <Route path="profile" element={<PlaceholderPage title="Profile" subtitle="User profile and security" />} />
+              </Route>
+            </Routes>
+          </BrowserRouter>
+        </AccountProvider>
+      </AuthProvider>
+    </ErrorBoundary>
   );
 }
