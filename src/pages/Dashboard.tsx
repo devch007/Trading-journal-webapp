@@ -281,7 +281,7 @@ export function Dashboard() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "llama-3.2-11b-vision-preview",
+          model: "llama-3.2-90b-vision-preview",
           messages: [
             {
               role: "user",
@@ -316,10 +316,12 @@ export function Dashboard() {
       }
 
       const result = await response.json();
-      let jsonStr = result.choices?.[0]?.message?.content || "{}";
+      const content = result.choices?.[0]?.message?.content || "{}";
+      console.log("[Import Trades] Raw LLM response:", content);
       
-      // Clean up potential markdown formatting
-      jsonStr = jsonStr.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+      // Robustly extract JSON object using regex to ignore conversational text
+      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      const jsonStr = jsonMatch ? jsonMatch[0] : "{}";
       
       const data = JSON.parse(jsonStr);
       
