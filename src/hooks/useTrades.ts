@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -79,7 +79,7 @@ export function useTrades() {
     };
   }, [user]);
 
-  const addTrade = async (tradeData: Omit<Trade, 'id' | 'createdAt' | 'userId'>) => {
+  const addTrade = useCallback(async (tradeData: Omit<Trade, 'id' | 'createdAt' | 'userId'>) => {
     if (!user) return;
     
     try {
@@ -96,9 +96,9 @@ export function useTrades() {
       console.error('Error adding trade:', error);
       throw error;
     }
-  };
+  }, [user]);
 
-  const deleteTrades = async (tradeIds: string[]) => {
+  const deleteTrades = useCallback(async (tradeIds: string[]) => {
     if (!user) return;
     try {
       const { error } = await supabase
@@ -111,9 +111,9 @@ export function useTrades() {
       console.error('Error deleting trades:', error);
       throw error;
     }
-  };
+  }, [user]);
 
-  const updateTrades = async (tradeIds: string[], data: Partial<Trade>) => {
+  const updateTrades = useCallback(async (tradeIds: string[], data: Partial<Trade>) => {
     if (!user) return;
     try {
       const { error } = await supabase
@@ -126,7 +126,7 @@ export function useTrades() {
       console.error('Error updating trades:', error);
       throw error;
     }
-  };
+  }, [user]);
 
   return { trades, loading, addTrade, deleteTrades, updateTrades };
 }

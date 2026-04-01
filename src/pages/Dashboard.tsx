@@ -112,22 +112,22 @@ export function Dashboard() {
   }, [trades]);
 
   const quantInsights = useMemo(() => {
-    if (!trades.length) return initialQuantInsights;
+    if (!trades || trades.length === 0) return initialQuantInsights;
     
-    const winningTrades = trades.filter(t => t.isPositive);
-    const losingTrades = trades.filter(t => !t.isPositive);
+    const winningTrades = (trades || []).filter(t => t.isPositive);
+    const losingTrades = (trades || []).filter(t => !t.isPositive);
     
     const avgWin = winningTrades.length ? winningTrades.reduce((sum, t) => sum + t.pnl, 0) / winningTrades.length : 0;
     const avgLoss = losingTrades.length ? losingTrades.reduce((sum, t) => sum + t.pnl, 0) / losingTrades.length : 0;
     
-    const bestTrade = trades.reduce((best, current) => current.pnl > best.pnl ? current : best, trades[0]);
-    const worstTrade = trades.reduce((worst, current) => current.pnl < worst.pnl ? current : worst, trades[0]);
+    const bestTrade = trades.reduce((best, current) => (current.pnl || 0) > (best.pnl || 0) ? current : best, trades[0]);
+    const worstTrade = trades.reduce((worst, current) => (current.pnl || 0) < (worst.pnl || 0) ? current : worst, trades[0]);
     
     return [
       { label: "Avg. Winning Trade", value: avgWin, isPositive: true },
       { label: "Avg. Losing Trade", value: avgLoss, isPositive: false },
-      { label: `Best Trade (${bestTrade.symbol})`, value: bestTrade.pnl, isPositive: true },
-      { label: `Worst Trade (${worstTrade.symbol})`, value: worstTrade.pnl, isPositive: false },
+      { label: `Best Trade (${bestTrade?.symbol || 'N/A'})`, value: bestTrade?.pnl || 0, isPositive: true },
+      { label: `Worst Trade (${worstTrade?.symbol || 'N/A'})`, value: worstTrade?.pnl || 0, isPositive: false },
     ];
   }, [trades]);
 
@@ -150,8 +150,8 @@ export function Dashboard() {
 
   // Update equity curve when trades or period change
   useEffect(() => {
-    if (!trades.length) {
-      setEquityData(initialEquityData);
+    if (!trades || trades.length === 0) {
+      setEquityData([{ name: 'No Data', value: selectedAccount ? (selectedAccount.initialCapital || 10000) : 10000 }]);
       return;
     }
     
@@ -170,18 +170,18 @@ export function Dashboard() {
       cutoff.setMonth(now.getMonth() - 1);
     }
 
-    const periodFilteredTrades = trades.filter(t => {
+    const periodFilteredTrades = (trades || []).filter(t => {
       const tradeDate = new Date(t.createdAt || Date.now());
       return tradeDate >= cutoff;
     });
 
     if (periodFilteredTrades.length === 0) {
-      setEquityData([{ name: 'No Data', value: selectedAccount ? selectedAccount.initialCapital : 10000 }]);
+      setEquityData([{ name: 'No Data', value: selectedAccount ? (selectedAccount.currentEquity || selectedAccount.initialCapital) : 10000 }]);
       return;
     }
     
     // Simple equity curve calculation
-    let currentEquity = selectedAccount ? selectedAccount.initialCapital : 10000;
+    const initialBalance = selectedAccount ? selectedAccount.initialCapital : 10000;
     
     // To calculate the equity at the start of the period, we need to sum PnL of trades BEFORE the cutoff
     const tradesBeforeCutoff = trades.filter(t => {
@@ -189,13 +189,13 @@ export function Dashboard() {
       return tradeDate < cutoff;
     });
     
-    const startingEquity = currentEquity + tradesBeforeCutoff.reduce((sum, t) => sum + t.pnl, 0);
+    const startingEquity = initialBalance + tradesBeforeCutoff.reduce((sum, t) => sum + (t.pnl || 0), 0);
     let runningEquity = startingEquity;
 
     const newEquityData = [...periodFilteredTrades].reverse().map((trade, index) => {
-      runningEquity += trade.pnl;
+      runningEquity += (trade.pnl || 0);
       return {
-        name: trade.date.split(', ')[1] || `T${index + 1}`,
+        name: trade.date?.split(', ')[1] || `T${index + 1}`,
         value: runningEquity
       };
     });

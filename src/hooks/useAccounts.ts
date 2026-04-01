@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -65,7 +65,7 @@ export function useAccounts() {
     };
   }, [user]);
 
-  const addAccount = async (accountData: Omit<Account, 'id' | 'createdAt' | 'userId'>) => {
+  const addAccount = useCallback(async (accountData: Omit<Account, 'id' | 'createdAt' | 'userId'>) => {
     if (!user) return;
     
     try {
@@ -82,9 +82,9 @@ export function useAccounts() {
       console.error('Error adding account:', error);
       throw error;
     }
-  };
+  }, [user]);
 
-  const updateAccount = async (accountId: string, accountData: Partial<Omit<Account, 'id' | 'createdAt' | 'userId'>>) => {
+  const updateAccount = useCallback(async (accountId: string, accountData: Partial<Omit<Account, 'id' | 'createdAt' | 'userId'>>) => {
     if (!user) return;
     
     try {
@@ -98,9 +98,9 @@ export function useAccounts() {
       console.error('Error updating account:', error);
       throw error;
     }
-  };
+  }, [user]);
 
-  const deleteAccount = async (accountId: string) => {
+  const deleteAccount = useCallback(async (accountId: string) => {
     if (!user) return;
     
     try {
@@ -114,7 +114,7 @@ export function useAccounts() {
       console.error('Error deleting account:', error);
       throw error;
     }
-  };
+  }, [user]);
 
   return { accounts, loading, addAccount, updateAccount, deleteAccount };
 }

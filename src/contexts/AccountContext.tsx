@@ -65,6 +65,9 @@ export function AccountProvider({ children }: { children: React.ReactNode }) {
   // Auto-sync account status and equity based on trades
   useEffect(() => {
     const syncAccountData = async () => {
+      // Create a list of updates to avoid multiple state changes if possible
+      const updatesToApply: {id: string, updates: any}[] = [];
+
       for (const processed of processedAccounts) {
         if (processed.status === 'ACTIVE') {
           const originalAccount = accounts.find(a => a.id === processed.id);
@@ -82,34 +85,43 @@ export function AccountProvider({ children }: { children: React.ReactNode }) {
             needsUpdate = true;
           }
           
-          if (Math.abs((originalAccount.currentEquity || originalAccount.initialCapital) - processed.currentEquity) > 0.01) {
+          // Only update equity if the difference is significant to avoid rounding trigger loops
+          const prevEquity = originalAccount.currentEquity || originalAccount.initialCapital;
+          if (Math.abs(prevEquity - processed.currentEquity) > 0.01) {
             updates.currentEquity = processed.currentEquity;
             needsUpdate = true;
           }
           
           if (needsUpdate) {
-            await updateAccount(processed.id, updates);
+            updatesToApply.push({ id: processed.id, updates });
           }
         }
       }
+
+      // Apply updates sequentially
+      for (const item of updatesToApply) {
+        await updateAccount(item.id, item.updates);
+      }
     };
     
-    if (processedAccounts.length > 0) {
+    if (processedAccounts.length > 0 && !loading) {
       syncAccountData();
     }
-  }, [processedAccounts, accounts, updateAccount]);
+  }, [processedAccounts, updateAccount, loading]); // Removed accounts from dependencies to prevent loop
+
+  const value = useMemo(() => ({
+    accounts,
+    loading,
+    addAccount,
+    updateAccount,
+    deleteAccount,
+    selectedAccountId,
+    setSelectedAccountId,
+    selectedAccount
+  }), [accounts, loading, addAccount, updateAccount, deleteAccount, selectedAccountId, selectedAccount]);
 
   return (
-    <AccountContext.Provider value={{
-      accounts,
-      loading,
-      addAccount,
-      updateAccount,
-      deleteAccount,
-      selectedAccountId,
-      setSelectedAccountId,
-      selectedAccount
-    }}>
+    <AccountContext.Provider value={value}>
       {children}
     </AccountContext.Provider>
   );
