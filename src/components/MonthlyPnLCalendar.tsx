@@ -23,19 +23,19 @@ export function MonthlyPnLCalendar({ trades }: MonthlyPnLCalendarProps) {
     const grouped: Record<number, { pnl: number, count: number }> = {};
     
     trades.forEach(trade => {
-      // Parse trade date. Format is "Today, 10:21:00" or actual date string
-      // For simplicity, we'll assume trades with "Today" belong to today's date
-      // In a real app, trade.createdAt should be used
+      if (!trade) return;
+
       let tradeDate = new Date();
+      const pnl = Number(trade.pnl || 0);
+
       if (trade.createdAt) {
         const parsed = new Date(trade.createdAt);
         if (!isNaN(parsed.getTime())) {
           tradeDate = parsed;
         }
-      } else if (trade.date.startsWith('Today')) {
+      } else if (trade.date && typeof trade.date === 'string' && trade.date.startsWith('Today')) {
         tradeDate = new Date();
-      } else {
-        // Try to parse
+      } else if (trade.date) {
         const parsed = new Date(trade.date);
         if (!isNaN(parsed.getTime())) {
           tradeDate = parsed;
@@ -47,7 +47,7 @@ export function MonthlyPnLCalendar({ trades }: MonthlyPnLCalendarProps) {
         if (!grouped[day]) {
           grouped[day] = { pnl: 0, count: 0 };
         }
-        grouped[day].pnl += trade.pnl;
+        grouped[day].pnl += pnl;
         grouped[day].count += 1;
       }
     });

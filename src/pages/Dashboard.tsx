@@ -527,13 +527,13 @@ export function Dashboard() {
                     </tr>
                   </thead>
                   <tbody className="text-sm">
-                    {(trades.length > 0 ? trades.slice(0, 5) : initialTrades).map((trade) => (
-                      <tr key={trade.id} className="border-b border-white/5 hover:bg-white/[0.02] transition-colors group animate-in fade-in slide-in-from-top-2 duration-500">
-                        <td className="py-4 text-on-surface-variant font-label text-xs">{trade.date}</td>
-                        <td className="py-4 font-bold text-white">{trade.symbol}</td>
-                        <td className={`py-4 font-bold text-xs ${trade.action === 'BUY' ? 'text-emerald-400' : 'text-rose-400'}`}>{trade.action}</td>
-                        <td className="py-4 text-on-surface-variant font-data text-xs">{trade.size}</td>
-                        <td className={`py-4 text-right font-data font-bold ${trade.isPositive ? 'text-emerald-400' : 'text-rose-400'}`}>{trade.result}</td>
+                    {(trades.length > 0 ? trades.slice(0, 5) : initialTrades).map((trade: any, index: number) => (
+                      <tr key={trade.id || index} className="border-b border-white/5 hover:bg-white/[0.02] transition-colors group animate-in fade-in slide-in-from-top-2 duration-500">
+                        <td className="py-4 text-on-surface-variant font-label text-xs">{trade.date || 'N/A'}</td>
+                        <td className="py-4 font-bold text-white">{trade.symbol || 'N/A'}</td>
+                        <td className={`py-4 font-bold text-xs ${trade.action === 'BUY' ? 'text-emerald-400' : 'text-rose-400'}`}>{trade.action || 'N/A'}</td>
+                        <td className="py-4 text-on-surface-variant font-data text-xs">{trade.size || 'N/A'}</td>
+                        <td className={`py-4 text-right font-data font-bold ${trade.isPositive ? 'text-emerald-400' : 'text-rose-400'}`}>{trade.result || '$0.00'}</td>
                       </tr>
                     ))}
                   </tbody>
