@@ -39,17 +39,34 @@ export function StrategyDetail() {
     
     // Robust filtering: case-insensitive and fallback to tag
     const filtered = trades.filter(t => {
-      const sMatch = t.strategy?.toLowerCase() === strategy.name.toLowerCase();
-      const tMatch = t.tag?.toLowerCase() === strategy.name.toLowerCase();
+      const sName = strategy.name.toLowerCase().trim();
+      const sMatch = t.strategy?.toLowerCase().trim() === sName;
+      const tMatch = t.tag?.toLowerCase().trim() === sName;
       return sMatch || tMatch;
     });
+
+    // Improved date parsing for "Today, ..." and "Yesterday, ..."
+    const parseTradeDate = (dateStr: string) => {
+      let d = dateStr;
+      if (d.startsWith('Today, ')) {
+        const time = d.split(', ')[1];
+        return new Date(`${new Date().toDateString()} ${time}`);
+      }
+      if (d.startsWith('Yesterday, ')) {
+        const time = d.split(', ')[1];
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        return new Date(`${yesterday.toDateString()} ${time}`);
+      }
+      return new Date(d);
+    };
 
     // Time-based filtering
     const now = new Date();
     const rangeFiltered = filtered.filter(t => {
       if (timeRange === 'ALL') return true;
-      const tradeDate = new Date(t.date.replace('Today, ', '').replace('Yesterday, ', ''));
-      if (isNaN(tradeDate.getTime())) return true; // Keep malformed for now but ideally fix below
+      const tradeDate = parseTradeDate(t.date);
+      if (isNaN(tradeDate.getTime())) return true; 
       
       const diffDays = (now.getTime() - tradeDate.getTime()) / (1000 * 3600 * 24);
       if (timeRange === '1W') return diffDays <= 7;
@@ -57,10 +74,10 @@ export function StrategyDetail() {
       return true;
     });
 
-    // Safe sorting
+    // Safe sorting using the new parser
     return rangeFiltered.sort((a, b) => {
-      const dateA = new Date(a.date.replace('Today, ', '').replace('Yesterday, ', '')).getTime();
-      const dateB = new Date(b.date.replace('Today, ', '').replace('Yesterday, ', '')).getTime();
+      const dateA = parseTradeDate(a.date).getTime();
+      const dateB = parseTradeDate(b.date).getTime();
       
       if (isNaN(dateA)) return 1;
       if (isNaN(dateB)) return -1;

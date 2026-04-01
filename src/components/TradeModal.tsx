@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { X } from "lucide-react";
 import { useAccountContext } from "../contexts/AccountContext";
+import { useStrategies } from "../contexts/StrategyContext";
 
 interface TradeModalProps {
   isOpen: boolean;
@@ -23,6 +24,8 @@ export function TradeModal({ isOpen, onClose, onSubmit, trade }: TradeModalProps
   const [duration, setDuration] = useState("");
   const [tags, setTags] = useState<string[]>(["BREAKOUT"]);
   const [tagInput, setTagInput] = useState("");
+  const [strategy, setStrategy] = useState("");
+  const { strategies } = useStrategies();
 
   useEffect(() => {
     if (isOpen) {
@@ -39,6 +42,7 @@ export function TradeModal({ isOpen, onClose, onSubmit, trade }: TradeModalProps
         setConfidence(trade.confidence || "High");
         setDuration(trade.duration || "");
         setTags(trade.tags || (trade.tag ? [trade.tag] : ["BREAKOUT"]));
+        setStrategy(trade.strategy || "");
       } else {
         // New trade mode — reset fields
         if (selectedAccountId) {
@@ -56,6 +60,7 @@ export function TradeModal({ isOpen, onClose, onSubmit, trade }: TradeModalProps
         setConfidence("High");
         setDuration("");
         setTags(["BREAKOUT"]);
+        setStrategy("");
       }
     }
   }, [isOpen, trade, selectedAccountId, accounts]);
@@ -101,7 +106,8 @@ export function TradeModal({ isOpen, onClose, onSubmit, trade }: TradeModalProps
         confidence,
         duration: duration || trade.duration || "",
         tags,
-        tag: tags[0] || "",
+        tag: tags[0] || trade.tag || "",
+        strategy,
       };
       onSubmit(updates);
     } else {
@@ -126,6 +132,7 @@ export function TradeModal({ isOpen, onClose, onSubmit, trade }: TradeModalProps
         duration: duration || "",
         tags,
         tag: tags[0] || "",
+        strategy,
       };
       onSubmit(newTrade);
     }
@@ -300,6 +307,21 @@ export function TradeModal({ isOpen, onClose, onSubmit, trade }: TradeModalProps
                 placeholder="e.g. 1h 30m"
               />
             </div>
+          </div>
+
+          {/* Strategy Selection */}
+          <div className="flex flex-col gap-2">
+            <label className="text-xs font-label text-on-surface-variant uppercase tracking-wider">Strategy</label>
+            <select 
+              value={strategy}
+              onChange={(e) => setStrategy(e.target.value)}
+              className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-primary/50 transition-colors appearance-none"
+            >
+              <option value="" className="bg-[#1a1a24]">-- Select Strategy --</option>
+              {strategies.map(s => (
+                <option key={s.id} value={s.name} className="bg-[#1a1a24]">{s.name}</option>
+              ))}
+            </select>
           </div>
 
           <div className="flex flex-col gap-2">

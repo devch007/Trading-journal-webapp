@@ -249,6 +249,7 @@ export function Dashboard() {
         duration: "",
         tag: "",
         tags: [],
+        strategy: t.strategy || "",
       });
     }
   };
