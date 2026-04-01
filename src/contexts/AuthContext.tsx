@@ -26,46 +26,65 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
-
-  // Use a ref to track which user ID we've already fetched a profile for
-  // This prevents duplicate fetches when onAuthStateChange fires multiple times
   const fetchedProfileForRef = useRef<string | null>(null);
 
   useEffect(() => {
-    // The recommended Supabase pattern: rely solely on onAuthStateChange.
-    // It fires immediately with INITIAL_SESSION on page load, which also
-    // handles the OAuth hash token from Google redirect.
+    let isMounted = true;
+
+    // Safety timeout: if loading hasn't resolved in 5 seconds, force it to false.
+    // This prevents the app from being permanently stuck on "Loading session..."
+    const timeout = setTimeout(() => {
+      if (isMounted && loading) {
+        console.warn('[Auth] Loading timeout reached (5s). Forcing loading=false.');
+        setLoading(false);
+      }
+    }, 5000);
+
+    // Use onAuthStateChange — it fires INITIAL_SESSION synchronously
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
+        console.log('[Auth] onAuthStateChange:', event, session ? 'has session' : 'no session');
+
         if (session) {
           setUser(session.user);
 
-          // Only fetch profile once per unique user ID to prevent duplicate calls
+          // Only fetch profile once per unique user to prevent duplicate calls
           if (fetchedProfileForRef.current !== session.user.id) {
             fetchedProfileForRef.current = session.user.id;
-            await fetchProfile(session.user.id);
+            // Use setTimeout(0) to avoid blocking the auth state change callback
+            // This is critical because Supabase can hang if the callback is async
+            setTimeout(() => {
+              if (isMounted) {
+                fetchProfile(session.user.id);
+              }
+            }, 0);
           } else {
-            // Profile was already fetched, just ensure loading is false
-            setLoading(false);
+            // Already fetched profile for this user
+            if (isMounted) setLoading(false);
           }
         } else {
-          // Clear state only when session is truly gone (e.g. SIGNED_OUT)
+          // No session
           if (event === 'SIGNED_OUT') {
             fetchedProfileForRef.current = null;
-            setUser(null);
-            setUserProfile(null);
+            if (isMounted) {
+              setUser(null);
+              setUserProfile(null);
+            }
           }
-          setLoading(false);
+          if (isMounted) setLoading(false);
         }
       }
     );
 
     return () => {
+      isMounted = false;
+      clearTimeout(timeout);
       subscription.unsubscribe();
     };
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchProfile = async (userId: string) => {
+    console.log('[Auth] Fetching profile for', userId);
     try {
       const { data, error } = await supabase
         .from('users')
@@ -73,8 +92,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .eq('id', userId)
         .single();
 
+      console.log('[Auth] Profile query result:', { data: !!data, error: error?.code });
+
       if (error && error.code === 'PGRST116') {
         // Profile doesn't exist yet - create it
+        console.log('[Auth] Creating new profile...');
         const { data: userData } = await supabase.auth.getUser();
         if (userData.user) {
           const newProfile = {
@@ -90,15 +112,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             .single();
 
           if (!createError && createdProfile) {
+            console.log('[Auth] Profile created successfully');
             setUserProfile(createdProfile as UserProfile);
+          } else {
+            console.error('[Auth] Failed to create profile:', createError);
           }
         }
+      } else if (error) {
+        // Some other error (not "row not found")
+        console.error('[Auth] Profile fetch error:', error.message, error.code);
       } else if (data) {
+        console.log('[Auth] Profile loaded, onboardingCompleted:', data.onboardingCompleted);
         setUserProfile(data as UserProfile);
       }
     } catch (error) {
-      console.error('Error fetching user profile:', error);
+      console.error('[Auth] fetchProfile exception:', error);
     } finally {
+      console.log('[Auth] Setting loading=false');
       setLoading(false);
     }
   };
