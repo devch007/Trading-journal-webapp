@@ -19,6 +19,7 @@ import {
 import { TopBar } from '../lib/TopBar';
 import { cn } from '../lib/utils';
 import { useTrades, Trade } from '../hooks/useTrades';
+import { useLocation } from 'react-router-dom';
 
 interface Message {
   id: string;
@@ -37,6 +38,8 @@ interface Insight {
 
 export function AIEngine() {
   const { trades, loading: tradesLoading } = useTrades();
+  const location = useLocation();
+  const [hasAutoTriggered, setHasAutoTriggered] = useState(false);
   
   const dynamicPrompts = useMemo(() => {
     if (!trades || trades.length === 0) {
@@ -375,6 +378,34 @@ export function AIEngine() {
       setIsTyping(false);
     }
   };
+
+  useEffect(() => {
+    const analyzeTradeId = location.state?.analyzeTradeId;
+    if (analyzeTradeId && trades && trades.length > 0 && !hasAutoTriggered) {
+      const tradeToAnalyze = trades.find(t => t.id === analyzeTradeId);
+      if (tradeToAnalyze) {
+        setHasAutoTriggered(true);
+        const checklistScore = tradeToAnalyze.checklist ? tradeToAnalyze.checklist.filter(c => c.checked).length : 0;
+        const totalChecklist = tradeToAnalyze.checklist ? tradeToAnalyze.checklist.length : 0;
+        
+        const autoMsg = `Can you analyze this specific trade for me?
+Symbol: ${tradeToAnalyze.symbol}
+Type: ${tradeToAnalyze.action} / ${tradeToAnalyze.tradeType || 'N/A'}
+P&L: ${tradeToAnalyze.pnl >= 0 ? '+' : ''}$${tradeToAnalyze.pnl}
+Tags: ${(tradeToAnalyze.tags || []).join(', ') || tradeToAnalyze.tag || 'None'}
+Emotions: ${(tradeToAnalyze.emotions || []).join(', ') || 'None'}
+Checklist Compliance: ${totalChecklist > 0 ? `${checklistScore}/${totalChecklist}` : 'N/A'}
+Notes: ${tradeToAnalyze.notes || 'None provided'}
+
+Please give me a specific, casual breakdown of my execution, psychology, and what I could have done better on this specific trade.`;
+        
+        handleSend(autoMsg);
+        
+        // Remove state so it doesn't trigger again on refresh
+        window.history.replaceState({}, document.title);
+      }
+    }
+  }, [location.state, trades, hasAutoTriggered]);
 
   const toggleVoice = () => {
     setIsListening(!isListening);

@@ -26,6 +26,7 @@ import { cn } from "../lib/utils";
 import { TradeQualityMeter } from "../components/TradeQualityMeter";
 import { useTrades, Trade } from "../hooks/useTrades";
 import { GoogleGenAI, Type } from "@google/genai";
+import { useNavigate } from "react-router-dom";
 
 export function Journal() {
   const { trades: allTrades, loading, updateTrades } = useTrades();
@@ -34,6 +35,7 @@ export function Journal() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const navigate = useNavigate();
 
   const entries = useMemo(() => {
     let filtered = allTrades;
@@ -336,14 +338,26 @@ export function Journal() {
                     </div>
                   </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-[10px] text-on-surface-variant font-label uppercase tracking-widest mb-1">Total P&L</p>
-                  <h3 className={cn(
-                    "font-headline text-3xl tracking-tighter",
-                    normalizedEntry.pnl >= 0 ? "text-primary" : "text-rose-400"
-                  )}>
-                    {normalizedEntry.pnl >= 0 ? "+" : ""}{normalizedEntry.pnl.toFixed(2)}
-                  </h3>
+                <div className="flex items-center gap-6 text-right">
+                  <div>
+                    <p className="text-[10px] text-on-surface-variant font-label uppercase tracking-widest mb-1">Total P&L</p>
+                    <h3 className={cn(
+                      "font-headline text-3xl tracking-tighter",
+                      normalizedEntry.pnl >= 0 ? "text-primary" : "text-rose-400"
+                    )}>
+                      {normalizedEntry.pnl >= 0 ? "+" : ""}{normalizedEntry.pnl.toFixed(2)}
+                    </h3>
+                  </div>
+                  
+                  {/* Large Analyze Trade Button */}
+                  <button 
+                    onClick={() => navigate('/ai-engine', { state: { analyzeTradeId: normalizedEntry.id } })}
+                    className="relative group flex flex-col items-center justify-center p-4 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 hover:from-primary/30 hover:to-primary/10 border border-primary/30 transition-all cursor-pointer shadow-[0_0_20px_rgba(59,130,246,0.15)] overflow-hidden"
+                  >
+                    <div className="absolute inset-0 bg-primary/10 opacity-0 group-hover:opacity-100 transition-opacity blur-xl rounded-full" />
+                    <BrainCircuit className="w-6 h-6 text-primary mb-1 relative z-10" />
+                    <span className="text-xs font-bold text-white uppercase tracking-widest relative z-10">Analyze Trade</span>
+                  </button>
                 </div>
               </div>
 
@@ -535,18 +549,6 @@ export function Journal() {
                       {normalizedEntry.sentiment}
                     </div>
                   )}
-                  <button 
-                    onClick={analyzeSentiment}
-                    disabled={isAnalyzing || !normalizedEntry.notes}
-                    className="flex items-center gap-1.5 px-3 py-1 bg-primary/10 hover:bg-primary/20 text-primary rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {isAnalyzing ? (
-                      <Loader2 className="w-3 h-3 animate-spin" />
-                    ) : (
-                      <BrainCircuit className="w-3 h-3" />
-                    )}
-                    {isAnalyzing ? "Analyzing..." : "Analyze Sentiment"}
-                  </button>
                 </div>
               </div>
               <textarea 
