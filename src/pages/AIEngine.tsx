@@ -373,6 +373,8 @@ ${tradeSummary.slice(0, 5).map(t => `${t.symbol} ${t.action} $${t.pnl?.toFixed(0
 
   useEffect(() => {
     const analyzeTradeId = location.state?.analyzeTradeId;
+    const analyzeStrategy = location.state?.analyzeStrategy;
+
     if (analyzeTradeId && trades && trades.length > 0 && !hasAutoTriggered) {
       const tradeToAnalyze = trades.find(t => t.id === analyzeTradeId);
       if (tradeToAnalyze) {
@@ -396,6 +398,21 @@ Please give me a specific, casual breakdown of my execution, psychology, and wha
         // Remove state so it doesn't trigger again on refresh
         window.history.replaceState({}, document.title);
       }
+    } else if (analyzeStrategy && !hasAutoTriggered) {
+      setHasAutoTriggered(true);
+      const { strategyName, winRate, totalPnL, totalTrades } = analyzeStrategy;
+      
+      const autoMsg = `Please provide a Full Performance Deep-Dive for my "${strategyName}" strategy. 
+
+Context:
+- Win Rate: ${winRate}%
+- Net P&L: $${totalPnL}
+- Total Trades: ${totalTrades}
+
+Deliver a complete, integrated report summarizing all essential performance aspects. Highlight any structural strengths, psychological insights, and specific areas where this strategy could be refined for a better edge.`;
+      
+      handleSend(autoMsg);
+      window.history.replaceState({}, document.title);
     }
   }, [location.state, trades, hasAutoTriggered]);
 

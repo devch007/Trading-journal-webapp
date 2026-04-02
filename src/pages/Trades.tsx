@@ -18,6 +18,7 @@ export function Trades() {
   const [filterSymbol, setFilterSymbol] = useState("ALL");
   const [filterAction, setFilterAction] = useState("ALL");
   const [filterTradeType, setFilterTradeType] = useState("ALL");
+  const [filterStrategy, setFilterStrategy] = useState("ALL");
   const [filterRange, setFilterRange] = useState("30D");
 
   const uniqueSymbols = useMemo(() => {
@@ -38,6 +39,15 @@ export function Trades() {
     return Array.from(tags).sort();
   }, [allTrades]);
 
+  const uniqueStrategies = useMemo(() => {
+    const strategies = new Set<string>();
+    allTrades.forEach(t => {
+      if (t.strategy) strategies.add(t.strategy);
+    });
+    return Array.from(strategies).sort();
+  }, [allTrades]);
+
+
   const trades = useMemo(() => {
     let filtered = allTrades;
     if (selectedAccountId) {
@@ -57,8 +67,11 @@ export function Trades() {
         return (t.tag || "BREAKOUT") === filterTradeType;
       });
     }
+    if (filterStrategy !== "ALL") {
+      filtered = filtered.filter(t => t.strategy === filterStrategy);
+    }
     return filtered;
-  }, [allTrades, selectedAccountId, filterSymbol, filterAction, filterTradeType]);
+  }, [allTrades, selectedAccountId, filterSymbol, filterAction, filterTradeType, filterStrategy]);
 
   const stats = useMemo(() => {
     const total = trades.length;
@@ -315,6 +328,22 @@ export function Trades() {
                   ))}
                 </select>
                 <span className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-500 uppercase text-[10px] tracking-wider">Trade Type</span>
+                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-400 pointer-events-none" />
+              </div>
+
+              {/* Strategy Filter */}
+              <div className="relative group">
+                <select
+                  value={filterStrategy}
+                  onChange={(e) => setFilterStrategy(e.target.value)}
+                  className="appearance-none bg-white/5 group-hover:bg-white/10 border border-white/10 rounded-full pl-[5rem] pr-8 py-2 text-xs font-medium text-gray-300 cursor-pointer transition-colors focus:outline-none focus:border-primary/50"
+                >
+                  <option value="ALL" className="bg-[#1a1a24]">All Strategies</option>
+                  {uniqueStrategies.map(strategy => (
+                    <option key={strategy} value={strategy} className="bg-[#1a1a24]">{strategy}</option>
+                  ))}
+                </select>
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-500 uppercase text-[10px] tracking-wider">Strategy</span>
                 <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-400 pointer-events-none" />
               </div>
 

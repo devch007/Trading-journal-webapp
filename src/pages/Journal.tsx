@@ -27,6 +27,7 @@ import { TradeQualityMeter } from "../components/TradeQualityMeter";
 import { useTrades, Trade } from "../hooks/useTrades";
 import { GoogleGenAI, Type } from "@google/genai";
 import { useNavigate } from "react-router-dom";
+import { useAccountContext } from "../contexts/AccountContext";
 
 export function Journal() {
   const { trades: allTrades, loading, updateTrades } = useTrades();
@@ -36,9 +37,14 @@ export function Journal() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
+  const { selectedAccountId } = useAccountContext();
 
   const entries = useMemo(() => {
     let filtered = allTrades;
+    
+    if (selectedAccountId) {
+      filtered = filtered.filter(t => t.accountId === selectedAccountId);
+    }
     
     if (activeTab === "Journaled") {
       filtered = filtered.filter(t => t.notes || t.rating || (t.emotions && t.emotions.length > 0));
@@ -57,7 +63,7 @@ export function Journal() {
     }
 
     return filtered;
-  }, [allTrades, activeTab, searchQuery]);
+  }, [allTrades, activeTab, searchQuery, selectedAccountId]);
 
   useEffect(() => {
     if (entries.length > 0 && !selectedId) {

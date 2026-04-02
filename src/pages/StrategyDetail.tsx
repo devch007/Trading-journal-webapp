@@ -45,42 +45,47 @@ export function StrategyDetail() {
       return sMatch || tMatch;
     });
 
-    // Improved date parsing for "Today, ..." and "Yesterday, ..."
-    const parseTradeDate = (dateStr: string) => {
-      let d = dateStr;
-      if (d.startsWith('Today, ')) {
-        const time = d.split(', ')[1];
+    const getTradeDate = (t: Trade) => {
+      if (t.createdAt) {
+        const d = new Date(t.createdAt);
+        if (!isNaN(d.getTime())) return d;
+      }
+      let dStr = t.date;
+      if (!dStr) return new Date();
+      if (dStr.startsWith('Today, ')) {
+        const time = dStr.split(', ')[1];
         return new Date(`${new Date().toDateString()} ${time}`);
       }
-      if (d.startsWith('Yesterday, ')) {
-        const time = d.split(', ')[1];
+      if (dStr.startsWith('Yesterday, ')) {
+        const time = dStr.split(', ')[1];
         const yesterday = new Date();
         yesterday.setDate(yesterday.getDate() - 1);
         return new Date(`${yesterday.toDateString()} ${time}`);
       }
-      return new Date(d);
+      const parsed = new Date(dStr);
+      if (!isNaN(parsed.getTime())) {
+        if (parsed.getFullYear() < 2020) parsed.setFullYear(new Date().getFullYear());
+        return parsed;
+      }
+      return new Date();
     };
 
     // Time-based filtering
     const now = new Date();
     const rangeFiltered = filtered.filter(t => {
       if (timeRange === 'ALL') return true;
-      const tradeDate = parseTradeDate(t.date);
-      if (isNaN(tradeDate.getTime())) return true; 
+      const tradeDate = getTradeDate(t);
       
       const diffDays = (now.getTime() - tradeDate.getTime()) / (1000 * 3600 * 24);
-      if (timeRange === '1W') return diffDays <= 7;
-      if (timeRange === '1M') return diffDays <= 30;
+      if (timeRange === '1W') return diffDays <= 7 && diffDays >= -2;
+      if (timeRange === '1M') return diffDays <= 30 && diffDays >= -2;
       return true;
     });
 
-    // Safe sorting using the new parser
+    // Safe sorting
     return rangeFiltered.sort((a, b) => {
-      const dateA = parseTradeDate(a.date).getTime();
-      const dateB = parseTradeDate(b.date).getTime();
-      
-      if (isNaN(dateA)) return 1;
-      if (isNaN(dateB)) return -1;
+      const dateA = getTradeDate(a).getTime();
+      const dateB = getTradeDate(b).getTime();
       return dateA - dateB;
     });
   }, [trades, strategy, timeRange]);
@@ -533,7 +538,16 @@ export function StrategyDetail() {
                    </p>
                  </div>
                  <button 
-                  onClick={() => navigate('/ai-engine')}
+                  onClick={() => navigate('/ai-engine', {
+                    state: {
+                      analyzeStrategy: {
+                        strategyName: strategy.name,
+                        winRate: stats.winRate.toFixed(1),
+                        totalPnL: stats.netPnl.toFixed(2),
+                        totalTrades: stats.total
+                      }
+                    }
+                  })}
                   className="w-full py-3.5 mt-auto rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm transition-all shadow-lg shadow-indigo-600/20 flex items-center justify-center gap-2 active:scale-[0.98] border border-indigo-400/20"
                  >
                    <TrendingUp className="w-4 h-4" />
