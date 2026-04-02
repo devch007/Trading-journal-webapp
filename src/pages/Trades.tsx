@@ -97,7 +97,7 @@ export function Trades() {
       // Update existing trade — only send safe, updatable fields
       const { id } = tradeData;
       const cleanUpdates: Record<string, any> = {};
-      const allowedFields = ['accountId','symbol','action','size','entry','exit','pnl','result','isPositive','session','confidence','duration','tags','tag'];
+      const allowedFields = ['accountId','symbol','action','size','entry','exit','pnl','result','isPositive','session','confidence','duration','tags','tag','strategy'];
       for (const key of allowedFields) {
         if (tradeData[key] !== undefined) {
           cleanUpdates[key] = tradeData[key];
