@@ -158,6 +158,31 @@ export function Dashboard() {
       setEquityData([{ name: 'No Data', value: selectedAccount ? (selectedAccount.initialCapital || 10000) : 10000 }]);
       return;
     }
+
+    const getTradeDate = (t: any) => {
+      if (t.createdAt) {
+        const d = new Date(t.createdAt);
+        if (!isNaN(d.getTime())) return d;
+      }
+      let dStr = t.date;
+      if (!dStr) return new Date();
+      if (dStr.startsWith('Today, ')) {
+        const time = dStr.split(', ')[1] || '00:00:00';
+        return new Date(`${new Date().toDateString()} ${time}`);
+      }
+      if (dStr.startsWith('Yesterday, ')) {
+        const time = dStr.split(', ')[1] || '00:00:00';
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        return new Date(`${yesterday.toDateString()} ${time}`);
+      }
+      const parsed = new Date(dStr);
+      if (!isNaN(parsed.getTime())) {
+        if (parsed.getFullYear() < 2020) parsed.setFullYear(new Date().getFullYear());
+        return parsed;
+      }
+      return new Date();
+    };
     
     // Filter trades by period
     const now = new Date();
@@ -175,7 +200,7 @@ export function Dashboard() {
     }
 
     const periodFilteredTrades = (trades || []).filter(t => {
-      const tradeDate = new Date(t.createdAt || Date.now());
+      const tradeDate = getTradeDate(t);
       return tradeDate >= cutoff;
     });
 
@@ -189,17 +214,23 @@ export function Dashboard() {
     
     // To calculate the equity at the start of the period, we need to sum PnL of trades BEFORE the cutoff
     const tradesBeforeCutoff = trades.filter(t => {
-      const tradeDate = new Date(t.createdAt || Date.now());
+      const tradeDate = getTradeDate(t);
       return tradeDate < cutoff;
     });
     
     const startingEquity = initialBalance + tradesBeforeCutoff.reduce((sum, t) => sum + (t.pnl || 0), 0);
     let runningEquity = startingEquity;
 
-    const newEquityData = [...periodFilteredTrades].reverse().map((trade, index) => {
+    // Sort chronologically for the curve (oldest first going left-to-right)
+    const sortedFilteredTrades = [...periodFilteredTrades].sort((a, b) => getTradeDate(a).getTime() - getTradeDate(b).getTime());
+
+    const newEquityData = sortedFilteredTrades.map((trade, index) => {
       runningEquity += (trade.pnl || 0);
+      const d = getTradeDate(trade);
       return {
-        name: trade.date?.split(', ')[1] || `T${index + 1}`,
+        name: period === '1D' 
+          ? d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) 
+          : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
         value: runningEquity
       };
     });
