@@ -37,12 +37,13 @@ export function StrategyDetail() {
   const strategyTrades = useMemo(() => {
     if (!strategy) return [];
     
-    // Robust filtering: case-insensitive and fallback to tag
+    // Robust filtering: check strategy field, singular tag, AND tags array (case-insensitive)
     const filtered = trades.filter(t => {
       const sName = strategy.name.toLowerCase().trim();
       const sMatch = t.strategy?.toLowerCase().trim() === sName;
       const tMatch = t.tag?.toLowerCase().trim() === sName;
-      return sMatch || tMatch;
+      const tagsMatch = Array.isArray(t.tags) && t.tags.some(tag => tag.toLowerCase().trim() === sName);
+      return sMatch || tMatch || tagsMatch;
     });
 
     const getTradeDate = (t: Trade) => {

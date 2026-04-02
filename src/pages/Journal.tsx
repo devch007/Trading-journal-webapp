@@ -35,6 +35,9 @@ export function Journal() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  // Optimistic local patch — stores instant UI changes before DB confirms
+  const [localPatch, setLocalPatch] = useState<Record<string, any>>({});
+  const dbSyncRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   const { selectedAccountId } = useAccountContext();
@@ -75,10 +78,20 @@ export function Journal() {
 
   const selectedEntry = entries.find(e => e.id === selectedId) || entries[0];
 
+  // Clear patch when switching trades
+  useEffect(() => {
+    setLocalPatch({});
+  }, [selectedId]);
+
   const updateEntry = (updates: Partial<Trade>) => {
-    if (selectedId) {
+    if (!selectedId) return;
+    // 1. Optimistically apply to local patch immediately
+    setLocalPatch(prev => ({ ...prev, ...updates }));
+    // 2. Debounce the actual DB write so rapid clicks batch together
+    if (dbSyncRef.current) clearTimeout(dbSyncRef.current);
+    dbSyncRef.current = setTimeout(() => {
       updateTrades([selectedId], updates);
-    }
+    }, 600);
   };
 
   const defaultChecklist = [
@@ -91,26 +104,27 @@ export function Journal() {
 
   const normalizedEntry = useMemo(() => {
     if (!selectedEntry) return null;
+    const merged = { ...selectedEntry, ...localPatch };
     return {
-      ...selectedEntry,
-      strategy: selectedEntry.strategy || "SCALP",
-      notes: selectedEntry.notes || "",
-      emotions: selectedEntry.emotions || [],
-      tags: selectedEntry.tags || (selectedEntry.tag ? [selectedEntry.tag] : []),
-      proof: selectedEntry.proof || null,
-      rating: selectedEntry.rating || 0,
-      checklist: selectedEntry.checklist || defaultChecklist,
-      tradeType: selectedEntry.tradeType || (selectedEntry.tag || "Scalp"),
-      sentiment: selectedEntry.sentiment || null,
-      entryPrice: selectedEntry.entry || "0.0000",
-      exitPrice: selectedEntry.exit || "0.0000",
-      duration: selectedEntry.duration || "0h 0m",
-      date: selectedEntry.date && !selectedEntry.date.startsWith('Today') 
-        ? selectedEntry.date 
-        : (selectedEntry.createdAt ? new Date(selectedEntry.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase() : "UNKNOWN DATE"),
-      type: selectedEntry.action === "BUY" ? "LONG" : "SHORT"
+      ...merged,
+      strategy: merged.strategy || "SCALP",
+      notes: merged.notes || "",
+      emotions: merged.emotions || [],
+      tags: merged.tags || (merged.tag ? [merged.tag] : []),
+      proof: merged.proof || null,
+      rating: merged.rating || 0,
+      checklist: merged.checklist || defaultChecklist,
+      tradeType: merged.tradeType || (merged.tag || "Scalp"),
+      sentiment: merged.sentiment || null,
+      entryPrice: merged.entry || "0.0000",
+      exitPrice: merged.exit || "0.0000",
+      duration: merged.duration || "0h 0m",
+      date: merged.date && !merged.date.startsWith('Today') 
+        ? merged.date 
+        : (merged.createdAt ? new Date(merged.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase() : "UNKNOWN DATE"),
+      type: merged.action === "BUY" ? "LONG" : "SHORT"
     };
-  }, [selectedEntry]);
+  }, [selectedEntry, localPatch]);
 
   const formatDate = (trade: Trade) => {
     if (trade.date && !trade.date.startsWith('Today')) return trade.date;
