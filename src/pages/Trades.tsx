@@ -5,6 +5,7 @@ import { useAccountContext } from "../contexts/AccountContext";
 import { TradeModal } from "../components/TradeModal";
 import { Plus, ChevronDown, Calendar, Trash2, Tag, X, CheckSquare, Square } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
+import { getTradeDate, parseDurationToMinutes, formatMinutesToDuration } from "../lib/timeUtils";
 
 export function Trades() {
   const { trades: allTrades, loading, addTrade, deleteTrades, updateTrades } = useTrades();
@@ -70,8 +71,22 @@ export function Trades() {
     if (filterStrategy !== "ALL") {
       filtered = filtered.filter(t => t.strategy === filterStrategy);
     }
-    return filtered;
-  }, [allTrades, selectedAccountId, filterSymbol, filterAction, filterTradeType, filterStrategy]);
+    
+    // Apply Date Range Filter
+    if (filterRange !== "ALL") {
+      const now = new Date();
+      const rangeDays = filterRange === "7D" ? 7 : filterRange === "30D" ? 30 : 90;
+      const cutoffDate = new Date(now.getTime() - rangeDays * 24 * 60 * 60 * 1000);
+      
+      filtered = filtered.filter(t => {
+        const tradeDate = getTradeDate(t.date);
+        return tradeDate >= cutoffDate;
+      });
+    }
+
+    // Sort by actual trade date (newest first)
+    return [...filtered].sort((a, b) => getTradeDate(b.date).getTime() - getTradeDate(a.date).getTime());
+  }, [allTrades, selectedAccountId, filterSymbol, filterAction, filterTradeType, filterStrategy, filterRange]);
 
   const stats = useMemo(() => {
     const total = trades.length;
@@ -80,14 +95,19 @@ export function Trades() {
     const winRate = total > 0 ? (wins / total) * 100 : 0;
     const totalPnl = trades.reduce((sum, t) => sum + t.pnl, 0);
     
-    // Calculate average duration from trades that have it
-    const tradesWithDuration = trades.filter(t => t.duration);
-    const avgDuration = tradesWithDuration.length > 0 ? tradesWithDuration[0].duration : '—';
+    // Calculate REAL average duration
+    const tradesWithDuration = trades.filter(t => t.duration && t.duration !== "—");
+    let avgDuration = "—";
+    
+    if (tradesWithDuration.length > 0) {
+      const totalMinutes = tradesWithDuration.reduce((sum, t) => sum + parseDurationToMinutes(t.duration || ""), 0);
+      avgDuration = formatMinutesToDuration(totalMinutes / tradesWithDuration.length);
+    }
     
     return { total, wins, losses, winRate, totalPnl, avgDuration, totalTrades: total };
   }, [trades]);
 
-  const formatCurrency = (val: number) => {
+  const formatCurrency = (val: number) => { 
     const absVal = Math.abs(val).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     return val >= 0 ? `+$${absVal}` : `-$${absVal}`;
   };
@@ -425,7 +445,12 @@ export function Trades() {
                           </button>
                         </td>
                         <td className="py-4 text-gray-500 text-xs">{trades.length - index}</td>
-                        <td className="py-4 text-gray-300 text-xs font-mono">{trade.date.replace('Today, ', '')}</td>
+                        <td className="py-4 text-gray-300 text-xs font-mono">
+                          {getTradeDate(trade.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' })}
+                          <span className="opacity-40 ml-1">
+                            {getTradeDate(trade.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        </td>
                         <td className="py-4 font-bold text-white text-xs">{trade.symbol}</td>
                         <td className="py-4">
                           <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${trade.action === 'BUY' ? 'bg-primary/20 text-primary' : 'bg-rose-500/20 text-rose-400'}`}>

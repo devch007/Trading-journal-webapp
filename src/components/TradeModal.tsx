@@ -52,7 +52,7 @@ export function TradeModal({ isOpen, onClose, onSubmit, trade }: TradeModalProps
   const formatDateFromPicker = (d: Date | null) => {
     if (!d) return "";
     if (isNaN(d.getTime())) return "";
-    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + 
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + 
       ', ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
   };
 
@@ -146,7 +146,7 @@ export function TradeModal({ isOpen, onClose, onSubmit, trade }: TradeModalProps
     } else {
       // NEW trade
       const now = new Date();
-      const dateStr = selectedDate ? formatDateFromPicker(selectedDate) : (now.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + 
+      const dateStr = selectedDate ? formatDateFromPicker(selectedDate) : (now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + 
         ', ' + now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
 
       const newTrade = {
