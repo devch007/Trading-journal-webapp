@@ -539,13 +539,24 @@ Deliver a complete, integrated report summarizing all essential performance aspe
           <div className="p-4 border-b border-white/5 flex items-center justify-between bg-white/5">
             <div className="flex items-center gap-3">
               <div className="relative">
-                <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center shadow-[0_0_15px_rgba(59,130,246,0.4)]">
-                  <Brain className="w-6 h-6 text-white" />
+                <div className="w-11 h-11 rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(59,130,246,0.5)] overflow-hidden" style={{ background: 'linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 50%, #0ea5e9 100%)' }}>
+                  {/* Finance candlestick avatar */}
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="4" y="8" width="3" height="8" rx="0.5" fill="#34d399"/>
+                    <line x1="5.5" y1="5" x2="5.5" y2="8" stroke="#34d399" strokeWidth="1.5" strokeLinecap="round"/>
+                    <line x1="5.5" y1="16" x2="5.5" y2="19" stroke="#34d399" strokeWidth="1.5" strokeLinecap="round"/>
+                    <rect x="10.5" y="5" width="3" height="10" rx="0.5" fill="#f87171"/>
+                    <line x1="12" y1="3" x2="12" y2="5" stroke="#f87171" strokeWidth="1.5" strokeLinecap="round"/>
+                    <line x1="12" y1="15" x2="12" y2="17" stroke="#f87171" strokeWidth="1.5" strokeLinecap="round"/>
+                    <rect x="17" y="7" width="3" height="7" rx="0.5" fill="#34d399"/>
+                    <line x1="18.5" y1="4" x2="18.5" y2="7" stroke="#34d399" strokeWidth="1.5" strokeLinecap="round"/>
+                    <line x1="18.5" y1="14" x2="18.5" y2="17" stroke="#34d399" strokeWidth="1.5" strokeLinecap="round"/>
+                  </svg>
                 </div>
                 <div className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-[#0d0d16] rounded-full" />
               </div>
               <div>
-                <h4 className="font-bold text-white text-sm">Trading Assistant</h4>
+                <h4 className="font-bold text-white text-sm">Trade Pilot AI</h4>
                 <p className="text-[10px] text-emerald-400 uppercase tracking-widest font-bold">Online • Analyzing Data</p>
               </div>
             </div>
@@ -572,11 +583,23 @@ Deliver a complete, integrated report summarizing all essential performance aspe
                     msg.role === 'user' ? "flex-row-reverse" : "flex-row"
                   )}>
                     <div className={cn(
-                      "w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-1 shadow-lg",
-                      msg.role === 'user' ? "bg-white/10" : "bg-primary"
-                    )}>
-                      {msg.role === 'user' ? <User className="w-4 h-4 text-white" /> : <Brain className="w-4 h-4 text-white" />}
-                    </div>
+                    "w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-1 shadow-lg overflow-hidden",
+                    msg.role === 'user' ? "bg-white/10" : ""
+                  )} style={msg.role === 'ai' ? { background: 'linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 50%, #0ea5e9 100%)' } : {}}>
+                    {msg.role === 'user' ? <User className="w-4 h-4 text-white" /> : (
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="4" y="8" width="3" height="8" rx="0.5" fill="#34d399"/>
+                        <line x1="5.5" y1="5" x2="5.5" y2="8" stroke="#34d399" strokeWidth="1.5" strokeLinecap="round"/>
+                        <line x1="5.5" y1="16" x2="5.5" y2="19" stroke="#34d399" strokeWidth="1.5" strokeLinecap="round"/>
+                        <rect x="10.5" y="5" width="3" height="10" rx="0.5" fill="#f87171"/>
+                        <line x1="12" y1="3" x2="12" y2="5" stroke="#f87171" strokeWidth="1.5" strokeLinecap="round"/>
+                        <line x1="12" y1="15" x2="12" y2="17" stroke="#f87171" strokeWidth="1.5" strokeLinecap="round"/>
+                        <rect x="17" y="7" width="3" height="7" rx="0.5" fill="#34d399"/>
+                        <line x1="18.5" y1="4" x2="18.5" y2="7" stroke="#34d399" strokeWidth="1.5" strokeLinecap="round"/>
+                        <line x1="18.5" y1="14" x2="18.5" y2="17" stroke="#34d399" strokeWidth="1.5" strokeLinecap="round"/>
+                      </svg>
+                    )}
+                  </div>
                     <div className={cn(
                       "p-4 rounded-2xl text-sm leading-relaxed shadow-xl",
                       msg.role === 'user' 
@@ -603,8 +626,18 @@ Deliver a complete, integrated report summarizing all essential performance aspe
                   className="flex justify-start"
                 >
                   <div className="flex gap-3">
-                    <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0 mt-1">
-                      <Brain className="w-4 h-4 text-white" />
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-1 overflow-hidden" style={{ background: 'linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 50%, #0ea5e9 100%)' }}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="4" y="8" width="3" height="8" rx="0.5" fill="#34d399"/>
+                        <line x1="5.5" y1="5" x2="5.5" y2="8" stroke="#34d399" strokeWidth="1.5" strokeLinecap="round"/>
+                        <line x1="5.5" y1="16" x2="5.5" y2="19" stroke="#34d399" strokeWidth="1.5" strokeLinecap="round"/>
+                        <rect x="10.5" y="5" width="3" height="10" rx="0.5" fill="#f87171"/>
+                        <line x1="12" y1="3" x2="12" y2="5" stroke="#f87171" strokeWidth="1.5" strokeLinecap="round"/>
+                        <line x1="12" y1="15" x2="12" y2="17" stroke="#f87171" strokeWidth="1.5" strokeLinecap="round"/>
+                        <rect x="17" y="7" width="3" height="7" rx="0.5" fill="#34d399"/>
+                        <line x1="18.5" y1="4" x2="18.5" y2="7" stroke="#34d399" strokeWidth="1.5" strokeLinecap="round"/>
+                        <line x1="18.5" y1="14" x2="18.5" y2="17" stroke="#34d399" strokeWidth="1.5" strokeLinecap="round"/>
+                      </svg>
                     </div>
                     <div className="bg-white/5 border border-white/10 p-4 rounded-2xl rounded-tl-none flex gap-1 items-center">
                       <motion.div animate={{ opacity: [0.3, 1, 0.3] }} transition={{ repeat: Infinity, duration: 1 }} className="w-1.5 h-1.5 rounded-full bg-white" />
