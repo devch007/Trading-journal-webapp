@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { X } from "lucide-react";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 import { useAccountContext } from "../contexts/AccountContext";
 import { useStrategies } from "../contexts/StrategyContext";
 
@@ -13,7 +15,7 @@ interface TradeModalProps {
 export function TradeModal({ isOpen, onClose, onSubmit, trade }: TradeModalProps) {
   const { accounts, selectedAccountId } = useAccountContext();
   const [accountId, setAccountId] = useState(selectedAccountId || "");
-  const [date, setDate] = useState("");
+  const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
   const [symbol, setSymbol] = useState("EURUSD");
   const [action, setAction] = useState("BUY");
   const [size, setSize] = useState("1.00");
@@ -28,8 +30,8 @@ export function TradeModal({ isOpen, onClose, onSubmit, trade }: TradeModalProps
   const [strategy, setStrategy] = useState("");
   const { strategies } = useStrategies();
 
-  const parseDateForInput = (dStr: string) => {
-    if (!dStr) return "";
+  const parseDateForPicker = (dStr: string) => {
+    if (!dStr) return null;
     let d = new Date();
     if (dStr.startsWith('Today, ')) {
       const timeParts = dStr.split(', ')[1]?.split(':') || ['00', '00'];
@@ -44,13 +46,11 @@ export function TradeModal({ isOpen, onClose, onSubmit, trade }: TradeModalProps
         d = parsed;
       }
     }
-    const zeroPad = (num: number) => num.toString().padStart(2, '0');
-    return `${d.getFullYear()}-${zeroPad(d.getMonth() + 1)}-${zeroPad(d.getDate())}T${zeroPad(d.getHours())}:${zeroPad(d.getMinutes())}`;
+    return d;
   };
 
-  const formatDateFromInput = (inputVal: string) => {
-    if (!inputVal) return "";
-    const d = new Date(inputVal);
+  const formatDateFromPicker = (d: Date | null) => {
+    if (!d) return "";
     if (isNaN(d.getTime())) return "";
     return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + 
       ', ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
@@ -61,7 +61,7 @@ export function TradeModal({ isOpen, onClose, onSubmit, trade }: TradeModalProps
       if (trade) {
         // Edit mode — load trade data
         setAccountId(trade.accountId || "");
-        setDate(trade.date ? parseDateForInput(trade.date) : "");
+        setSelectedDate(trade.date ? parseDateForPicker(trade.date) : new Date());
         setSymbol(trade.symbol || "EURUSD");
         setAction(trade.action || "BUY");
         setSize(trade.size?.replace(" Lot", "") || "1.00");
@@ -80,7 +80,7 @@ export function TradeModal({ isOpen, onClose, onSubmit, trade }: TradeModalProps
         } else if (accounts.length > 0 && !accountId) {
           setAccountId(accounts[0].id);
         }
-        setDate(parseDateForInput(new Date().toString()));
+        setSelectedDate(new Date());
         setSymbol("EURUSD");
         setAction("BUY");
         setSize("1.00");
@@ -122,7 +122,7 @@ export function TradeModal({ isOpen, onClose, onSubmit, trade }: TradeModalProps
 
     if (trade) {
       // EDIT: only send the fields we want to update - not the entire trade object
-      const formattedDate = date ? formatDateFromInput(date) : trade.date;
+      const formattedDate = selectedDate ? formatDateFromPicker(selectedDate) : trade.date;
       const updates: Record<string, any> = {
         id: trade.id, // needed to identify which trade
         accountId: accountId || trade.accountId,
@@ -146,7 +146,7 @@ export function TradeModal({ isOpen, onClose, onSubmit, trade }: TradeModalProps
     } else {
       // NEW trade
       const now = new Date();
-      const dateStr = date ? formatDateFromInput(date) : (now.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + 
+      const dateStr = selectedDate ? formatDateFromPicker(selectedDate) : (now.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + 
         ', ' + now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
 
       const newTrade = {
@@ -207,14 +207,25 @@ export function TradeModal({ isOpen, onClose, onSubmit, trade }: TradeModalProps
           )}
 
           {/* Date */}
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-2 relative z-50">
             <label className="text-xs font-label text-on-surface-variant uppercase tracking-wider">Date & Time</label>
-            <input 
-              type="datetime-local" 
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-data focus:outline-none focus:border-primary/50 transition-colors [&::-webkit-calendar-picker-indicator]:filter-[invert(1)]"
-            />
+            <div className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus-within:border-primary/50 transition-colors w-full">
+              <DatePicker
+                selected={selectedDate}
+                onChange={(d) => setSelectedDate(d)}
+                showTimeSelect
+                timeFormat="h:mm aa"
+                timeIntervals={15}
+                timeCaption="Time"
+                dateFormat="MMMM d, yyyy h:mm aa"
+                className="bg-transparent border-none text-white font-data focus:outline-none w-full"
+                calendarClassName="bg-[#191923] border-white/10 shadow-2xl"
+                dayClassName={() => "text-white hover:bg-primary/50"}
+                timeClassName={() => "text-white bg-[#191923]"}
+                popperClassName="z-[100]"
+                wrapperClassName="w-full"
+              />
+            </div>
           </div>
 
           {/* Symbol & Action */}
