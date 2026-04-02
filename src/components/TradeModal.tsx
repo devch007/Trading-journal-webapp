@@ -28,12 +28,40 @@ export function TradeModal({ isOpen, onClose, onSubmit, trade }: TradeModalProps
   const [strategy, setStrategy] = useState("");
   const { strategies } = useStrategies();
 
+  const parseDateForInput = (dStr: string) => {
+    if (!dStr) return "";
+    let d = new Date();
+    if (dStr.startsWith('Today, ')) {
+      const timeParts = dStr.split(', ')[1]?.split(':') || ['00', '00'];
+      d.setHours(parseInt(timeParts[0]), parseInt(timeParts[1]), parseInt(timeParts[2] || "0"));
+    } else if (dStr.startsWith('Yesterday, ')) {
+      d.setDate(d.getDate() - 1);
+      const timeParts = dStr.split(', ')[1]?.split(':') || ['00', '00'];
+      d.setHours(parseInt(timeParts[0]), parseInt(timeParts[1]), parseInt(timeParts[2] || "0"));
+    } else {
+      const parsed = new Date(dStr);
+      if (!isNaN(parsed.getTime())) {
+        d = parsed;
+      }
+    }
+    const zeroPad = (num: number) => num.toString().padStart(2, '0');
+    return `${d.getFullYear()}-${zeroPad(d.getMonth() + 1)}-${zeroPad(d.getDate())}T${zeroPad(d.getHours())}:${zeroPad(d.getMinutes())}`;
+  };
+
+  const formatDateFromInput = (inputVal: string) => {
+    if (!inputVal) return "";
+    const d = new Date(inputVal);
+    if (isNaN(d.getTime())) return "";
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + 
+      ', ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  };
+
   useEffect(() => {
     if (isOpen) {
       if (trade) {
         // Edit mode — load trade data
         setAccountId(trade.accountId || "");
-        setDate(trade.date || "");
+        setDate(trade.date ? parseDateForInput(trade.date) : "");
         setSymbol(trade.symbol || "EURUSD");
         setAction(trade.action || "BUY");
         setSize(trade.size?.replace(" Lot", "") || "1.00");
@@ -52,7 +80,7 @@ export function TradeModal({ isOpen, onClose, onSubmit, trade }: TradeModalProps
         } else if (accounts.length > 0 && !accountId) {
           setAccountId(accounts[0].id);
         }
-        setDate("");
+        setDate(parseDateForInput(new Date().toString()));
         setSymbol("EURUSD");
         setAction("BUY");
         setSize("1.00");
@@ -94,10 +122,11 @@ export function TradeModal({ isOpen, onClose, onSubmit, trade }: TradeModalProps
 
     if (trade) {
       // EDIT: only send the fields we want to update - not the entire trade object
+      const formattedDate = date ? formatDateFromInput(date) : trade.date;
       const updates: Record<string, any> = {
         id: trade.id, // needed to identify which trade
         accountId: accountId || trade.accountId,
-        date: date || trade.date,
+        date: formattedDate,
         symbol,
         action,
         size: sizeFormatted,
@@ -117,7 +146,7 @@ export function TradeModal({ isOpen, onClose, onSubmit, trade }: TradeModalProps
     } else {
       // NEW trade
       const now = new Date();
-      const dateStr = date || (now.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + 
+      const dateStr = date ? formatDateFromInput(date) : (now.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + 
         ', ' + now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
 
       const newTrade = {
@@ -181,11 +210,10 @@ export function TradeModal({ isOpen, onClose, onSubmit, trade }: TradeModalProps
           <div className="flex flex-col gap-2">
             <label className="text-xs font-label text-on-surface-variant uppercase tracking-wider">Date & Time</label>
             <input 
-              type="text" 
+              type="datetime-local" 
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-data focus:outline-none focus:border-primary/50 transition-colors"
-              placeholder="e.g. Apr 2, 10:20:00 or 2024.01.15 14:30"
+              className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-data focus:outline-none focus:border-primary/50 transition-colors [&::-webkit-calendar-picker-indicator]:filter-[invert(1)]"
             />
           </div>
 
