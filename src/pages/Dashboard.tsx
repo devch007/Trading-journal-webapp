@@ -103,13 +103,17 @@ export function Dashboard() {
     const grossLoss = Math.abs(losingTrades.reduce((sum, t) => sum + t.pnl, 0));
     const profitFactor = grossLoss === 0 ? grossProfit : grossProfit / grossLoss;
     
+    const accountBalance = selectedAccount?.initialCapital || selectedAccount?.currentEquity || 0;
+    const roiPercent = accountBalance > 0 ? (totalPnl / accountBalance) * 100 : null;
+
     return {
       totalPnl,
       winRate,
       profitFactor,
-      activeTrades: trades.length
+      activeTrades: trades.length,
+      roiPercent
     };
-  }, [trades]);
+  }, [trades, selectedAccount]);
 
   const quantInsights = useMemo(() => {
     if (!trades || trades.length === 0) return initialQuantInsights;
@@ -441,28 +445,28 @@ export function Dashboard() {
           <StatCard 
             title="Total P&L" 
             value={formatCurrency(stats.totalPnl)} 
-            trend="+14.5%" 
+            trend={stats.roiPercent !== null ? `${stats.roiPercent >= 0 ? '+' : ''}${stats.roiPercent.toFixed(2)}% ROI` : 'No balance set'} 
             isPositive={stats.totalPnl >= 0} 
             icon={<Activity className="text-primary w-5 h-5" />} 
           />
           <StatCard 
             title="Win Rate" 
             value={`${stats.winRate.toFixed(1)}%`} 
-            trend="+2.4%" 
+            trend={`${stats.winRate >= 50 ? '+' : ''}${(stats.winRate - 50).toFixed(1)}% vs 50%`}
             isPositive={stats.winRate >= 50} 
             icon={<Target className="text-secondary w-5 h-5" />} 
           />
           <StatCard 
             title="Profit Factor" 
             value={stats.profitFactor.toFixed(2)} 
-            trend="-0.1" 
+            trend={`${stats.profitFactor >= 1 ? '+' : ''}${(stats.profitFactor - 1).toFixed(2)} vs 1.0`}
             isPositive={stats.profitFactor >= 1} 
             icon={<TrendingUp className="text-tertiary w-5 h-5" />} 
           />
           <StatCard 
             title="Active Trades" 
             value={stats.activeTrades.toString()} 
-            trend="0" 
+            trend={`${stats.activeTrades} total`}
             isPositive={true} 
             icon={<TrendingDown className="text-error w-5 h-5" />} 
           />
