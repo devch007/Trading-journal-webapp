@@ -266,8 +266,8 @@ export function Dashboard() {
     for (const t of extractedTrades) {
       const pnl = parseFloat(t.profit) || 0;
       const now = new Date();
-      const dateStr = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + 
-        ', ' + now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      const dateStr = t.date_time || (now.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + 
+        ', ' + now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
       await addTrade({
         accountId: selectedAccountId || '',
         date: dateStr,
@@ -334,7 +334,7 @@ export function Dashboard() {
               content: [
                 {
                   type: "text",
-                  text: "Extract the trades from this MT5/trading screenshot. Return ONLY a valid JSON object with a 'trades' array. Each trade should have: symbol (string), type ('BUY' or 'SELL'), volume (number), entry_price (string), exit_price (string), profit (number), commission (number, default 0), and confidence ('High', 'Medium', or 'Low' based on how clearly you can read the row). Keep in mind that MT5 usually has two 'Price' columns: the first one is the entry_price, and the second one (further to the right) is the exit_price. Ensure you extract the exact prices as strings (e.g., '145.200'). Do not include any markdown formatting or explanations."
+                  text: "Extract the trades from this MT5/trading screenshot. Return ONLY a valid JSON object with a 'trades' array. Each trade should have: symbol (string), type ('BUY' or 'SELL'), volume (number), entry_price (string), exit_price (string), profit (number), commission (number, default 0), date_time (string, extract the exact timestamp of the trade if visible in the row e.g., '2024.01.15 14:30', otherwise null), and confidence ('High', 'Medium', or 'Low' based on how clearly you can read the row). Keep in mind that MT5 usually has two 'Price' columns: the first one is the entry_price, and the second one (further to the right) is the exit_price. Ensure you extract the exact prices as strings (e.g., '145.200'). Do not include any markdown formatting or explanations."
                 },
                 {
                   type: "image_url",

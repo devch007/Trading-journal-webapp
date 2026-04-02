@@ -13,6 +13,7 @@ interface TradeModalProps {
 export function TradeModal({ isOpen, onClose, onSubmit, trade }: TradeModalProps) {
   const { accounts, selectedAccountId } = useAccountContext();
   const [accountId, setAccountId] = useState(selectedAccountId || "");
+  const [date, setDate] = useState("");
   const [symbol, setSymbol] = useState("EURUSD");
   const [action, setAction] = useState("BUY");
   const [size, setSize] = useState("1.00");
@@ -32,6 +33,7 @@ export function TradeModal({ isOpen, onClose, onSubmit, trade }: TradeModalProps
       if (trade) {
         // Edit mode — load trade data
         setAccountId(trade.accountId || "");
+        setDate(trade.date || "");
         setSymbol(trade.symbol || "EURUSD");
         setAction(trade.action || "BUY");
         setSize(trade.size?.replace(" Lot", "") || "1.00");
@@ -50,6 +52,7 @@ export function TradeModal({ isOpen, onClose, onSubmit, trade }: TradeModalProps
         } else if (accounts.length > 0 && !accountId) {
           setAccountId(accounts[0].id);
         }
+        setDate("");
         setSymbol("EURUSD");
         setAction("BUY");
         setSize("1.00");
@@ -94,6 +97,7 @@ export function TradeModal({ isOpen, onClose, onSubmit, trade }: TradeModalProps
       const updates: Record<string, any> = {
         id: trade.id, // needed to identify which trade
         accountId: accountId || trade.accountId,
+        date: date || trade.date,
         symbol,
         action,
         size: sizeFormatted,
@@ -113,8 +117,8 @@ export function TradeModal({ isOpen, onClose, onSubmit, trade }: TradeModalProps
     } else {
       // NEW trade
       const now = new Date();
-      const dateStr = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + 
-        ', ' + now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      const dateStr = date || (now.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + 
+        ', ' + now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
 
       const newTrade = {
         accountId: accountId || undefined,
@@ -172,6 +176,18 @@ export function TradeModal({ isOpen, onClose, onSubmit, trade }: TradeModalProps
               </select>
             </div>
           )}
+
+          {/* Date */}
+          <div className="flex flex-col gap-2">
+            <label className="text-xs font-label text-on-surface-variant uppercase tracking-wider">Date & Time</label>
+            <input 
+              type="text" 
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-data focus:outline-none focus:border-primary/50 transition-colors"
+              placeholder="e.g. Apr 2, 10:20:00 or 2024.01.15 14:30"
+            />
+          </div>
 
           {/* Symbol & Action */}
           <div className="grid grid-cols-2 gap-4">
