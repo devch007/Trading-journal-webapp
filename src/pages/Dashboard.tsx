@@ -91,7 +91,7 @@ export function Dashboard() {
   
   // Calculate stats based on real trades
   const stats = useMemo(() => {
-    if (!trades.length) return { totalPnl: 0, winRate: 0, profitFactor: 0, activeTrades: 0 };
+    if (!trades.length) return { totalPnl: 0, winRate: 0, profitFactor: 0, activeTrades: 0, roiPercent: null };
     
     const totalPnl = trades.reduce((sum, trade) => sum + trade.pnl, 0);
     const winningTrades = trades.filter(t => t.isPositive);
