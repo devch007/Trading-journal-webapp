@@ -12,6 +12,7 @@ import { useTrades, Trade } from '../hooks/useTrades';
 import { cn } from '../lib/utils';
 import { StrategyModal } from '../components/StrategyModal';
 import { TradeModal } from '../components/TradeModal';
+import { getTradeDate } from '../lib/timeUtils';
 
 export function StrategyDetail() {
   const { id } = useParams<{ id: string }>();
@@ -71,36 +72,11 @@ export function StrategyDetail() {
       return sMatch || tMatch || tagsMatch;
     });
 
-    const getTradeDate = (t: Trade) => {
-      if (t.createdAt) {
-        const d = new Date(t.createdAt);
-        if (!isNaN(d.getTime())) return d;
-      }
-      let dStr = t.date;
-      if (!dStr) return new Date();
-      if (dStr.startsWith('Today, ')) {
-        const time = dStr.split(', ')[1];
-        return new Date(`${new Date().toDateString()} ${time}`);
-      }
-      if (dStr.startsWith('Yesterday, ')) {
-        const time = dStr.split(', ')[1];
-        const yesterday = new Date();
-        yesterday.setDate(yesterday.getDate() - 1);
-        return new Date(`${yesterday.toDateString()} ${time}`);
-      }
-      const parsed = new Date(dStr);
-      if (!isNaN(parsed.getTime())) {
-        if (parsed.getFullYear() < 2020) parsed.setFullYear(2026);
-        return parsed;
-      }
-      return new Date();
-    };
-
     // Time-based filtering
     const now = new Date();
     const rangeFiltered = filtered.filter(t => {
       if (timeRange === 'ALL') return true;
-      const tradeDate = getTradeDate(t);
+      const tradeDate = getTradeDate(t.date);
       
       const diffDays = (now.getTime() - tradeDate.getTime()) / (1000 * 3600 * 24);
       if (timeRange === '1W') return diffDays <= 7 && diffDays >= -2;
@@ -108,10 +84,10 @@ export function StrategyDetail() {
       return true;
     });
 
-    // Safe sorting
+    // Safe sorting by actual trade date
     return rangeFiltered.sort((a, b) => {
-      const dateA = getTradeDate(a).getTime();
-      const dateB = getTradeDate(b).getTime();
+      const dateA = getTradeDate(a.date).getTime();
+      const dateB = getTradeDate(b.date).getTime();
       return dateA - dateB;
     });
   }, [trades, strategy, timeRange]);
