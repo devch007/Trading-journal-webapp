@@ -10,6 +10,7 @@ export interface Strategy {
   color?: string;
   rules?: string[];
   timeframes?: string[];
+  imageUrl?: string;
   winRate?: number;
   totalTrades?: number;
   pnl?: number;

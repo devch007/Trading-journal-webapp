@@ -19,6 +19,7 @@ export interface StrategyFormData {
   timeframes: string[];
   rules: string[];
   tags: string[];
+  imageUrl?: string;
 }
 
 export const emptyForm = (): StrategyFormData => ({
@@ -28,4 +29,5 @@ export const emptyForm = (): StrategyFormData => ({
   timeframes: ['H1'],
   rules: [],
   tags: [],
+  imageUrl: '',
 });

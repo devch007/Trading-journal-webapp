@@ -171,8 +171,21 @@ export function StrategyDetail() {
       {/* Background Ambient Glow */}
       <div className="absolute top-0 right-0 w-[600px] h-[600px] opacity-10 pointer-events-none blur-[150px] rounded-full transition-colors duration-1000" style={{ background: color }} />
 
+      {/* Cover Image Banner */}
+      {strategy.imageUrl && (
+        <div className="relative h-48 w-full overflow-hidden">
+          <img
+            src={strategy.imageUrl}
+            alt={`${strategy.name} cover`}
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/20 to-[#06060c]" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#06060c]/60 to-transparent" />
+        </div>
+      )}
+
       {/* Header */}
-      <div className="px-8 pt-8 pb-4 border-b border-white/5 flex items-center justify-between z-10 sticky top-0 bg-[#06060c]/80 backdrop-blur-md">
+      <div className={`px-8 ${strategy.imageUrl ? 'pt-4' : 'pt-8'} pb-4 border-b border-white/5 flex items-center justify-between z-10 sticky top-0 bg-[#06060c]/80 backdrop-blur-md`}>
         <div className="flex items-center gap-4">
           <button 
             onClick={() => navigate('/strategies')}

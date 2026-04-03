@@ -41,8 +41,23 @@ const StrategyCard: React.FC<StrategyCardProps> = ({ strategy, onEdit, onDelete,
       />
 
       <div className="relative bg-[#0d0d16] border border-white/5 group-hover:border-white/10 rounded-2xl overflow-hidden transition-all">
-        {/* Color stripe */}
-        <div className="h-1 w-full" style={{ background: `linear-gradient(90deg, ${strategy.color}, transparent)` }} />
+        {/* Cover Image or Color stripe */}
+        {strategy.imageUrl ? (
+          <div className="relative h-32 w-full overflow-hidden">
+            <img
+              src={strategy.imageUrl}
+              alt={`${strategy.name} cover`}
+              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+            />
+            <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-[#0d0d16]" />
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent to-black/20" />
+            {/* Color accent badge */}
+            <div className="absolute top-3 left-3 w-3 h-3 rounded-full shadow-lg" style={{ backgroundColor: strategy.color, boxShadow: `0 0 10px ${strategy.color}88` }} />
+          </div>
+        ) : (
+          <div className="h-1 w-full" style={{ background: `linear-gradient(90deg, ${strategy.color}, transparent)` }} />
+        )}
 
         <div className="p-6">
           {/* Header row */}

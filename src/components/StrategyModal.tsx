@@ -21,6 +21,7 @@ export function StrategyModal({ initial, onSave, onClose }: StrategyModalProps) 
           timeframes: initial.timeframes || ['H1'],
           rules: initial.rules || [],
           tags: initial.tags || [],
+          imageUrl: initial.imageUrl || '',
         }
       : emptyForm()
   );
@@ -107,6 +108,18 @@ export function StrategyModal({ initial, onSave, onClose }: StrategyModalProps) 
               onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
               rows={2}
               className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-gray-300 focus:outline-none focus:border-blue-500/50 transition-colors resize-none placeholder:text-gray-600"
+            />
+          </div>
+
+          {/* Cover Image */}
+          <div className="space-y-2">
+            <label className="text-xs text-gray-500 font-bold uppercase tracking-wider">Cover Image URL (Optional)</label>
+            <input
+              type="text"
+              placeholder="Paste an image URL to add a landscape cover to the card..."
+              value={form.imageUrl || ''}
+              onChange={e => setForm(f => ({ ...f, imageUrl: e.target.value }))}
+              className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-blue-500/50 transition-colors placeholder:text-gray-600"
             />
           </div>
 
