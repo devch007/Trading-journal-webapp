@@ -180,21 +180,44 @@ export function Strategies() {
     return map;
   }, [trades]);
 
-  const filtered = useMemo(
-    () => strategies.filter(s => s.name.toLowerCase().includes(search.toLowerCase())),
-    [strategies, search]
-  );
+  const filtered = useMemo(() => {
+    // 1. Gather all explicit strategies created by user
+    const explicitStrategies = strategies;
+    
+    // 2. Synthesize missing strategies from trade history
+    const synthesizedStrategies = Object.keys(strategyStats)
+      .filter(name => name !== 'Untagged' && !explicitStrategies.some(s => s.name === name))
+      .map(name => ({
+        id: `auto-${name}`,
+        name,
+        description: 'Auto-generated from trade history',
+        color: '#3b82f6', // default blue
+      } as Strategy));
+      
+    // 3. Combine and filter by search
+    return [...explicitStrategies, ...synthesizedStrategies].filter(s => 
+      s.name.toLowerCase().includes(search.toLowerCase())
+    );
+  }, [strategies, search, strategyStats]);
 
   const summaryStats = useMemo(() => {
     const totalTrades = trades.length;
     const totalPnl = trades.reduce((s, t) => s + t.pnl, 0);
-    const bestStrategy = strategies.reduce<{ name: string; pnl: number } | null>((best, s) => {
-      const stat = strategyStats[s.name];
-      if (!stat) return best;
-      if (!best || stat.pnl > best.pnl) return { name: s.name, pnl: stat.pnl };
-      return best;
-    }, null);
-    return { totalTrades, totalPnl, bestStrategy, strategyCount: strategies.length };
+    
+    let best = null as { name: string; pnl: number } | null;
+    Object.keys(strategyStats).forEach(name => {
+      if (name !== 'Untagged') {
+        const stat = strategyStats[name];
+        if (!best || stat.pnl > best.pnl) {
+          best = { name, pnl: stat.pnl };
+        }
+      }
+    });
+
+    const uniqueCount = Object.keys(strategyStats).filter(n => n !== 'Untagged').length 
+                        + strategies.filter(s => !strategyStats[s.name]).length;
+
+    return { totalTrades, totalPnl, bestStrategy: best, strategyCount: uniqueCount };
   }, [strategies, trades, strategyStats]);
 
   return (

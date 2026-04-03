@@ -32,7 +32,32 @@ export function StrategyDetail() {
     }
   };
 
-  const strategy = useMemo(() => strategies.find(s => s.id === id), [strategies, id]);
+  const strategy = useMemo(() => {
+    const explicit = strategies.find(s => s.id === id);
+    if (explicit) return explicit;
+
+    if (id?.startsWith('auto-')) {
+      const name = id.replace('auto-', '');
+      // Ensure there are actually trades for this to prevent invalid URLs
+      const hasTrades = trades.some(t => {
+        const sName = name.toLowerCase().trim();
+        return t.strategy?.toLowerCase().trim() === sName ||
+               t.tag?.toLowerCase().trim() === sName ||
+               (Array.isArray(t.tags) && t.tags.some(tag => tag.toLowerCase().trim() === sName));
+      });
+
+      if (hasTrades) {
+        return {
+          id,
+          name,
+          description: 'Auto-generated from trade history',
+          color: '#3b82f6',
+          tags: [name]
+        } as any;
+      }
+    }
+    return undefined;
+  }, [strategies, id, trades]);
 
   const strategyTrades = useMemo(() => {
     if (!strategy) return [];
