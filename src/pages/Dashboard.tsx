@@ -413,7 +413,7 @@ export function Dashboard() {
     <div className="flex flex-col min-h-full pb-10">
       <TopBar 
         title="Dashboard" 
-        subtitle="Overview & Analytics" 
+        subtitle="Platform by DC Technologies" 
         showSearch={true} 
         actionButton={
           <button 
