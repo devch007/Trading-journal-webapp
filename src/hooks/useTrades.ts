@@ -40,12 +40,9 @@ export function useTrades() {
   const fetchTrades = useCallback(async () => {
     if (!user) return;
     
-    // Select all columns EXCEPT 'proof' for performance
-    const columns = 'id, userId, accountId, date, symbol, action, size, result, isPositive, pnl, createdAt, entry, exit, duration, session, confidence, tag, strategy, notes, emotions, tags, rating, checklist, tradeType, sentiment';
-
     const { data, error } = await supabase
       .from('trades')
-      .select(columns)
+      .select('*')
       .eq('userId', user.id)
       .order('createdAt', { ascending: false });
 
