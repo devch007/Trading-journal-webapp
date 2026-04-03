@@ -67,7 +67,12 @@ export function getTradeDate(dateStr: string): Date {
   }
 
   const parsed = new Date(dateStr);
-  if (!isNaN(parsed.getTime())) return parsed;
+  if (!isNaN(parsed.getTime())) {
+    if (parsed.getFullYear() < 2020) {
+      parsed.setFullYear(2026);
+    }
+    return parsed;
+  }
 
   return new Date(); // Fallback
 }
