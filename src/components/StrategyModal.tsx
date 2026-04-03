@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { motion } from 'motion/react';
-import { Target, X, CheckSquare, Tag } from 'lucide-react';
+import { Target, X, CheckSquare, Tag, ImagePlus, Trash2 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { Strategy } from '../contexts/StrategyContext';
 import { STRATEGY_COLORS, TIMEFRAME_OPTIONS, DEFAULT_RULES, StrategyFormData, emptyForm } from '../constants/strategy';
@@ -27,6 +27,18 @@ export function StrategyModal({ initial, onSave, onClose }: StrategyModalProps) 
   );
   const [ruleInput, setRuleInput] = useState('');
   const [tagInput, setTagInput] = useState('');
+  const imageInputRef = useRef<HTMLInputElement>(null);
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const base64 = ev.target?.result as string;
+      setForm(f => ({ ...f, imageUrl: base64 }));
+    };
+    reader.readAsDataURL(file);
+  };
 
   const addRule = () => {
     const v = ruleInput.trim();
@@ -113,14 +125,48 @@ export function StrategyModal({ initial, onSave, onClose }: StrategyModalProps) 
 
           {/* Cover Image */}
           <div className="space-y-2">
-            <label className="text-xs text-gray-500 font-bold uppercase tracking-wider">Cover Image URL (Optional)</label>
+            <label className="text-xs text-gray-500 font-bold uppercase tracking-wider">Cover Image (Optional)</label>
             <input
-              type="text"
-              placeholder="Paste an image URL to add a landscape cover to the card..."
-              value={form.imageUrl || ''}
-              onChange={e => setForm(f => ({ ...f, imageUrl: e.target.value }))}
-              className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-blue-500/50 transition-colors placeholder:text-gray-600"
+              ref={imageInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleImageUpload}
             />
+            {form.imageUrl ? (
+              <div className="relative rounded-xl overflow-hidden border border-white/10 group">
+                <img
+                  src={form.imageUrl}
+                  alt="Cover preview"
+                  className="w-full h-32 object-cover"
+                />
+                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => imageInputRef.current?.click()}
+                    className="px-3 py-1.5 bg-white/20 backdrop-blur-sm rounded-lg text-xs font-bold text-white border border-white/20 hover:bg-white/30 transition-all"
+                  >
+                    Change
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setForm(f => ({ ...f, imageUrl: '' }))}
+                    className="p-1.5 bg-rose-500/20 backdrop-blur-sm rounded-lg text-rose-400 border border-rose-500/30 hover:bg-rose-500/30 transition-all"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => imageInputRef.current?.click()}
+                className="w-full h-24 rounded-xl border-2 border-dashed border-white/10 hover:border-blue-500/40 bg-black/20 hover:bg-blue-500/5 transition-all flex flex-col items-center justify-center gap-2 group"
+              >
+                <ImagePlus className="w-6 h-6 text-gray-600 group-hover:text-blue-400 transition-colors" />
+                <span className="text-xs font-bold text-gray-600 group-hover:text-gray-400 transition-colors">Upload landscape cover image</span>
+              </button>
+            )}
           </div>
 
           {/* Timeframes */}
