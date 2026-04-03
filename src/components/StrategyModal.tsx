@@ -151,7 +151,7 @@ export function StrategyModal({ initial, onSave, onClose }: StrategyModalProps) 
                   <button
                     type="button"
                     onClick={() => setForm(f => ({ ...f, imageUrl: '' }))}
-                    className="p-1.5 bg-rose-500/20 backdrop-blur-sm rounded-lg text-rose-400 border border-rose-500/30 hover:bg-rose-500/30 transition-all"
+                    className="p-1.5 bg-[#E5534B]/20 backdrop-blur-sm rounded-lg text-[#E5534B] border border-[#E5534B]/30 hover:bg-[#E5534B]/30 transition-all"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
@@ -209,7 +209,7 @@ export function StrategyModal({ initial, onSave, onClose }: StrategyModalProps) 
                   {form.rules.length > 0 && (
                     <button
                       onClick={() => setForm(f => ({ ...f, rules: f.rules.filter((_, idx) => idx !== i) }))}
-                      className="text-gray-600 hover:text-rose-400 transition-colors"
+                      className="text-gray-600 hover:text-[#E5534B] transition-colors"
                     >
                       <X className="w-3.5 h-3.5" />
                     </button>

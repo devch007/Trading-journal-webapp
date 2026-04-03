@@ -44,8 +44,8 @@ export function TopBar({ title, subtitle, showAccountSelector = true, showSearch
   return (
     <header className="flex justify-between items-center w-full px-8 py-10">
       <div>
-        <h1 className="font-headline text-3xl tracking-tight text-primary">{title}</h1>
-        <p className="text-on-surface-variant font-label text-sm uppercase tracking-widest mt-1">
+        <h1 className="type-h1 text-primary">{title}</h1>
+        <p className="type-label mt-1">
           {subtitle}
         </p>
       </div>
@@ -54,11 +54,11 @@ export function TopBar({ title, subtitle, showAccountSelector = true, showSearch
         {showSearch && (
           <button 
             onClick={() => setIsCommandPaletteOpen(true)}
-            className="relative group flex items-center gap-3 bg-white/5 border border-white/10 rounded-full pl-4 pr-3 py-2 text-sm text-on-surface-variant hover:bg-white/10 hover:border-white/20 transition-all w-64 text-left"
+            className="relative group flex items-center gap-3 bg-white/5 border border-white/10 rounded-full pl-4 pr-3 py-2 text-[14px] text-[#A7A7A7] hover:bg-white/10 hover:border-white/20 transition-all w-64 text-left"
           >
             <Search className="w-4 h-4" />
-            <span className="flex-1">Search...</span>
-            <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-white/5 border border-white/10 text-[10px] font-bold text-gray-500">
+            <span className="flex-1 type-body">Search...</span>
+            <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-white/5 border border-white/10 type-micro text-[#6A6A6A]">
               <Command className="w-2.5 h-2.5" />
               <span>K</span>
             </div>
@@ -78,10 +78,10 @@ export function TopBar({ title, subtitle, showAccountSelector = true, showSearch
             >
               <Wallet className="text-primary w-5 h-5" />
               <div className="flex flex-col items-start leading-tight">
-                <span className="text-[10px] text-on-surface-variant uppercase font-label tracking-tighter">
+                <span className="type-micro text-[#6A6A6A]">
                   {selectedAccount ? selectedAccount.name : 'No Account'}
                 </span>
-                <span className="font-data text-sm font-headline text-on-surface">
+                <span className="tnum text-[15px] font-bold text-on-surface">
                   ${selectedAccount ? (selectedAccount.currentEquity ?? selectedAccount.initialCapital).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00'}
                 </span>
               </div>
@@ -101,10 +101,10 @@ export function TopBar({ title, subtitle, showAccountSelector = true, showSearch
                       className={`w-full flex items-center justify-between px-4 py-3 hover:bg-white/5 transition-colors text-left ${selectedAccount?.id === account.id ? 'bg-primary/10' : ''}`}
                     >
                       <div className="flex flex-col">
-                        <span className="text-sm font-bold text-white">{account.name}</span>
-                        <span className="text-xs text-on-surface-variant">{account.firm}</span>
+                        <span className="type-h2 text-[14px] text-white">{account.name}</span>
+                        <span className="type-body text-[12px]">{account.firm}</span>
                       </div>
-                      <span className="font-data text-sm text-primary">
+                      <span className="tnum text-[14px] font-bold text-primary">
                         ${(account.currentEquity ?? account.initialCapital).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </span>
                     </button>
@@ -121,7 +121,7 @@ export function TopBar({ title, subtitle, showAccountSelector = true, showSearch
         
         <button 
           onClick={logout}
-          className="p-2 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-on-surface-variant hover:text-rose-400 transition-colors"
+          className="p-2 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-on-surface-variant hover:text-[#E5534B] transition-colors"
           title="Logout"
         >
           <LogOut className="w-5 h-5" />

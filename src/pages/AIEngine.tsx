@@ -173,8 +173,8 @@ export function AIEngine() {
           `Net PnL: $${totalPnL.toLocaleString()}`
         ],
         icon: TrendingUp,
-        color: "text-emerald-400",
-        bgColor: "bg-emerald-500/10"
+        color: "text-[#1ED760]",
+        bgColor: "bg-[#1ED760]/10"
       },
       {
         title: "Symbol Focus",
@@ -201,8 +201,8 @@ export function AIEngine() {
               "Action: Maintain current discipline"
             ],
         icon: AlertTriangle,
-        color: maxLosingStreak > 3 ? "text-rose-400" : "text-emerald-400",
-        bgColor: maxLosingStreak > 3 ? "bg-rose-500/10" : "bg-emerald-500/10"
+        color: maxLosingStreak > 3 ? "text-[#E5534B]" : "text-[#1ED760]",
+        bgColor: maxLosingStreak > 3 ? "bg-[#E5534B]/10" : "bg-[#1ED760]/10"
       },
       {
         title: "AI Strategy Tip",
@@ -514,7 +514,7 @@ Deliver a complete, integrated report summarizing all essential performance aspe
             </div>
             <div className="flex items-end gap-4 mb-2">
               <span className="text-4xl font-bold text-white">{healthScore}</span>
-              <span className="text-emerald-400 text-sm font-bold mb-1">
+              <span className="text-[#1ED760] text-sm font-bold mb-1">
                 {trades.length > 0 ? "Analyzing History" : "No Data Yet"}
               </span>
             </div>
@@ -553,11 +553,11 @@ Deliver a complete, integrated report summarizing all essential performance aspe
                     <line x1="18.5" y1="14" x2="18.5" y2="17" stroke="#34d399" strokeWidth="1.5" strokeLinecap="round"/>
                   </svg>
                 </div>
-                <div className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-[#0d0d16] rounded-full" />
+                <div className="absolute bottom-0 right-0 w-3 h-3 bg-[#1ED760] border-2 border-[#0d0d16] rounded-full" />
               </div>
               <div>
                 <h4 className="font-bold text-white text-sm">Trade Pilot AI</h4>
-                <p className="text-[10px] text-emerald-400 uppercase tracking-widest font-bold">Online • Analyzing Data</p>
+                <p className="text-[10px] text-[#1ED760] uppercase tracking-widest font-bold">Online • Analyzing Data</p>
               </div>
             </div>
             <div className="flex gap-1">
@@ -700,7 +700,7 @@ Deliver a complete, integrated report summarizing all essential performance aspe
                 className={cn(
                   "w-12 h-12 rounded-xl flex items-center justify-center transition-all active:scale-90 shadow-lg",
                   isListening 
-                    ? "bg-rose-500 text-white shadow-rose-500/20" 
+                    ? "bg-[#E5534B] text-white shadow-rose-500/20" 
                     : "bg-white/5 border border-white/10 text-gray-400 hover:text-white hover:bg-white/10"
                 )}
               >

@@ -36,20 +36,20 @@ export class ErrorBoundary extends React.Component<Props, State> {
     if (this.state.hasError) {
       return (
         <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6 bg-[#0d0d16]">
-          <div className="glass-card max-w-xl w-full p-8 rounded-3xl flex flex-col items-center text-center border border-rose-500/20 shadow-2xl">
-            <div className="w-16 h-16 rounded-2xl bg-rose-500/20 flex items-center justify-center mb-6 border border-rose-500/30">
-              <AlertTriangle className="w-8 h-8 text-rose-500" />
+          <div className="glass-card max-w-xl w-full p-8 rounded-3xl flex flex-col items-center text-center border border-[#E5534B]/20 shadow-2xl">
+            <div className="w-16 h-16 rounded-2xl bg-[#E5534B]/20 flex items-center justify-center mb-6 border border-[#E5534B]/30">
+              <AlertTriangle className="w-8 h-8 text-[#E5534B]" />
             </div>
             
-            <h1 className="text-2xl font-headline text-white mb-3">Something went wrong</h1>
+            <h1 className="text-2xl type-h2 text-white mb-3">Something went wrong</h1>
             <p className="text-gray-400 mb-8 max-w-md">
               A critical error occurred while rendering the page. Our team has been notified.
             </p>
 
             {this.state.error && (
               <div className="w-full bg-black/40 border border-white/5 p-4 rounded-xl mb-8 text-left overflow-x-auto">
-                <p className="text-rose-400 font-mono text-sm font-bold mb-2">{this.state.error.toString()}</p>
-                <p className="text-gray-500 font-mono text-xs whitespace-pre-wrap">
+                <p className="text-[#E5534B] tnum text-sm font-bold mb-2">{this.state.error.toString()}</p>
+                <p className="text-gray-500 tnum text-xs whitespace-pre-wrap">
                   {this.state.errorInfo?.componentStack}
                 </p>
               </div>

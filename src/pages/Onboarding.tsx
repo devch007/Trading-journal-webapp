@@ -30,7 +30,7 @@ export function Onboarding() {
         <div className="w-16 h-16 rounded-2xl bg-primary/20 flex items-center justify-center mb-6">
           <CheckCircle2 className="w-8 h-8 text-primary" />
         </div>
-        <h1 className="text-3xl font-headline text-on-surface mb-2">Welcome to Edgr!</h1>
+        <h1 className="text-3xl type-h2 text-on-surface mb-2">Welcome to Edgr!</h1>
         <p className="text-on-surface-variant mb-8">
           Let's get your account set up. What is your current trading experience level?
         </p>

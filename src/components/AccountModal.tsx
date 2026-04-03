@@ -64,7 +64,7 @@ export function AccountModal({ isOpen, onClose, onSubmit, initialData }: Account
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
       <div className="glass-card w-full max-w-md rounded-2xl border border-white/10 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
         <div className="flex justify-between items-center p-6 border-b border-white/5">
-          <h2 className="font-headline text-xl text-white">{initialData ? 'Edit Account' : 'New Account'}</h2>
+          <h2 className="type-h1">{initialData ? 'Edit Account' : 'New Account'}</h2>
           <button 
             onClick={onClose}
             className="p-2 rounded-full hover:bg-white/10 text-on-surface-variant hover:text-white transition-colors"
@@ -76,7 +76,7 @@ export function AccountModal({ isOpen, onClose, onSubmit, initialData }: Account
         <form onSubmit={handleSubmit} className="p-6 flex flex-col gap-5">
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-2">
-              <label className="text-xs font-label text-on-surface-variant uppercase tracking-wider">Firm</label>
+              <label className="text-xs type-label text-on-surface-variant uppercase tracking-wider">Firm</label>
               <input 
                 type="text" 
                 value={firm}
@@ -87,7 +87,7 @@ export function AccountModal({ isOpen, onClose, onSubmit, initialData }: Account
               />
             </div>
             <div className="flex flex-col gap-2">
-              <label className="text-xs font-label text-on-surface-variant uppercase tracking-wider">Account Name</label>
+              <label className="text-xs type-label text-on-surface-variant uppercase tracking-wider">Account Name</label>
               <input 
                 type="text" 
                 value={name}
@@ -101,7 +101,7 @@ export function AccountModal({ isOpen, onClose, onSubmit, initialData }: Account
 
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-2">
-              <label className="text-xs font-label text-on-surface-variant uppercase tracking-wider">Type</label>
+              <label className="text-xs type-label text-on-surface-variant uppercase tracking-wider">Type</label>
               <input 
                 type="text" 
                 value={type}
@@ -112,7 +112,7 @@ export function AccountModal({ isOpen, onClose, onSubmit, initialData }: Account
               />
             </div>
             <div className="flex flex-col gap-2">
-              <label className="text-xs font-label text-on-surface-variant uppercase tracking-wider">Badge/ID</label>
+              <label className="text-xs type-label text-on-surface-variant uppercase tracking-wider">Badge/ID</label>
               <input 
                 type="text" 
                 value={badge}
@@ -125,12 +125,12 @@ export function AccountModal({ isOpen, onClose, onSubmit, initialData }: Account
           </div>
 
           <div className="flex flex-col gap-2">
-            <label className="text-xs font-label text-on-surface-variant uppercase tracking-wider">Initial Capital ($)</label>
+            <label className="text-xs type-label text-on-surface-variant uppercase tracking-wider">Initial Capital ($)</label>
             <input 
               type="number" 
               value={initialCapital}
               onChange={(e) => setInitialCapital(e.target.value)}
-              className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-data focus:outline-none focus:border-primary/50 transition-colors"
+              className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white tnum focus:outline-none focus:border-primary/50 transition-colors"
               placeholder="100000"
               required
             />
@@ -138,25 +138,25 @@ export function AccountModal({ isOpen, onClose, onSubmit, initialData }: Account
 
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-2">
-              <label className="text-xs font-label text-on-surface-variant uppercase tracking-wider">Daily Drawdown (%)</label>
+              <label className="text-xs type-label text-on-surface-variant uppercase tracking-wider">Daily Drawdown (%)</label>
               <input 
                 type="number" 
                 step="0.1"
                 value={dailyDrawdown}
                 onChange={(e) => setDailyDrawdown(e.target.value)}
-                className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-data focus:outline-none focus:border-primary/50 transition-colors"
+                className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white tnum focus:outline-none focus:border-primary/50 transition-colors"
                 placeholder="5.0"
                 required
               />
             </div>
             <div className="flex flex-col gap-2">
-              <label className="text-xs font-label text-on-surface-variant uppercase tracking-wider">Max Drawdown (%)</label>
+              <label className="text-xs type-label text-on-surface-variant uppercase tracking-wider">Max Drawdown (%)</label>
               <input 
                 type="number" 
                 step="0.1"
                 value={maxDrawdown}
                 onChange={(e) => setMaxDrawdown(e.target.value)}
-                className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-data focus:outline-none focus:border-primary/50 transition-colors"
+                className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white tnum focus:outline-none focus:border-primary/50 transition-colors"
                 placeholder="10.0"
                 required
               />
@@ -164,7 +164,7 @@ export function AccountModal({ isOpen, onClose, onSubmit, initialData }: Account
           </div>
 
           <div className="flex flex-col gap-2">
-            <label className="text-xs font-label text-on-surface-variant uppercase tracking-wider">Status</label>
+            <label className="text-xs type-label text-on-surface-variant uppercase tracking-wider">Status</label>
             <select 
               value={status}
               onChange={(e) => setStatus(e.target.value)}

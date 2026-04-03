@@ -180,7 +180,7 @@ export function TradeModal({ isOpen, onClose, onSubmit, trade }: TradeModalProps
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
       <div className="glass-card w-full max-w-md rounded-2xl border border-white/10 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center p-6 border-b border-white/5">
-          <h2 className="font-headline text-xl text-white">{trade ? 'Edit Trade' : 'New Trade'}</h2>
+          <h2 className="type-h1">{trade ? 'Edit Trade' : 'New Trade'}</h2>
           <button 
             onClick={onClose}
             className="p-2 rounded-full hover:bg-white/10 text-on-surface-variant hover:text-white transition-colors"
@@ -193,7 +193,7 @@ export function TradeModal({ isOpen, onClose, onSubmit, trade }: TradeModalProps
           {/* Account Selection */}
           {accounts.length > 0 && (
             <div className="flex flex-col gap-2">
-              <label className="text-xs font-label text-on-surface-variant uppercase tracking-wider">Account</label>
+              <label className="text-xs type-label text-on-surface-variant uppercase tracking-wider">Account</label>
               <select 
                 value={accountId}
                 onChange={(e) => setAccountId(e.target.value)}
@@ -211,7 +211,7 @@ export function TradeModal({ isOpen, onClose, onSubmit, trade }: TradeModalProps
 
           {/* Date */}
           <div className="flex flex-col gap-2 relative z-50">
-            <label className="text-xs font-label text-on-surface-variant uppercase tracking-wider">Date & Time</label>
+            <label className="text-xs type-label text-on-surface-variant uppercase tracking-wider">Date & Time</label>
             <div className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus-within:border-primary/50 transition-colors w-full">
               <DatePicker
                 selected={selectedDate}
@@ -221,7 +221,7 @@ export function TradeModal({ isOpen, onClose, onSubmit, trade }: TradeModalProps
                 timeIntervals={15}
                 timeCaption="Time"
                 dateFormat="MMMM d, yyyy h:mm aa"
-                className="bg-transparent border-none text-white font-data focus:outline-none w-full"
+                className="bg-transparent border-none text-white tnum focus:outline-none w-full"
                 calendarClassName="bg-[#191923] border-white/10 shadow-2xl"
                 dayClassName={() => "text-white hover:bg-primary/50"}
                 timeClassName={() => "text-white bg-[#191923]"}
@@ -234,7 +234,7 @@ export function TradeModal({ isOpen, onClose, onSubmit, trade }: TradeModalProps
           {/* Symbol & Action */}
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-2">
-              <label className="text-xs font-label text-on-surface-variant uppercase tracking-wider">Symbol</label>
+              <label className="text-xs type-label text-on-surface-variant uppercase tracking-wider">Symbol</label>
               <select 
                 value={symbol}
                 onChange={(e) => setSymbol(e.target.value)}
@@ -253,19 +253,19 @@ export function TradeModal({ isOpen, onClose, onSubmit, trade }: TradeModalProps
               </select>
             </div>
             <div className="flex flex-col gap-2">
-              <label className="text-xs font-label text-on-surface-variant uppercase tracking-wider">Action</label>
+              <label className="text-xs type-label text-on-surface-variant uppercase tracking-wider">Action</label>
               <div className="flex bg-white/5 border border-white/10 rounded-xl p-1">
                 <button
                   type="button"
                   onClick={() => setAction("BUY")}
-                  className={`flex-1 py-2 rounded-lg text-sm font-bold transition-colors ${action === "BUY" ? "bg-emerald-500/20 text-emerald-400" : "text-on-surface-variant hover:text-white"}`}
+                  className={`flex-1 py-2 rounded-lg text-sm font-bold transition-colors ${action === "BUY" ? "bg-[#1ED760]/20 text-[#1ED760]" : "text-on-surface-variant hover:text-white"}`}
                 >
                   BUY
                 </button>
                 <button
                   type="button"
                   onClick={() => setAction("SELL")}
-                  className={`flex-1 py-2 rounded-lg text-sm font-bold transition-colors ${action === "SELL" ? "bg-rose-500/20 text-rose-400" : "text-on-surface-variant hover:text-white"}`}
+                  className={`flex-1 py-2 rounded-lg text-sm font-bold transition-colors ${action === "SELL" ? "bg-[#E5534B]/20 text-[#E5534B]" : "text-on-surface-variant hover:text-white"}`}
                 >
                   SELL
                 </button>
@@ -276,24 +276,24 @@ export function TradeModal({ isOpen, onClose, onSubmit, trade }: TradeModalProps
           {/* Entry & Exit */}
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-2">
-              <label className="text-xs font-label text-on-surface-variant uppercase tracking-wider">Entry Price</label>
+              <label className="text-xs type-label text-on-surface-variant uppercase tracking-wider">Entry Price</label>
               <input 
                 type="number" 
                 step="0.00001"
                 value={entry}
                 onChange={(e) => setEntry(e.target.value)}
-                className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-data focus:outline-none focus:border-primary/50 transition-colors"
+                className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white tnum focus:outline-none focus:border-primary/50 transition-colors"
                 placeholder="e.g. 1.08500"
               />
             </div>
             <div className="flex flex-col gap-2">
-              <label className="text-xs font-label text-on-surface-variant uppercase tracking-wider">Exit Price</label>
+              <label className="text-xs type-label text-on-surface-variant uppercase tracking-wider">Exit Price</label>
               <input 
                 type="number" 
                 step="0.00001"
                 value={exit}
                 onChange={(e) => setExit(e.target.value)}
-                className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-data focus:outline-none focus:border-primary/50 transition-colors"
+                className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white tnum focus:outline-none focus:border-primary/50 transition-colors"
                 placeholder="e.g. 1.09000"
               />
             </div>
@@ -302,26 +302,26 @@ export function TradeModal({ isOpen, onClose, onSubmit, trade }: TradeModalProps
           {/* Size & P&L */}
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-2">
-              <label className="text-xs font-label text-on-surface-variant uppercase tracking-wider">Size (Lots)</label>
+              <label className="text-xs type-label text-on-surface-variant uppercase tracking-wider">Size (Lots)</label>
               <input 
                 type="number" 
                 step="0.01"
                 min="0.01"
                 value={size}
                 onChange={(e) => setSize(e.target.value)}
-                className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-data focus:outline-none focus:border-primary/50 transition-colors"
+                className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white tnum focus:outline-none focus:border-primary/50 transition-colors"
                 placeholder="1.00"
                 required
               />
             </div>
             <div className="flex flex-col gap-2">
-              <label className="text-xs font-label text-on-surface-variant uppercase tracking-wider">P&L ($)</label>
+              <label className="text-xs type-label text-on-surface-variant uppercase tracking-wider">P&L ($)</label>
               <input 
                 type="number" 
                 step="0.01"
                 value={pnl}
                 onChange={(e) => setPnl(e.target.value)}
-                className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-data focus:outline-none focus:border-primary/50 transition-colors"
+                className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white tnum focus:outline-none focus:border-primary/50 transition-colors"
                 placeholder="e.g. 150.00 or -50.00"
                 required
               />
@@ -331,7 +331,7 @@ export function TradeModal({ isOpen, onClose, onSubmit, trade }: TradeModalProps
           {/* Session, Confidence, Duration */}
           <div className="grid grid-cols-3 gap-4">
             <div className="flex flex-col gap-2">
-              <label className="text-xs font-label text-on-surface-variant uppercase tracking-wider">Session</label>
+              <label className="text-xs type-label text-on-surface-variant uppercase tracking-wider">Session</label>
               <select 
                 value={session}
                 onChange={(e) => setSession(e.target.value as any)}
@@ -344,7 +344,7 @@ export function TradeModal({ isOpen, onClose, onSubmit, trade }: TradeModalProps
               </select>
             </div>
             <div className="flex flex-col gap-2">
-              <label className="text-xs font-label text-on-surface-variant uppercase tracking-wider">Confidence</label>
+              <label className="text-xs type-label text-on-surface-variant uppercase tracking-wider">Confidence</label>
               <select 
                 value={confidence}
                 onChange={(e) => setConfidence(e.target.value as any)}
@@ -356,12 +356,12 @@ export function TradeModal({ isOpen, onClose, onSubmit, trade }: TradeModalProps
               </select>
             </div>
             <div className="flex flex-col gap-2">
-              <label className="text-xs font-label text-on-surface-variant uppercase tracking-wider">Duration</label>
+              <label className="text-xs type-label text-on-surface-variant uppercase tracking-wider">Duration</label>
               <input 
                 type="text" 
                 value={duration}
                 onChange={(e) => setDuration(e.target.value)}
-                className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-data focus:outline-none focus:border-primary/50 transition-colors"
+                className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white tnum focus:outline-none focus:border-primary/50 transition-colors"
                 placeholder="e.g. 1h 30m"
               />
             </div>
@@ -369,7 +369,7 @@ export function TradeModal({ isOpen, onClose, onSubmit, trade }: TradeModalProps
 
           {/* Strategy Selection */}
           <div className="flex flex-col gap-2">
-            <label className="text-xs font-label text-on-surface-variant uppercase tracking-wider">Strategy</label>
+            <label className="text-xs type-label text-on-surface-variant uppercase tracking-wider">Strategy</label>
             <select 
               value={strategy}
               onChange={(e) => setStrategy(e.target.value)}
@@ -383,7 +383,7 @@ export function TradeModal({ isOpen, onClose, onSubmit, trade }: TradeModalProps
           </div>
 
           <div className="flex flex-col gap-2">
-            <label className="text-xs font-label text-on-surface-variant uppercase tracking-wider">Add Tag (Press Enter)</label>
+            <label className="text-xs type-label text-on-surface-variant uppercase tracking-wider">Add Tag (Press Enter)</label>
             <input 
               type="text" 
               value={tagInput}
@@ -406,7 +406,7 @@ export function TradeModal({ isOpen, onClose, onSubmit, trade }: TradeModalProps
                   <button 
                     type="button"
                     onClick={() => removeTag(t)}
-                    className="hover:text-rose-400 transition-colors"
+                    className="hover:text-[#E5534B] transition-colors"
                   >
                     <X className="w-3 h-3" />
                   </button>
@@ -418,7 +418,7 @@ export function TradeModal({ isOpen, onClose, onSubmit, trade }: TradeModalProps
           {/* Submit Button */}
           <button 
             type="submit"
-            className={`mt-4 w-full py-4 rounded-xl font-bold text-white transition-all hover:opacity-90 active:scale-[0.98] ${action === 'BUY' ? 'bg-emerald-500 hover:bg-emerald-400 shadow-[0_0_20px_rgba(16,185,129,0.3)]' : 'bg-rose-500 hover:bg-rose-400 shadow-[0_0_20px_rgba(244,63,94,0.3)]'}`}
+            className={`mt-4 w-full py-4 rounded-xl font-bold text-white transition-all hover:opacity-90 active:scale-[0.98] ${action === 'BUY' ? 'bg-[#1ED760] hover:bg-[#1ED760] shadow-[0_0_20px_rgba(16,185,129,0.3)]' : 'bg-[#E5534B] hover:bg-[#E5534B] shadow-[0_0_20px_rgba(244,63,94,0.3)]'}`}
           >
             {trade ? 'Save Changes' : `Execute ${action} ${symbol}`}
           </button>

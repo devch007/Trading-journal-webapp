@@ -140,7 +140,7 @@ export function StrategyDetail() {
         <div className="bg-[#0d0d16] border border-white/10 p-4 rounded-xl shadow-2xl backdrop-blur-md min-w-[200px]">
           <div className="flex justify-between items-center mb-3 pb-2 border-b border-white/5">
             <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{data.date}</span>
-            <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded", data.action === 'BUY' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400')}>
+            <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded", data.action === 'BUY' ? 'bg-[#1ED760]/10 text-[#1ED760]' : 'bg-[#E5534B]/10 text-[#E5534B]')}>
               {data.action}
             </span>
           </div>
@@ -151,7 +151,7 @@ export function StrategyDetail() {
             </div>
             <div className="flex justify-between items-center text-sm">
               <span className="text-gray-500">Result</span>
-              <span className={cn("font-bold", data.raw >= 0 ? "text-emerald-400" : "text-rose-400")}>
+              <span className={cn("font-bold", data.raw >= 0 ? "text-[#1ED760]" : "text-[#E5534B]")}>
                 {data.raw >= 0 ? '+' : ''}${Math.abs(data.raw).toFixed(2)}
               </span>
             </div>
@@ -206,7 +206,7 @@ export function StrategyDetail() {
               <div className="flex items-center gap-2 mt-0.5">
                 <span className="text-xs text-gray-500 font-bold uppercase tracking-wider">{stats.total} trades recorded</span>
                 <span className="w-1 h-1 rounded-full bg-gray-700" />
-                <span className={cn("text-xs font-bold", stats.winRate >= 50 ? "text-emerald-400" : "text-rose-400")}>
+                <span className={cn("text-xs font-bold", stats.winRate >= 50 ? "text-[#1ED760]" : "text-[#E5534B]")}>
                   {stats.winRate.toFixed(1)}% Win Rate
                 </span>
               </div>
@@ -229,9 +229,9 @@ export function StrategyDetail() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[
               { label: 'Total Trades', value: stats.total.toString(), icon: BarChart, color: 'text-indigo-400' },
-              { label: 'All-Time Win %', value: `${stats.winRate.toFixed(1)}%`, icon: Activity, positive: stats.winRate >= 50, color: stats.winRate >= 50 ? 'text-emerald-400' : 'text-rose-400' },
+              { label: 'All-Time Win %', value: `${stats.winRate.toFixed(1)}%`, icon: Activity, positive: stats.winRate >= 50, color: stats.winRate >= 50 ? 'text-[#1ED760]' : 'text-[#E5534B]' },
               { label: 'Closed Trades', value: stats.total.toString(), icon: BookOpen, color: 'text-blue-400' },
-              { label: 'Net P&L', value: `${stats.netPnl >= 0 ? '+' : ''}$${stats.netPnl.toFixed(2)}`, icon: TrendingUp, positive: stats.netPnl >= 0, color: stats.netPnl >= 0 ? 'text-emerald-400' : 'text-rose-400' }
+              { label: 'Net P&L', value: `${stats.netPnl >= 0 ? '+' : ''}$${stats.netPnl.toFixed(2)}`, icon: TrendingUp, positive: stats.netPnl >= 0, color: stats.netPnl >= 0 ? 'text-[#1ED760]' : 'text-[#E5534B]' }
             ].map(stat => (
               <div key={stat.label} className="bg-black/40 border border-white/5 rounded-2xl p-5 flex flex-col gap-3 group hover:border-white/10 transition-all shadow-sm">
                 <div className="flex items-center justify-between">
@@ -239,7 +239,7 @@ export function StrategyDetail() {
                     <stat.icon className="w-4 h-4" />
                   </div>
                   {stat.positive !== undefined && (
-                    <div className={cn("text-[10px] font-bold px-1.5 py-0.5 rounded capitalize", stat.positive ? "bg-emerald-500/10 text-emerald-400" : "bg-rose-500/10 text-rose-400")}>
+                    <div className={cn("text-[10px] font-bold px-1.5 py-0.5 rounded capitalize", stat.positive ? "bg-[#1ED760]/10 text-[#1ED760]" : "bg-[#E5534B]/10 text-[#E5534B]")}>
                       {stat.positive ? "Profit" : "Loss"}
                     </div>
                   )}
@@ -380,7 +380,7 @@ export function StrategyDetail() {
                          <td className="px-6 py-4">
                            <span className={cn(
                              "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-black tracking-widest uppercase",
-                             trade.action === 'BUY' ? "bg-emerald-500/10 text-emerald-400" : "bg-rose-500/10 text-rose-400"
+                             trade.action === 'BUY' ? "bg-[#1ED760]/10 text-[#1ED760]" : "bg-[#E5534B]/10 text-[#E5534B]"
                            )}>
                              {trade.action === 'BUY' ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
                              {trade.action}
@@ -390,15 +390,15 @@ export function StrategyDetail() {
                            <span className="px-2 py-0.5 rounded bg-white/10 text-[9px] font-bold text-gray-300">CLOSED</span>
                          </td>
                          <td className="px-6 py-4">
-                            <span className="text-xs font-mono text-gray-400">1.00 Lot</span>
+                            <span className="text-xs tnum text-gray-400">1.00 Lot</span>
                          </td>
                          <td className="px-6 py-4 text-right">
                            <div className="flex flex-col items-end">
-                             <span className={cn("text-sm font-bold font-mono", trade.pnl >= 0 ? "text-emerald-400" : "text-rose-400")}>
+                             <span className={cn("text-sm font-bold tnum", trade.pnl >= 0 ? "text-[#1ED760]" : "text-[#E5534B]")}>
                                {trade.pnl >= 0 ? '+' : ''}${Math.abs(trade.pnl).toFixed(2)}
                              </span>
                              {trade.pnl !== 0 && (
-                               <div className={cn("flex items-center text-[10px]", trade.pnl > 0 ? "text-emerald-500/50" : "text-rose-500/50")}>
+                               <div className={cn("flex items-center text-[10px]", trade.pnl > 0 ? "text-[#1ED760]/50" : "text-[#E5534B]/50")}>
                                  {trade.pnl > 0 ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
                                  {Math.abs((trade.pnl / 1000) * 100).toFixed(1)}% ROI
                                </div>
@@ -473,7 +473,7 @@ export function StrategyDetail() {
              <div className="p-5 flex-1 flex flex-col">
                 <button 
                   onClick={() => navigate('/journal')}
-                  className="group w-full py-3 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold text-sm mb-6 hover:bg-emerald-500/20 transition-all flex items-center justify-center gap-2 active:scale-[0.98]"
+                  className="group w-full py-3 rounded-xl bg-[#1ED760]/10 text-[#1ED760] border border-[#1ED760]/20 font-bold text-sm mb-6 hover:bg-[#1ED760]/20 transition-all flex items-center justify-center gap-2 active:scale-[0.98]"
                 >
                   <Plus className="w-4 h-4 group-hover:rotate-90 transition-transform" />
                   Write New Entry

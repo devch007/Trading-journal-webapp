@@ -9,7 +9,7 @@ import { useTrades } from "../hooks/useTrades";
 import { useAuth } from "../contexts/AuthContext";
 import { useAccountContext } from "../contexts/AccountContext";
 import { MonthlyPnLCalendar } from "../components/MonthlyPnLCalendar";
-import { getTradeDate } from "../lib/timeUtils";
+import { getTradeDate, normalizeImportedDateTime } from "../lib/timeUtils";
 
 // Initial static data
 const initialEquityData = [
@@ -41,7 +41,7 @@ const initialPerformance = [
   { pair: "EURUSD", winRate: 82, color: "bg-primary" },
   { pair: "XAUUSD", winRate: 65, color: "bg-primary" },
   { pair: "GBPUSD", winRate: 58, color: "bg-primary" },
-  { pair: "USDJPY", winRate: 42, color: "bg-rose-500" },
+  { pair: "USDJPY", winRate: 42, color: "bg-[#E5534B]" },
   { pair: "USDCAD", winRate: 50, color: "bg-gray-500" },
 ];
 
@@ -55,30 +55,30 @@ const CustomTooltip = ({ active, payload }: any) => {
     return (
       <div className="glass-card p-4 rounded-xl border border-white/10 flex flex-col gap-2 shadow-2xl bg-[#0d0d16]/95 backdrop-blur-md min-w-[200px]">
         <div className="flex justify-between items-center border-b border-white/5 pb-2 mb-1">
-          <p className="text-on-surface-variant font-bold text-[10px] uppercase tracking-widest">{item.fullDate || item.name}</p>
+          <p className="type-label text-[10px]">{item.fullDate || item.name}</p>
           {item.action && (
-            <span className={`text-[9px] font-black px-1.5 py-0.5 rounded ${item.action === 'BUY' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}>
+            <span className={`type-micro text-[9px] px-1.5 py-0.5 rounded ${item.action === 'BUY' ? 'bg-[#1ED760]/10 text-[#1ED760]' : 'bg-[#E5534B]/10 text-[#E5534B]'}`}>
               {item.action}
             </span>
           )}
         </div>
         
         <div className="flex justify-between items-center">
-          <span className="text-gray-500 text-xs font-medium">Equity</span>
-          <p className="font-bold text-white text-sm">${value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+          <span className="type-label text-[11px]">Equity</span>
+          <p className="font-bold text-white text-sm tnum">${value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
         </div>
 
         {item.symbol && (
           <div className="flex justify-between items-center">
-            <span className="text-gray-500 text-xs font-medium">Asset</span>
+            <span className="type-label text-[11px]">Asset</span>
             <p className="text-white text-xs font-bold">{item.symbol}</p>
           </div>
         )}
 
         {tradePnl !== undefined && item.fullDate !== 'Opening Balance' && (
           <div className="flex justify-between items-center pt-1 border-t border-white/5 mt-1">
-            <span className="text-gray-500 text-xs font-medium">Result</span>
-            <div className={`flex items-center gap-1 font-bold text-xs ${isPositive ? 'text-emerald-400' : 'text-rose-400'}`}>
+            <span className="type-label text-[11px]">Result</span>
+            <div className={`flex items-center gap-1 font-bold text-xs tnum ${isPositive ? 'text-[#1ED760]' : 'text-[#E5534B]'}`}>
               {isPositive ? '+' : '-'}${Math.abs(tradePnl).toFixed(2)}
               {isPositive ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
             </div>
@@ -168,7 +168,7 @@ export function Dashboard() {
       
       let color = "bg-gray-500";
       if (winRate >= 60) color = "bg-primary";
-      else if (winRate < 50) color = "bg-rose-500";
+      else if (winRate < 50) color = "bg-[#E5534B]";
       
       return { pair, winRate, color };
     }).sort((a, b) => b.winRate - a.winRate).slice(0, 5);
@@ -286,9 +286,15 @@ export function Dashboard() {
   const handleSaveImportedTrades = async (extractedTrades: any[]) => {
     for (const t of extractedTrades) {
       const pnl = parseFloat(t.profit) || 0;
+
+      // Try to use the AI-extracted date_time; normalizeImportedDateTime handles
+      // MT5 format ("2026.04.03 14:30") and forces year to 2026.
+      // Falls back to right now only as a last resort.
+      const isoDate = normalizeImportedDateTime(t.date_time);
       const now = new Date();
-      const dateStr = t.date_time || (now.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + 
-        ', ' + now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
+      now.setFullYear(2026); // even the fallback must be in 2026
+      const dateStr = isoDate || now.toISOString();
+
       await addTrade({
         accountId: selectedAccountId || '',
         date: dateStr,
@@ -355,7 +361,23 @@ export function Dashboard() {
               content: [
                 {
                   type: "text",
-                  text: "Extract the trades from this MT5/trading screenshot. Return ONLY a valid JSON object with a 'trades' array. Each trade should have: symbol (string), type ('BUY' or 'SELL'), volume (number), entry_price (string), exit_price (string), profit (number), commission (number, default 0), date_time (string, extract the exact timestamp of the trade. If the year is not visible, default to the year 2026 e.g., '2026.04.03 14:30', otherwise null), and confidence ('High', 'Medium', or 'Low' based on how clearly you can read the row). Keep in mind that MT5 usually has two 'Price' columns: the first one is the entry_price, and the second one (further to the right) is the exit_price. Ensure you extract the exact prices as strings (e.g., '145.200'). Do not include any markdown formatting or explanations."
+                  text: `You are a trading data extraction assistant. Extract all trades from this MT5/trading platform screenshot.
+
+Return ONLY a valid JSON object with a 'trades' array. Each element must have these fields:
+- symbol (string, e.g. "EURUSD.x")
+- type ("BUY" or "SELL" only)
+- volume (number)
+- entry_price (string, exact value from first Price column, e.g. "1.15294")
+- exit_price (string, exact value from second Price column, e.g. "1.15360")
+- profit (number, positive or negative)
+- commission (number, default 0 if not shown)
+- date_time (string — CRITICAL: extract the exact timestamp shown for each trade row in MT5 dot-format: "YYYY.MM.DD HH:MM:SS". The year is ALWAYS 2026 — if it is not visible or is ambiguous, write 2026. Example: "2026.04.03 14:35:22". Never return null for this field.)
+- confidence ("High", "Medium", or "Low" — how clearly you can read the row)
+
+IMPORTANT:
+- MT5 has two Price columns per row: the FIRST is entry_price, the SECOND (further right) is exit_price.
+- Every date_time MUST include the year 2026 in the format shown above.
+- Do NOT include markdown, code fences, or explanations — return raw JSON only.`
                 },
                 {
                   type: "image_url",
@@ -442,7 +464,7 @@ export function Dashboard() {
       <div className="px-8 flex flex-col gap-8">
         {/* Quick Actions */}
         <div className="flex flex-col gap-4">
-          <h3 className="font-headline text-lg text-white">Quick Actions</h3>
+          <h3 className="type-h2 text-white">Quick Actions</h3>
           <div className="flex gap-4 flex-wrap">
             <button 
               onClick={() => setIsTradeModalOpen(true)}
@@ -452,8 +474,8 @@ export function Dashboard() {
                 <Plus className="w-5 h-5 text-primary" />
               </div>
               <div className="flex flex-col items-start">
-                <span className="font-bold text-white text-sm">Log New Trade</span>
-                <span className="text-xs text-on-surface-variant">Manually enter trade details</span>
+                <span className="type-h2 text-[14px] text-white">Log New Trade</span>
+                <span className="type-body text-[12px]">Manually enter trade details</span>
               </div>
             </button>
 
@@ -477,13 +499,13 @@ export function Dashboard() {
                     <Upload className="w-5 h-5 text-primary" />
                   )}
                 </div>
-                <div className="flex flex-col items-start">
-                  <span className="font-bold text-white text-sm">{isExtracting ? 'Analyzing screenshot...' : 'Import Trades'}</span>
-                  <span className="text-xs text-on-surface-variant">{isExtracting ? 'Please wait' : 'Extract from MT5 screenshot'}</span>
+              <div className="flex flex-col items-start">
+                  <span className="type-h2 text-[14px] text-white">{isExtracting ? 'Analyzing screenshot...' : 'Import Trades'}</span>
+                  <span className="type-body text-[12px]">{isExtracting ? 'Please wait' : 'Extract from MT5 screenshot'}</span>
                 </div>
               </button>
               {extractionError && (
-                <div className="absolute top-full mt-2 left-0 flex items-center gap-1 text-xs text-rose-400 bg-rose-500/10 px-3 py-1.5 rounded-lg border border-rose-500/20 whitespace-nowrap">
+                <div className="absolute top-full mt-2 left-0 flex items-center gap-1 text-xs text-[#E5534B] bg-[#E5534B]/10 px-3 py-1.5 rounded-lg border border-[#E5534B]/20 whitespace-nowrap">
                   <AlertCircle className="w-3 h-3" />
                   {extractionError}
                 </div>
@@ -533,14 +555,14 @@ export function Dashboard() {
             <div className="glass-card p-6 rounded-2xl flex flex-col gap-6">
               <div className="flex justify-between items-center">
                 <div className="flex items-center gap-3">
-                  <h3 className="font-headline text-lg text-white">Equity Curve</h3>
+                  <h3 className="type-h2 text-white">Equity Curve</h3>
                 </div>
                 <div className="flex gap-2">
                   {['1D', '1W', '1M', 'ALL'].map(p => (
                     <button 
                       key={p} 
                       onClick={() => setPeriod(p)}
-                      className={`px-3 py-1 text-xs font-label rounded-lg transition-colors ${period === p ? 'bg-primary text-background font-bold' : 'bg-white/5 hover:bg-white/10 text-on-surface-variant hover:text-white'}`}
+                      className={`px-3 py-1 type-micro rounded-lg transition-colors ${period === p ? 'bg-primary text-background' : 'bg-white/5 hover:bg-white/10 text-[#A7A7A7] hover:text-white'}`}
                     >
                       {p}
                     </button>
@@ -576,10 +598,10 @@ export function Dashboard() {
             {/* Recent Execution History */}
             <div className="glass-card p-6 rounded-2xl flex flex-col gap-6">
               <div className="flex justify-between items-center">
-                <h3 className="font-headline text-lg text-white">Recent Execution History</h3>
+                <h3 className="type-h2 text-white">Recent Execution History</h3>
                 <button 
                   onClick={() => navigate('/trades')}
-                  className="text-sm text-primary hover:text-primary/80 transition-colors font-label"
+                  className="type-body text-primary hover:text-primary/80 transition-colors"
                 >
                   View All
                 </button>
@@ -587,22 +609,22 @@ export function Dashboard() {
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse">
                   <thead>
-                    <tr className="text-xs text-on-surface-variant font-label uppercase border-b border-white/5">
-                      <th className="pb-3 font-medium">Date</th>
-                      <th className="pb-3 font-medium">Symbol</th>
-                      <th className="pb-3 font-medium">Action</th>
-                      <th className="pb-3 font-medium">Size</th>
-                      <th className="pb-3 font-medium text-right">Result</th>
+                    <tr className="type-label text-[10px] border-b border-white/5">
+                      <th className="pb-3">Date</th>
+                      <th className="pb-3">Symbol</th>
+                      <th className="pb-3">Action</th>
+                      <th className="pb-3">Size</th>
+                      <th className="pb-3 text-right">Result</th>
                     </tr>
                   </thead>
                   <tbody className="text-sm">
                     {(trades.length > 0 ? trades.slice(0, 5) : initialTrades).map((trade: any, index: number) => (
                       <tr key={trade.id || index} className="border-b border-white/5 hover:bg-white/[0.02] transition-colors group animate-in fade-in slide-in-from-top-2 duration-500">
-                        <td className="py-4 text-on-surface-variant font-label text-xs">{trade.date || 'N/A'}</td>
-                        <td className="py-4 font-bold text-white">{trade.symbol || 'N/A'}</td>
-                        <td className={`py-4 font-bold text-xs ${trade.action === 'BUY' ? 'text-emerald-400' : 'text-rose-400'}`}>{trade.action || 'N/A'}</td>
-                        <td className="py-4 text-on-surface-variant font-data text-xs">{trade.size || 'N/A'}</td>
-                        <td className={`py-4 text-right font-data font-bold ${trade.isPositive ? 'text-emerald-400' : 'text-rose-400'}`}>{trade.result || '$0.00'}</td>
+                        <td className="py-4 type-body text-[12px] text-[#6A6A6A]">{trade.date || 'N/A'}</td>
+                        <td className="py-4 type-h2 text-[14px] text-white">{trade.symbol || 'N/A'}</td>
+                        <td className={`py-4 type-micro ${trade.action === 'BUY' ? 'text-[#1ED760]' : 'text-[#E5534B]'}`}>{trade.action || 'N/A'}</td>
+                        <td className="py-4 type-body text-[12px] tnum">{trade.size || 'N/A'}</td>
+                        <td className={`py-4 text-right font-bold tnum text-[14px] ${trade.isPositive ? 'text-[#1ED760]' : 'text-[#E5534B]'}`}>{trade.result || '$0.00'}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -615,12 +637,12 @@ export function Dashboard() {
           <div className="flex flex-col gap-6">
             {/* Quant Insights */}
             <div className="glass-card p-6 rounded-2xl flex flex-col gap-4">
-              <h3 className="font-headline text-lg text-white mb-2">Quant Insights</h3>
+              <h3 className="type-h2 text-white mb-2">Quant Insights</h3>
               <div className="flex flex-col">
                 {quantInsights.map((insight, i) => (
                   <div key={i} className={`flex justify-between items-center py-4 ${i !== quantInsights.length - 1 ? 'border-b border-white/5' : ''}`}>
-                    <span className="text-sm text-on-surface-variant font-label">{insight.label}</span>
-                    <span className={`font-data font-bold transition-colors duration-500 ${insight.isPositive ? 'text-emerald-400' : 'text-rose-400'}`}>
+                    <span className="type-label text-[12px]">{insight.label}</span>
+                    <span className={`font-bold tnum text-[15px] transition-colors duration-500 ${insight.isPositive ? 'text-[#1ED760]' : 'text-[#E5534B]'}`}>
                       {formatCurrency(insight.value)}
                     </span>
                   </div>
@@ -630,13 +652,13 @@ export function Dashboard() {
 
             {/* Performance by Pair */}
             <div className="glass-card p-6 rounded-2xl flex flex-col gap-6">
-              <h3 className="font-headline text-lg text-white">Performance by Pair</h3>
+              <h3 className="type-h2 text-white">Performance by Pair</h3>
               <div className="flex flex-col gap-5">
                 {performanceByPair.map((perf, i) => (
                   <div key={i} className="flex flex-col gap-2">
-                    <div className="flex justify-between items-center text-xs font-label">
-                      <span className="text-white font-bold">{perf.pair}</span>
-                      <span className="text-on-surface-variant transition-all duration-500">{perf.winRate.toFixed(0)}% WIN</span>
+                    <div className="flex justify-between items-center">
+                      <span className="type-h2 text-[13px] text-white">{perf.pair}</span>
+                      <span className="type-label text-[11px] transition-all duration-500">{perf.winRate.toFixed(0)}% WIN</span>
                     </div>
                     <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
                       <div className={`h-full rounded-full transition-all duration-1000 ease-out ${perf.color}`} style={{ width: `${perf.winRate}%` }}></div>
@@ -661,14 +683,14 @@ function StatCard({ title, value, trend, isPositive, icon }: { title: string, va
         <div className="p-2 bg-white/5 rounded-lg border border-white/10">
           {icon}
         </div>
-        <div className={`flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-full ${isPositive ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}>
+        <div className={`flex items-center gap-1 type-micro px-2 py-1 rounded-full ${isPositive ? 'bg-[#1ED760]/10 text-[#1ED760]' : 'bg-[#E5534B]/10 text-[#E5534B]'}`}>
           {isPositive ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
           {trend}
         </div>
       </div>
       <div>
-        <p className="text-on-surface-variant font-label text-sm mb-1">{title}</p>
-        <h2 className="font-headline text-3xl text-white tracking-tight transition-all duration-500">{value}</h2>
+        <p className="type-label mb-1">{title}</p>
+        <h2 className="type-metric text-white transition-all duration-500">{value}</h2>
       </div>
     </div>
   );

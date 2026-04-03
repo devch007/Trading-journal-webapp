@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600&family=Epilogue:wght@700&family=Space+Grotesk:wght@500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=DM+Sans:wght@400;500;600;700;800;900&family=DM+Mono:wght@400;500&display=swap');
 @import "tailwindcss";
 
 @theme {
@@ -20,7 +20,7 @@
   --color-primary-dim: #2563eb;
   --color-tertiary-fixed: #7ff3be;
   --color-primary: #3b82f6;
-  --color-on-surface-variant: #aca9b6;
+  --color-on-surface-variant: #A7A7A7;
   --color-error: #ff6e84;
   --color-inverse-primary: #1e3a8a;
   --color-surface-container-high: #1f1e2a;
@@ -54,9 +54,18 @@
   --color-on-error-container: #ffb2b9;
   --color-inverse-surface: #fcf8ff;
 
-  --font-headline: "Syne", "Epilogue", sans-serif;
-  --font-body: "Manrope", sans-serif;
-  --font-label: "Space Grotesk", sans-serif;
+  /* ── Spotify-inspired P&L colors ── */
+  --color-pnl-positive: #1ED760;
+  --color-pnl-negative: #E5534B;
+  --color-muted: #A7A7A7;
+  --color-muted-dim: #6A6A6A;
+  --color-body-text: #B3B3B3;
+
+  /* ── Font stack: Circular Std → Inter → DM Sans → sans-serif ── */
+  --font-sans: "Circular Std", "Inter", "DM Sans", sans-serif;
+  --font-headline: "Circular Std", "Inter", "DM Sans", sans-serif;
+  --font-body: "Circular Std", "Inter", "DM Sans", sans-serif;
+  --font-label: "Circular Std", "Inter", "DM Sans", sans-serif;
   --font-data: "DM Mono", monospace;
   --font-mono: "DM Mono", monospace;
 }
@@ -76,12 +85,101 @@
 }
 
 @layer base {
+  * {
+    font-family: "Circular Std", "Inter", "DM Sans", sans-serif;
+  }
   body {
-    @apply bg-background text-on-surface font-body selection:bg-primary/30 selection:text-primary min-h-screen overflow-x-hidden transition-colors duration-300;
+    @apply bg-background text-on-surface selection:bg-primary/30 selection:text-primary min-h-screen overflow-x-hidden transition-colors duration-300;
+    font-family: "Circular Std", "Inter", "DM Sans", sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 }
 
 @layer utilities {
+  /* ── Spotify Type Scale Utilities ── */
+
+  /* Display: 32px / 800 / -0.5px tracking — for hero numbers like account balance */
+  .type-display {
+    font-size: 32px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    color: #FFFFFF;
+    font-feature-settings: 'tnum';
+    line-height: 1.1;
+  }
+
+  /* Heading 1: 22px / 700 / -0.3px — section titles */
+  .type-h1 {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+    line-height: 1.2;
+  }
+
+  /* Heading 2: 16px / 700 / -0.1px — card titles */
+  .type-h2 {
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: -0.1px;
+    line-height: 1.3;
+  }
+
+  /* Label / Metric name: 12px / 400 / 0.3px / UPPERCASE / #A7A7A7 */
+  .type-label {
+    font-size: 12px;
+    font-weight: 400;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+    color: #A7A7A7;
+    line-height: 1.4;
+  }
+
+  /* Metric value: 28px / 700 / -0.4px — big stat numbers */
+  .type-metric {
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.4px;
+    font-feature-settings: 'tnum';
+    line-height: 1.1;
+  }
+
+  /* Body / Descriptions: 14px / 400 / 1.5 line-height / #B3B3B3 */
+  .type-body {
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 1.5;
+    color: #B3B3B3;
+  }
+
+  /* Micro / Tags / Badges: 11px / 600 / 0.5px / UPPERCASE */
+  .type-micro {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    line-height: 1.3;
+  }
+
+  /* Nav items: 13px / 700 / 0px */
+  .type-nav {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0px;
+    line-height: 1.3;
+  }
+
+  /* Tabular numbers for all numeric alignment */
+  .tnum {
+    font-feature-settings: 'tnum';
+  }
+
+  /* P&L coloring */
+  .pnl-positive { color: #1ED760; }
+  .pnl-negative { color: #E5534B; }
+  .text-muted { color: #A7A7A7; }
+  .text-muted-dim { color: #6A6A6A; }
+
   .glass-card {
     background: rgba(255, 255, 255, 0.04);
     backdrop-filter: blur(20px);
@@ -135,9 +233,9 @@
   }
 }
 
-/* React DatePicker Customization for one ui */
+/* React DatePicker Customization */
 .react-datepicker {
-  font-family: var(--font-body);
+  font-family: "Circular Std", "Inter", "DM Sans", sans-serif;
   background-color: var(--color-surface-container-high) !important;
   border: 1px solid var(--color-outline-variant) !important;
   border-radius: 16px !important;
@@ -155,15 +253,21 @@
 }
 .react-datepicker__current-month, .react-datepicker-time__header, .react-datepicker-year-header {
   color: var(--color-on-surface) !important;
-  font-family: var(--font-headline) !important;
-  font-size: 1rem !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.1px !important;
 }
 .react-datepicker__day-name {
   color: var(--color-on-surface-variant) !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
 }
 .react-datepicker__day, .react-datepicker__time-list-item {
   color: var(--color-on-surface) !important;
   border-radius: 8px !important;
+  font-feature-settings: 'tnum' !important;
 }
 .react-datepicker__day:hover {
   background-color: rgba(255, 255, 255, 0.1) !important;

@@ -70,9 +70,9 @@ const StrategyCard: React.FC<StrategyCardProps> = ({ strategy, onEdit, onDelete,
                 <Layers className="w-5 h-5" style={{ color: strategy.color }} />
               </div>
               <div>
-                <h3 className="font-bold text-white text-base tracking-tight">{strategy.name}</h3>
+                <h3 className="type-h2 text-white">{strategy.name}</h3>
                 {strategy.description && (
-                  <p className="text-xs text-gray-500 mt-0.5 line-clamp-1">{strategy.description}</p>
+                  <p className="type-body text-[12px] mt-0.5 line-clamp-1">{strategy.description}</p>
                 )}
               </div>
             </div>
@@ -85,7 +85,7 @@ const StrategyCard: React.FC<StrategyCardProps> = ({ strategy, onEdit, onDelete,
               </button>
               <button 
                 onClick={(e) => { e.stopPropagation(); onDelete(); }} 
-                className="p-2 rounded-lg hover:bg-rose-500/10 text-gray-500 hover:text-rose-400 transition-all"
+                className="p-2 rounded-lg hover:bg-[#E5534B]/10 text-gray-500 hover:text-[#E5534B] transition-all"
               >
                 <Trash2 className="w-4 h-4" />
               </button>
@@ -100,11 +100,11 @@ const StrategyCard: React.FC<StrategyCardProps> = ({ strategy, onEdit, onDelete,
               { label: 'Net P&L', value: tradesCount > 0 ? `${pnl >= 0 ? '+' : ''}$${Math.abs(pnl).toFixed(2)}` : 'N/A', positive: pnl >= 0 },
             ].map((stat) => (
               <div key={stat.label} className="bg-white/[0.03] border border-white/5 rounded-xl p-3">
-                <p className="text-[10px] text-gray-500 uppercase tracking-widest font-bold mb-1">{stat.label}</p>
+                <p className="type-label text-[10px] mb-1">{stat.label}</p>
                 <p className={cn(
-                  'text-sm font-bold',
+                  'type-h2 tnum',
                   stat.positive !== undefined
-                    ? (stat.positive ? 'text-emerald-400' : 'text-rose-400')
+                    ? (stat.positive ? 'text-[#1ED760]' : 'text-[#E5534B]')
                     : 'text-white'
                 )}>
                   {stat.value}
@@ -117,7 +117,7 @@ const StrategyCard: React.FC<StrategyCardProps> = ({ strategy, onEdit, onDelete,
           {strategy.timeframes && strategy.timeframes.length > 0 && (
             <div className="flex flex-wrap gap-1.5 mb-3">
               {strategy.timeframes.map(tf => (
-                <span key={tf} className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider"
+                <span key={tf} className="px-2 py-0.5 rounded type-micro text-[10px]"
                   style={{ backgroundColor: strategy.color + '15', color: strategy.color }}>
                   {tf}
                 </span>
@@ -129,7 +129,7 @@ const StrategyCard: React.FC<StrategyCardProps> = ({ strategy, onEdit, onDelete,
           {strategy.tags && strategy.tags.length > 0 && (
             <div className="flex flex-wrap gap-1.5 mb-3">
               {strategy.tags.map(tag => (
-                <span key={tag} className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-white/5 border border-white/5 text-gray-400">
+                <span key={tag} className="px-2 py-0.5 rounded-full type-micro text-[10px] bg-white/5 border border-white/5 text-[#6A6A6A]">
                   #{tag}
                 </span>
               ))}
@@ -141,7 +141,7 @@ const StrategyCard: React.FC<StrategyCardProps> = ({ strategy, onEdit, onDelete,
             <>
               <button
                 onClick={(e) => { e.stopPropagation(); setExpanded(e => !e); }}
-                className="flex items-center gap-1.5 text-xs font-bold text-gray-500 hover:text-gray-300 transition-colors mt-2"
+                className="flex items-center gap-1.5 type-body text-[12px] text-[#6A6A6A] hover:text-[#A7A7A7] transition-colors mt-2"
               >
                 <BookOpen className="w-3.5 h-3.5" />
                 {strategy.rules.length} Rules
@@ -160,7 +160,7 @@ const StrategyCard: React.FC<StrategyCardProps> = ({ strategy, onEdit, onDelete,
                       {strategy.rules.map((rule, i) => (
                         <div key={i} className="flex items-start gap-2 p-2.5 bg-white/[0.03] rounded-lg border border-white/5">
                           <div className="w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0" style={{ backgroundColor: strategy.color }} />
-                          <span className="text-xs text-gray-400">{rule}</span>
+                          <span className="type-body text-[12px] text-[#A7A7A7]">{rule}</span>
                         </div>
                       ))}
                     </div>
@@ -261,11 +261,11 @@ export function Strategies() {
             },
           ].map((item) => (
             <div key={item.label} className="bg-white/[0.03] border border-white/5 rounded-2xl p-5 backdrop-blur-xl hover:border-blue-500/20 transition-all group">
-              <p className="text-[10px] text-gray-500 uppercase tracking-widest font-bold mb-2">{item.label}</p>
-              <p className={cn('text-xl font-bold', item.positive !== undefined ? (item.positive ? 'text-emerald-400' : 'text-rose-400') : 'text-white')}>
+              <p className="type-label mb-2">{item.label}</p>
+              <p className={cn('type-h1 tnum', item.positive !== undefined ? (item.positive ? 'text-[#1ED760]' : 'text-[#E5534B]') : 'text-white')}>
                 {item.value}
               </p>
-              <p className="text-[10px] text-gray-600 mt-1">{item.sub}</p>
+              <p className="type-body text-[10px] text-[#6A6A6A] mt-1">{item.sub}</p>
             </div>
           ))}
         </div>
@@ -282,11 +282,11 @@ export function Strategies() {
                 className="bg-black/40 border border-white/10 rounded-xl pl-4 pr-10 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500/40 transition-all w-64 placeholder:text-gray-600"
               />
             </div>
-            <span className="text-xs text-gray-500 font-bold">{filtered.length} strategies</span>
+            <span className="type-label"> {filtered.length} strategies</span>
           </div>
           <button
             onClick={() => { setEditTarget(undefined); setShowForm(true); }}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white transition-all shadow-[0_0_20px_rgba(59,130,246,0.2)] hover:shadow-[0_0_30px_rgba(59,130,246,0.35)] bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 active:scale-95"
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl type-nav text-white transition-all shadow-[0_0_20px_rgba(59,130,246,0.2)] hover:shadow-[0_0_30px_rgba(59,130,246,0.35)] bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 active:scale-95"
           >
             <Plus className="w-4 h-4" />
             New Strategy
@@ -297,7 +297,7 @@ export function Strategies() {
         {loading ? (
           <div className="flex items-center justify-center h-60 text-gray-500">
             <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mr-3" />
-            <span className="text-sm font-bold uppercase tracking-widest">Loading...</span>
+            <span className="type-micro">Loading...</span>
           </div>
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-72 border border-dashed border-white/10 rounded-2xl text-gray-600">

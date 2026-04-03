@@ -299,12 +299,12 @@ export function Journal() {
                   <div className="p-5">
                     <div className="flex justify-between items-start mb-3">
                       <div>
-                        <h4 className="font-headline text-lg text-white tracking-tight">{entry.symbol}</h4>
-                        <p className="text-[10px] text-on-surface-variant font-label uppercase tracking-widest mt-0.5">{formatDate(entry)}</p>
+                        <h4 className="type-h2">{entry.symbol}</h4>
+                        <p className="text-[10px] text-on-surface-variant type-label mt-0.5">{formatDate(entry)}</p>
                       </div>
                       <div className={cn(
-                        "font-data font-bold text-base",
-                        entry.pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'
+                        "type-h2 tnum text-base",
+                        entry.pnl >= 0 ? 'text-[#1ED760]' : 'text-[#E5534B]'
                       )}>
                         {entry.pnl >= 0 ? "+" : ""}{entry.pnl.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </div>
@@ -313,18 +313,18 @@ export function Journal() {
                     <div className="flex items-center gap-3">
                       <span className={cn(
                         "px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-tighter",
-                        entry.action === 'BUY' ? "bg-emerald-500/10 text-emerald-400" : "bg-rose-500/10 text-rose-400"
+                        entry.action === 'BUY' ? "bg-[#1ED760]/10 text-[#1ED760]" : "bg-[#E5534B]/10 text-[#E5534B]"
                       )}>
                         {entry.action === 'BUY' ? 'LONG' : 'SHORT'}
                       </span>
-                      <span className="text-[10px] text-gray-500 font-label uppercase tracking-widest">
+                      <span className="text-[10px] text-gray-500 type-label">
                         {entry.strategy || entry.tag || "SCALP"}
                       </span>
                       {entry.sentiment && (
                         <div className={cn(
                           "px-1.5 py-0.5 rounded text-[8px] font-bold uppercase tracking-tighter flex items-center gap-1",
-                          entry.sentiment === 'positive' ? "bg-emerald-500/10 text-emerald-400" :
-                          entry.sentiment === 'negative' ? "bg-rose-500/10 text-rose-400" :
+                          entry.sentiment === 'positive' ? "bg-[#1ED760]/10 text-[#1ED760]" :
+                          entry.sentiment === 'negative' ? "bg-[#E5534B]/10 text-[#E5534B]" :
                           "bg-gray-500/10 text-gray-400"
                         )}>
                           <BrainCircuit className="w-2 h-2" />
@@ -354,7 +354,7 @@ export function Journal() {
           {!normalizedEntry ? (
             <div className="flex-1 flex flex-col items-center justify-center text-gray-500 p-12 text-center">
               <Target className="w-16 h-16 mb-6 opacity-10" />
-              <h3 className="text-xl font-headline text-white/50 mb-2">Select a trade to analyze</h3>
+              <h3 className="text-xl type-h2 text-white/50 mb-2">Select a trade to analyze</h3>
               <p className="text-sm max-w-xs">Choose a trade from the list on the left to view detailed performance metrics and journal entries.</p>
             </div>
           ) : (
@@ -367,21 +367,21 @@ export function Journal() {
                   </div>
                   <div>
                     <div className="flex items-center gap-3 mb-1">
-                      <h2 className="font-headline text-3xl text-white tracking-tighter">{normalizedEntry.symbol}</h2>
+                      <h2 className="type-display">{normalizedEntry.symbol}</h2>
                       <span className={cn(
                         "px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest",
-                        normalizedEntry.pnl >= 0 ? "bg-primary/20 text-primary border border-primary/30" : "bg-rose-500/20 text-rose-400 border border-rose-500/30"
+                        normalizedEntry.pnl >= 0 ? "bg-primary/20 text-primary border border-primary/30" : "bg-[#E5534B]/20 text-[#E5534B] border border-[#E5534B]/30"
                       )}>
                         {normalizedEntry.pnl >= 0 ? "Winner" : "Loser"}
                       </span>
                     </div>
                     <div className="flex items-center gap-4 text-on-surface-variant">
-                      <span className="text-[10px] font-label uppercase tracking-widest flex items-center gap-1.5">
-                        {normalizedEntry.pnl >= 0 ? <TrendingUp className="w-3 h-3 text-primary" /> : <TrendingDown className="w-3 h-3 text-rose-400" />}
+                      <span className="text-[10px] type-label flex items-center gap-1.5">
+                        {normalizedEntry.pnl >= 0 ? <TrendingUp className="w-3 h-3 text-primary" /> : <TrendingDown className="w-3 h-3 text-[#E5534B]" />}
                         {normalizedEntry.type} Position
                       </span>
                       <span className="w-1 h-1 rounded-full bg-white/10" />
-                      <span className="text-[10px] font-label uppercase tracking-widest flex items-center gap-1.5">
+                      <span className="text-[10px] type-label flex items-center gap-1.5">
                         <CalendarIcon className="w-3 h-3" />
                         {normalizedEntry.date}
                       </span>
@@ -390,10 +390,10 @@ export function Journal() {
                 </div>
                 <div className="flex items-center gap-6 text-right">
                   <div>
-                    <p className="text-[10px] text-on-surface-variant font-label uppercase tracking-widest mb-1">Total P&L</p>
+                    <p className="text-[10px] text-on-surface-variant type-label mb-1">Total P&L</p>
                     <h3 className={cn(
-                      "font-headline text-3xl tracking-tighter",
-                      normalizedEntry.pnl >= 0 ? "text-primary" : "text-rose-400"
+                      "type-display",
+                      normalizedEntry.pnl >= 0 ? "text-primary" : "text-[#E5534B]"
                     )}>
                       {normalizedEntry.pnl >= 0 ? "+" : ""}{normalizedEntry.pnl.toFixed(2)}
                     </h3>
@@ -434,17 +434,17 @@ export function Journal() {
                     <div key={idx} className="bg-white/5 p-5 rounded-2xl border border-white/5 group hover:border-primary/30 transition-all">
                       <div className="flex items-center gap-2 mb-2">
                         <item.icon className="w-3 h-3 text-gray-500 group-hover:text-primary transition-colors" />
-                        <span className="text-[10px] text-on-surface-variant font-label uppercase tracking-widest">{item.label}</span>
+                        <span className="text-[10px] text-on-surface-variant type-label">{item.label}</span>
                       </div>
                       {item.field ? (
                         <input 
                           key={`${normalizedEntry.id}-${item.field}`}
                           defaultValue={item.value as string} 
                           onBlur={e => updateEntry({ [item.field!]: e.target.value })} 
-                          className="bg-transparent font-data font-bold text-lg text-white w-full focus:outline-none border-b border-transparent focus:border-primary/50 transition-all" 
+                          className="bg-transparent type-metric tnum text-[18px] text-white w-full focus:outline-none border-b border-transparent focus:border-primary/50 transition-all" 
                         />
                       ) : (
-                        <div className="font-data font-bold text-lg text-white">{item.value}</div>
+                        <div className="type-metric tnum text-[18px] text-white">{item.value}</div>
                       )}
                     </div>
                   ))}
@@ -453,7 +453,7 @@ export function Journal() {
             {/* Trade Settings */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               <div className="space-y-3">
-                <label className="text-[10px] text-on-surface-variant font-label uppercase tracking-widest flex items-center gap-2">
+                <label className="text-[10px] text-on-surface-variant type-label flex items-center gap-2">
                   <Target className="w-3 h-3 text-primary" /> Trade Type
                 </label>
                 <select 
@@ -468,7 +468,7 @@ export function Journal() {
               </div>
 
               <div className="space-y-3">
-                <label className="text-[10px] text-on-surface-variant font-label uppercase tracking-widest flex items-center gap-2">
+                <label className="text-[10px] text-on-surface-variant type-label flex items-center gap-2">
                   <Tag className="w-3 h-3 text-primary" /> Tags
                 </label>
                 <div className="flex flex-wrap gap-2 mb-2">
@@ -503,7 +503,7 @@ export function Journal() {
 
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
-                  <label className="text-[10px] text-on-surface-variant font-label uppercase tracking-widest flex items-center gap-2">
+                  <label className="text-[10px] text-on-surface-variant type-label flex items-center gap-2">
                     <Star className="w-3 h-3 text-amber-400" /> Rating
                   </label>
                   <span className="text-xs font-bold text-white">{normalizedEntry.rating}/10</span>
@@ -523,7 +523,7 @@ export function Journal() {
 
             {/* Emotions */}
             <div className="space-y-4">
-              <label className="text-[10px] text-on-surface-variant font-label uppercase tracking-widest flex items-center gap-2">
+              <label className="text-[10px] text-on-surface-variant type-label flex items-center gap-2">
                 <Smile className="w-3 h-3 text-primary" /> Psychological State
               </label>
               <div className="flex gap-4">
@@ -547,10 +547,10 @@ export function Journal() {
             {/* Checklist */}
             <div className="space-y-4">
               <div className="flex justify-between items-center">
-                <label className="text-[10px] text-on-surface-variant font-label uppercase tracking-widest flex items-center gap-2">
+                <label className="text-[10px] text-on-surface-variant type-label flex items-center gap-2">
                   <CheckSquare className="w-3 h-3 text-primary" /> Execution Checklist
                 </label>
-                <span className="text-xs font-bold text-emerald-400">{normalizedEntry.checklist.filter(c => c.checked).length}/5 Complete</span>
+                <span className="text-xs font-bold text-[#1ED760]">{normalizedEntry.checklist.filter(c => c.checked).length}/5 Complete</span>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
                 {normalizedEntry.checklist.map((item, idx) => (
@@ -560,19 +560,19 @@ export function Journal() {
                     className={cn(
                       "p-4 rounded-2xl border text-left transition-all group",
                       item.checked 
-                        ? "bg-emerald-500/10 border-emerald-500/30" 
+                        ? "bg-[#1ED760]/10 border-[#1ED760]/30" 
                         : "bg-white/5 border-white/5 hover:border-white/20"
                     )}
                   >
                     <div className="mb-3">
                       {item.checked 
-                        ? <CheckSquare className="w-5 h-5 text-emerald-400" /> 
+                        ? <CheckSquare className="w-5 h-5 text-[#1ED760]" /> 
                         : <Square className="w-5 h-5 text-gray-600 group-hover:text-gray-400" />
                       }
                     </div>
                     <div className={cn(
                       "text-[10px] font-bold leading-tight uppercase tracking-tight",
-                      item.checked ? "text-emerald-400" : "text-gray-500"
+                      item.checked ? "text-[#1ED760]" : "text-gray-500"
                     )}>
                       {item.label}
                     </div>
@@ -584,15 +584,15 @@ export function Journal() {
             {/* Notes */}
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <label className="text-[10px] text-on-surface-variant font-label uppercase tracking-widest flex items-center gap-2">
+                <label className="text-[10px] text-on-surface-variant type-label flex items-center gap-2">
                   <MessageSquare className="w-3 h-3 text-primary" /> Trade Notes
                 </label>
                 <div className="flex items-center gap-3">
                   {normalizedEntry.sentiment && (
                     <div className={cn(
                       "px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-widest flex items-center gap-1",
-                      normalizedEntry.sentiment === 'positive' ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" :
-                      normalizedEntry.sentiment === 'negative' ? "bg-rose-500/10 text-rose-400 border border-rose-500/20" :
+                      normalizedEntry.sentiment === 'positive' ? "bg-[#1ED760]/10 text-[#1ED760] border border-[#1ED760]/20" :
+                      normalizedEntry.sentiment === 'negative' ? "bg-[#E5534B]/10 text-[#E5534B] border border-[#E5534B]/20" :
                       "bg-gray-500/10 text-gray-400 border border-gray-500/20"
                     )}>
                       <BrainCircuit className="w-3 h-3" />
@@ -612,7 +612,7 @@ export function Journal() {
 
             {/* Proof */}
             <div className="space-y-3">
-              <label className="text-[10px] text-on-surface-variant font-label uppercase tracking-widest flex items-center gap-2">
+              <label className="text-[10px] text-on-surface-variant type-label flex items-center gap-2">
                 <ImageIcon className="w-3 h-3 text-primary" /> Trade Proof
               </label>
               <div 
@@ -629,7 +629,7 @@ export function Journal() {
                     </div>
                     <button 
                       onClick={(e) => { e.stopPropagation(); updateEntry({ proof: null }); }} 
-                      className="absolute top-4 right-4 bg-rose-500 p-2 rounded-xl shadow-lg hover:bg-rose-600 transition-colors z-20"
+                      className="absolute top-4 right-4 bg-[#E5534B] p-2 rounded-xl shadow-lg hover:bg-rose-600 transition-colors z-20"
                     >
                       <X className="w-4 h-4 text-white" />
                     </button>

@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { Trade } from '../hooks/useTrades';
+import { getTradeDate } from '../lib/timeUtils';
 
 interface MonthlyPnLCalendarProps {
   trades: Trade[];
@@ -33,13 +34,9 @@ export function MonthlyPnLCalendar({ trades }: MonthlyPnLCalendarProps) {
         if (!isNaN(parsed.getTime())) {
           tradeDate = parsed;
         }
-      } else if (trade.date && typeof trade.date === 'string' && trade.date.startsWith('Today')) {
-        tradeDate = new Date();
       } else if (trade.date) {
-        const parsed = new Date(trade.date);
-        if (!isNaN(parsed.getTime())) {
-          tradeDate = parsed;
-        }
+        // Use getTradeDate which handles ISO, MT5 dot-format, and relative strings
+        tradeDate = getTradeDate(trade.date);
       }
       
       if (tradeDate.getFullYear() === year && tradeDate.getMonth() === month) {
@@ -90,21 +87,21 @@ export function MonthlyPnLCalendar({ trades }: MonthlyPnLCalendarProps) {
   return (
     <div className="glass-card p-6 rounded-2xl flex flex-col gap-6">
       <div className="flex justify-between items-center">
-        <h3 className="font-headline text-xl font-bold text-white">Monthly P&L</h3>
-        <div className="flex items-center gap-4 text-sm font-bold">
-          <span className="text-gray-400">Monthly: <span className={totalMonthlyPnl >= 0 ? 'text-primary' : 'text-rose-400'}>{formatCurrency(totalMonthlyPnl)}</span></span>
-          <span className="text-gray-400">{monthName} {year}</span>
+        <h3 className="type-h1 text-white">Monthly P&L</h3>
+        <div className="flex items-center gap-4">
+          <span className="type-label">Monthly: <span className={totalMonthlyPnl >= 0 ? 'text-[#1ED760]' : 'text-[#E5534B]'}>{formatCurrency(totalMonthlyPnl)}</span></span>
+          <span className="type-label">{monthName} {year}</span>
         </div>
       </div>
       
       <div className="grid grid-cols-8 gap-2">
         {/* Header Row */}
         {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((day, i) => (
-          <div key={i} className="text-center text-xs font-bold text-gray-500 uppercase tracking-wider pb-2">
+          <div key={i} className="text-center type-label text-[10px] pb-2">
             {day}
           </div>
         ))}
-        <div className="text-center text-xs font-bold text-gray-500 uppercase tracking-wider pb-2">
+        <div className="text-center type-label text-[10px] pb-2">
           Weekly
         </div>
 
@@ -118,11 +115,11 @@ export function MonthlyPnLCalendar({ trades }: MonthlyPnLCalendarProps) {
               
               if (dayData) {
                 if (dayData.pnl > 0) {
-                  bgColor = "bg-primary/10";
-                  borderColor = "border-primary/30";
+                  bgColor = "bg-[#1ED760]/10";
+                  borderColor = "border-[#1ED760]/30";
                 } else if (dayData.pnl < 0) {
-                  bgColor = "bg-rose-500/10";
-                  borderColor = "border-rose-500/30";
+                  bgColor = "bg-[#E5534B]/10";
+                  borderColor = "border-[#E5534B]/30";
                 }
               }
               
@@ -138,16 +135,16 @@ export function MonthlyPnLCalendar({ trades }: MonthlyPnLCalendarProps) {
                   className={`aspect-square rounded-xl border ${borderColor} ${bgColor} p-2 flex flex-col justify-between transition-colors hover:border-white/20`}
                 >
                   {day && (
-                    <span className={`text-xs font-bold ${isToday ? 'text-primary' : 'text-gray-500'}`}>
+                    <span className={`text-[11px] font-bold tnum ${isToday ? 'text-primary' : 'text-[#6A6A6A]'}`}>
                       {day}
                     </span>
                   )}
                   {dayData && (
                     <div className="flex flex-col items-end">
-                      <span className={`text-[10px] font-bold ${dayData.pnl >= 0 ? 'text-primary' : 'text-rose-400'}`}>
+                      <span className={`text-[10px] font-bold tnum ${dayData.pnl >= 0 ? 'text-[#1ED760]' : 'text-[#E5534B]'}`}>
                         {formatCurrency(dayData.pnl)}
                       </span>
-                      <span className="text-[8px] text-gray-500 uppercase">{dayData.count} Trades</span>
+                      <span className="type-micro text-[8px] text-[#6A6A6A]">{dayData.count} Trades</span>
                     </div>
                   )}
                 </div>
@@ -156,11 +153,11 @@ export function MonthlyPnLCalendar({ trades }: MonthlyPnLCalendarProps) {
             
             {/* Weekly Summary Cell */}
             <div className="aspect-square rounded-xl border border-white/5 bg-white/10 p-2 flex flex-col items-center justify-center gap-1">
-              <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Weekly</span>
-              <span className={`text-sm font-bold ${week.weeklyPnl >= 0 ? 'text-gray-300' : 'text-rose-400'}`}>
+              <span className="type-micro text-[10px] text-[#6A6A6A]">Weekly</span>
+              <span className={`text-[14px] font-bold tnum ${week.weeklyPnl >= 0 ? 'text-white' : 'text-[#E5534B]'}`}>
                 ${Math.abs(week.weeklyPnl).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
               </span>
-              <span className="text-[9px] text-gray-500">Traded Days</span>
+              <span className="type-micro text-[9px] text-[#6A6A6A]">Traded Days</span>
             </div>
           </React.Fragment>
         ))}
@@ -169,12 +166,12 @@ export function MonthlyPnLCalendar({ trades }: MonthlyPnLCalendarProps) {
       {/* Legend */}
       <div className="flex justify-center items-center gap-6 pt-4">
         <div className="flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full bg-primary"></div>
-          <span className="text-xs font-bold text-gray-400">Profit</span>
+          <div className="w-2 h-2 rounded-full bg-[#1ED760]"></div>
+          <span className="type-label text-[11px]">Profit</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full bg-rose-500"></div>
-          <span className="text-xs font-bold text-gray-400">Loss</span>
+          <div className="w-2 h-2 rounded-full bg-[#E5534B]"></div>
+          <span className="type-label text-[11px]">Loss</span>
         </div>
       </div>
     </div>

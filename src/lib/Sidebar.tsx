@@ -40,12 +40,12 @@ export function Sidebar({ isExpanded, setIsExpanded }: SidebarProps) {
     )}>
       <div className={cn("mb-12", isExpanded ? "flex items-center gap-3" : "flex justify-center")}>
         <div className="w-8 h-8 rounded-lg bg-blue-500/20 flex items-center justify-center shadow-[0_0_15px_rgba(59,130,246,0.3)]">
-          <span className="text-primary font-bold text-xl font-headline">
+          <span className="text-primary type-h2 text-xl">
             T
           </span>
         </div>
         {isExpanded && (
-          <span className="text-white font-bold text-lg tracking-tight font-headline">
+          <span className="text-white text-lg tracking-tight type-h2">
             TRADOVA
           </span>
         )}
@@ -72,7 +72,7 @@ export function Sidebar({ isExpanded, setIsExpanded }: SidebarProps) {
               )}
               <item.icon className={cn("w-6 h-6 shrink-0 transition-transform duration-300", !isExpanded && "group-hover:scale-110")} />
               {isExpanded && (
-                <span className="text-sm font-bold tracking-wide whitespace-nowrap">
+                <span className="type-nav whitespace-nowrap">
                   {item.title}
                 </span>
               )}
@@ -92,7 +92,7 @@ export function Sidebar({ isExpanded, setIsExpanded }: SidebarProps) {
         >
           <CircleUser className="w-6 h-6 shrink-0" />
           {isExpanded && (
-            <span className="text-sm font-bold tracking-wide">
+            <span className="type-nav">
               Profile
             </span>
           )}
@@ -108,7 +108,7 @@ export function Sidebar({ isExpanded, setIsExpanded }: SidebarProps) {
           {isExpanded ? (
             <>
               <ChevronLeft className="w-6 h-6 shrink-0" />
-              <span className="text-sm font-bold tracking-wide">Collapse</span>
+              <span className="type-nav">Collapse</span>
             </>
           ) : (
             <ChevronRight className="w-6 h-6 shrink-0" />

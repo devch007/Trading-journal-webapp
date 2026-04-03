@@ -60,7 +60,7 @@ function PlaceholderPage({ title, subtitle }: { title: string, subtitle: string 
       <TopBar title={title} subtitle={subtitle} showSearch={true} />
       <div className="px-8 flex-1 flex flex-col">
         <div className="glass-card p-8 rounded-2xl flex-1 flex items-center justify-center min-h-[400px]">
-          <p className="text-on-surface-variant font-label text-lg">{title} module coming soon.</p>
+          <p className="text-on-surface-variant type-label text-lg">{title} module coming soon.</p>
         </div>
       </div>
     </div>

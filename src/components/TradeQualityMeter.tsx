@@ -44,17 +44,17 @@ export function TradeQualityMeter({
   const totalScore = Math.round(profitabilityScore + executionScore + journalScore + ratingScore);
 
   const getQualityColor = (score: number) => {
-    if (score >= 80) return "text-emerald-400";
+    if (score >= 80) return "text-[#1ED760]";
     if (score >= 60) return "text-blue-400";
     if (score >= 40) return "text-amber-400";
-    return "text-rose-400";
+    return "text-[#E5534B]";
   };
 
   const getQualityBg = (score: number) => {
-    if (score >= 80) return "bg-emerald-400/20 border-emerald-400/30";
+    if (score >= 80) return "bg-[#1ED760]/20 border-[#1ED760]/30";
     if (score >= 60) return "bg-blue-400/20 border-blue-400/30";
     if (score >= 40) return "bg-amber-400/20 border-amber-400/30";
-    return "bg-rose-400/20 border-rose-400/30";
+    return "bg-[#E5534B]/20 border-[#E5534B]/30";
   };
 
   const categories = [
@@ -70,7 +70,7 @@ export function TradeQualityMeter({
         <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center border border-primary/30">
           <div className="w-2 h-2 rounded-full bg-primary" />
         </div>
-        <h3 className="font-headline text-lg text-white tracking-tight">Trade Quality</h3>
+        <h3 className="type-h2">Trade Quality</h3>
       </div>
 
       <div className="flex flex-col md:flex-row gap-8 items-center mb-8">
@@ -101,7 +101,7 @@ export function TradeQualityMeter({
             />
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className={cn("text-4xl font-bold font-data", getQualityColor(totalScore))}>
+            <span className={cn("text-4xl font-bold tnum", getQualityColor(totalScore))}>
               {totalScore}
             </span>
           </div>
@@ -111,7 +111,7 @@ export function TradeQualityMeter({
         <div className="flex-1 w-full space-y-4">
           {categories.map((cat, idx) => (
             <div key={idx} className="space-y-1.5">
-              <div className="flex justify-between text-[10px] font-label uppercase tracking-widest">
+              <div className="flex justify-between text-[10px] type-label">
                 <span className="text-on-surface-variant">{cat.label}</span>
                 <span className="text-white font-bold">{cat.score}/{cat.max}</span>
               </div>
@@ -130,7 +130,7 @@ export function TradeQualityMeter({
 
       {/* Legend & Info */}
       <div className="space-y-4 pt-4 border-t border-white/5">
-        <div className="flex items-center gap-2 text-[10px] text-on-surface-variant font-label uppercase tracking-widest">
+        <div className="flex items-center gap-2 text-[10px] text-on-surface-variant type-label">
           <Info className="w-3 h-3" />
           How is this calculated?
         </div>
