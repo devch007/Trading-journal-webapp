@@ -150,17 +150,17 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            className="absolute inset-0 bg-black/40 backdrop-blur-md"
           />
           
           <motion.div
             initial={{ opacity: 0, scale: 0.95, y: -20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: -20 }}
-            className="relative w-full max-w-2xl bg-[#1a1a24] border border-white/10 rounded-2xl shadow-2xl overflow-hidden flex flex-col"
+            className="relative w-full max-w-2xl bg-white/5 backdrop-blur-2xl border border-white/20 shadow-[0_8px_32px_0_rgba(0,0,0,0.5)] rounded-2xl overflow-hidden flex flex-col"
           >
             {/* Search Input */}
-            <div className="flex items-center px-5 py-4 border-b border-white/5 gap-4">
+            <div className="flex items-center px-5 py-4 border-b border-white/10 gap-4 bg-white/[0.02]">
               <Search className="w-5 h-5 text-gray-400" />
               <input
                 ref={inputRef}
@@ -168,10 +168,10 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
                 placeholder="Search pages, trades, or symbols..."
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                className="flex-1 bg-transparent border-none outline-none text-white text-lg placeholder:text-gray-600"
+                className="flex-1 bg-transparent border-none outline-none text-white type-h1 placeholder:text-[#6A6A6A]"
               />
-              <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-white/5 border border-white/10 text-[10px] font-bold text-gray-500">
-                <span className="text-xs">ESC</span>
+              <div className="flex items-center gap-1.5 px-2 py-1 rounded bg-white/10 border border-white/10 type-micro text-[#A7A7A7]">
+                <span>ESC</span>
               </div>
             </div>
 
@@ -185,7 +185,7 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
                     
                     return (
                       <div key={cat} className="space-y-1">
-                        <div className="px-3 py-1 text-[10px] font-bold text-gray-500 uppercase tracking-widest">
+                        <div className="px-3 py-1 type-label text-[10px] text-[#A7A7A7]">
                           {cat}
                         </div>
                         {catItems.map((item) => {
@@ -199,18 +199,18 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
                               onMouseEnter={() => setSelectedIndex(globalIndex)}
                               className={cn(
                                 "w-full flex items-center gap-4 px-3 py-3 rounded-xl transition-all text-left group",
-                                isSelected ? "bg-primary/10 border border-primary/20" : "border border-transparent hover:bg-white/5"
+                                isSelected ? "bg-white/10 border border-white/10 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]" : "border border-transparent hover:bg-white/5"
                               )}
                             >
                               <div className={cn(
-                                "p-2 rounded-lg transition-colors",
-                                isSelected ? "bg-primary/20 text-primary" : "bg-white/5 text-gray-400 group-hover:text-white"
+                                "p-2 rounded-lg transition-colors border",
+                                isSelected ? "bg-primary/20 text-primary border-primary/30" : "bg-white/5 text-gray-400 border-transparent group-hover:text-white"
                               )}>
                                 <item.icon className="w-5 h-5" />
                               </div>
                               <div className="flex-1">
-                                <div className="text-sm font-bold text-white">{item.title}</div>
-                                <div className="text-xs text-gray-500">{item.subtitle}</div>
+                                <div className="type-h2 text-white">{item.title}</div>
+                                <div className="type-body text-[12px] text-[#6A6A6A] mt-0.5">{item.subtitle}</div>
                               </div>
                               {isSelected && (
                                 <ArrowRight className="w-4 h-4 text-primary animate-in slide-in-from-left-2" />
@@ -224,29 +224,29 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
                 </div>
               ) : (
                 <div className="py-12 text-center">
-                  <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center mx-auto mb-4">
-                    <Search className="w-6 h-6 text-gray-600" />
+                  <div className="w-12 h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mx-auto mb-4 backdrop-blur-md">
+                    <Search className="w-5 h-5 text-[#6A6A6A]" />
                   </div>
-                  <p className="text-gray-500 text-sm">No results found for "{query}"</p>
+                  <p className="type-body text-[#6A6A6A]">No results found for "{query}"</p>
                 </div>
               )}
             </div>
 
             {/* Footer */}
-            <div className="px-5 py-3 border-t border-white/5 bg-black/20 flex items-center justify-between text-[10px] font-bold text-gray-500 uppercase tracking-wider">
+            <div className="px-5 py-4 border-t border-white/10 bg-white/[0.02] flex items-center justify-between type-micro text-[#6A6A6A]">
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-1.5">
-                  <span className="px-1.5 py-0.5 rounded bg-white/5 border border-white/10">↑</span>
-                  <span className="px-1.5 py-0.5 rounded bg-white/5 border border-white/10">↓</span>
+                  <span className="px-1.5 py-0.5 rounded bg-white/10 border border-white/10">↑</span>
+                  <span className="px-1.5 py-0.5 rounded bg-white/10 border border-white/10">↓</span>
                   <span>Navigate</span>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <span className="px-1.5 py-0.5 rounded bg-white/5 border border-white/10">ENTER</span>
+                  <span className="px-1.5 py-0.5 rounded bg-white/10 border border-white/10">ENTER</span>
                   <span>Select</span>
                 </div>
               </div>
               <div className="flex items-center gap-1.5">
-                <span className="px-1.5 py-0.5 rounded bg-white/5 border border-white/10">ESC</span>
+                <span className="px-1.5 py-0.5 rounded bg-white/10 border border-white/10">ESC</span>
                 <span>Close</span>
               </div>
             </div>
