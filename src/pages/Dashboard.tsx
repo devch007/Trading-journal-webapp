@@ -9,6 +9,7 @@ import { useTrades } from "../hooks/useTrades";
 import { useAuth } from "../contexts/AuthContext";
 import { useAccountContext } from "../contexts/AccountContext";
 import { MonthlyPnLCalendar } from "../components/MonthlyPnLCalendar";
+import { getTradeDate } from "../lib/timeUtils";
 
 // Initial static data
 const initialEquityData = [
@@ -44,24 +45,45 @@ const initialPerformance = [
   { pair: "USDCAD", winRate: 50, color: "bg-gray-500" },
 ];
 
-const CustomTooltip = ({ active, payload, label, data }: any) => {
+const CustomTooltip = ({ active, payload }: any) => {
   if (active && payload && payload.length) {
-    const value = payload[0].value;
-    const currentIndex = data.findIndex((d: any) => d.name === label);
-    const prevValue = currentIndex > 0 ? data[currentIndex - 1].value : value;
-    const isPositive = value >= prevValue;
+    const item = payload[0].payload;
+    const value = item.value;
+    const tradePnl = item.tradePnl;
+    const isPositive = tradePnl !== undefined ? tradePnl >= 0 : true;
 
     return (
-      <div className="glass-card p-3 rounded-xl border border-white/10 flex flex-col gap-1 shadow-xl bg-[#1a1a24]/90 backdrop-blur-md">
-        <p className="text-on-surface-variant font-label text-xs uppercase tracking-wider">{label}</p>
-        <div className="flex items-center gap-2">
-          <p className="font-data font-bold text-lg text-white">${value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
-          {currentIndex > 0 && (
-            <div className={`flex items-center ${isPositive ? 'text-emerald-400' : 'text-rose-400'}`}>
-              {isPositive ? <ArrowUpRight className="w-4 h-4" /> : <ArrowDownRight className="w-4 h-4" />}
-            </div>
+      <div className="glass-card p-4 rounded-xl border border-white/10 flex flex-col gap-2 shadow-2xl bg-[#0d0d16]/95 backdrop-blur-md min-w-[200px]">
+        <div className="flex justify-between items-center border-b border-white/5 pb-2 mb-1">
+          <p className="text-on-surface-variant font-bold text-[10px] uppercase tracking-widest">{item.fullDate || item.name}</p>
+          {item.action && (
+            <span className={`text-[9px] font-black px-1.5 py-0.5 rounded ${item.action === 'BUY' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}>
+              {item.action}
+            </span>
           )}
         </div>
+        
+        <div className="flex justify-between items-center">
+          <span className="text-gray-500 text-xs font-medium">Equity</span>
+          <p className="font-bold text-white text-sm">${value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+        </div>
+
+        {item.symbol && (
+          <div className="flex justify-between items-center">
+            <span className="text-gray-500 text-xs font-medium">Asset</span>
+            <p className="text-white text-xs font-bold">{item.symbol}</p>
+          </div>
+        )}
+
+        {tradePnl !== undefined && item.fullDate !== 'Opening Balance' && (
+          <div className="flex justify-between items-center pt-1 border-t border-white/5 mt-1">
+            <span className="text-gray-500 text-xs font-medium">Result</span>
+            <div className={`flex items-center gap-1 font-bold text-xs ${isPositive ? 'text-emerald-400' : 'text-rose-400'}`}>
+              {isPositive ? '+' : '-'}${Math.abs(tradePnl).toFixed(2)}
+              {isPositive ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
+            </div>
+          </div>
+        )}
       </div>
     );
   }
@@ -159,31 +181,6 @@ export function Dashboard() {
       return;
     }
 
-    const getTradeDate = (t: any) => {
-      if (t.createdAt) {
-        const d = new Date(t.createdAt);
-        if (!isNaN(d.getTime())) return d;
-      }
-      let dStr = t.date;
-      if (!dStr) return new Date();
-      if (dStr.startsWith('Today, ')) {
-        const time = dStr.split(', ')[1] || '00:00:00';
-        return new Date(`${new Date().toDateString()} ${time}`);
-      }
-      if (dStr.startsWith('Yesterday, ')) {
-        const time = dStr.split(', ')[1] || '00:00:00';
-        const yesterday = new Date();
-        yesterday.setDate(yesterday.getDate() - 1);
-        return new Date(`${yesterday.toDateString()} ${time}`);
-      }
-      const parsed = new Date(dStr);
-      if (!isNaN(parsed.getTime())) {
-        if (parsed.getFullYear() < 2020) parsed.setFullYear(2026);
-        return parsed;
-      }
-      return new Date();
-    };
-    
     // Filter trades by period
     const now = new Date();
     let cutoff = new Date(0); // Default to beginning of time for 'ALL'
@@ -200,21 +197,28 @@ export function Dashboard() {
     }
 
     const periodFilteredTrades = (trades || []).filter(t => {
-      const tradeDate = getTradeDate(t);
+      const tradeDate = getTradeDate(t.date);
       return tradeDate >= cutoff;
     });
 
     if (periodFilteredTrades.length === 0) {
-      setEquityData([{ name: 'No Data', value: selectedAccount ? (selectedAccount.currentEquity || selectedAccount.initialCapital) : 10000 }]);
+      setEquityData([{ 
+        name: 'No Data', 
+        value: selectedAccount ? (selectedAccount.currentEquity || selectedAccount.initialCapital) : 10000,
+        tradePnl: 0,
+        symbol: '',
+        action: '',
+        fullDate: 'No recent trades'
+      }] as any);
       return;
     }
-    
+
     // Simple equity curve calculation
     const initialBalance = selectedAccount ? selectedAccount.initialCapital : 10000;
     
     // To calculate the equity at the start of the period, we need to sum PnL of trades BEFORE the cutoff
     const tradesBeforeCutoff = trades.filter(t => {
-      const tradeDate = getTradeDate(t);
+      const tradeDate = getTradeDate(t.date);
       return tradeDate < cutoff;
     });
     
@@ -222,26 +226,34 @@ export function Dashboard() {
     let runningEquity = startingEquity;
 
     // Sort chronologically for the curve (oldest first going left-to-right)
-    const sortedFilteredTrades = [...periodFilteredTrades].sort((a, b) => getTradeDate(a).getTime() - getTradeDate(b).getTime());
+    const sortedFilteredTrades = [...periodFilteredTrades].sort((a, b) => getTradeDate(a.date).getTime() - getTradeDate(b.date).getTime());
 
     const newEquityData = sortedFilteredTrades.map((trade, index) => {
       runningEquity += (trade.pnl || 0);
-      const d = getTradeDate(trade);
+      const d = getTradeDate(trade.date);
       return {
         name: period === '1D' 
           ? d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) 
           : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-        value: runningEquity
+        value: runningEquity,
+        tradePnl: trade.pnl,
+        symbol: trade.symbol,
+        action: trade.action,
+        fullDate: d.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
       };
     });
     
     // Add starting point
     newEquityData.unshift({ 
       name: period === '1D' ? 'Start' : cutoff.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }), 
-      value: startingEquity 
+      value: startingEquity,
+      tradePnl: 0,
+      symbol: '',
+      action: '',
+      fullDate: 'Opening Balance'
     });
     
-    setEquityData(newEquityData);
+    setEquityData(newEquityData as any);
   }, [trades, selectedAccount, period]);
 
   const formatCurrency = (val: number) => {
