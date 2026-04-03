@@ -40,9 +40,12 @@ export function useTrades() {
   const fetchTrades = useCallback(async () => {
     if (!user) return;
     
+    // Select all columns EXCEPT 'proof' for performance
+    const columns = 'id, userId, accountId, date, symbol, action, size, result, isPositive, pnl, createdAt, entry, exit, duration, session, confidence, tag, strategy, notes, emotions, tags, rating, checklist, tradeType, sentiment';
+
     const { data, error } = await supabase
       .from('trades')
-      .select('*')
+      .select(columns)
       .eq('userId', user.id)
       .order('createdAt', { ascending: false });
 
@@ -52,6 +55,21 @@ export function useTrades() {
       setTrades(data as Trade[]);
     }
     setLoading(false);
+  }, [user]);
+
+  const fetchTradeProof = useCallback(async (tradeId: string) => {
+    if (!user) return null;
+    const { data, error } = await supabase
+      .from('trades')
+      .select('proof')
+      .eq('id', tradeId)
+      .single();
+
+    if (error) {
+      console.error('Error fetching trade proof:', error);
+      return null;
+    }
+    return data.proof;
   }, [user]);
 
   useEffect(() => {
@@ -151,5 +169,5 @@ export function useTrades() {
     }
   }, [user, fetchTrades]);
 
-  return { trades, loading, addTrade, deleteTrades, updateTrades };
+  return { trades, loading, addTrade, deleteTrades, updateTrades, fetchTradeProof };
 }

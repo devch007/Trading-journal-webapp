@@ -30,13 +30,16 @@ import { useNavigate } from "react-router-dom";
 import { useAccountContext } from "../contexts/AccountContext";
 
 export function Journal() {
-  const { trades: allTrades, loading, updateTrades } = useTrades();
+  const { trades: allTrades, loading, updateTrades, fetchTradeProof } = useTrades();
   const [activeTab, setActiveTab] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   // Optimistic local patch — stores instant UI changes before DB confirms
   const [localPatch, setLocalPatch] = useState<Record<string, any>>({});
+  const [proofCache, setProofCache] = useState<Record<string, string>>({});
+  const [isProofLoading, setIsProofLoading] = useState(false);
+  
   const dbSyncRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
@@ -78,6 +81,21 @@ export function Journal() {
 
   const selectedEntry = entries.find(e => e.id === selectedId) || entries[0];
 
+  // Lazy-load proof when trade is selected
+  useEffect(() => {
+    if (selectedId && !proofCache[selectedId]) {
+      const loadProof = async () => {
+        setIsProofLoading(true);
+        const proof = await fetchTradeProof(selectedId);
+        if (proof) {
+          setProofCache(prev => ({ ...prev, [selectedId]: proof }));
+        }
+        setIsProofLoading(false);
+      };
+      loadProof();
+    }
+  }, [selectedId, fetchTradeProof]);
+
   // Clear patch when switching trades
   useEffect(() => {
     setLocalPatch({});
@@ -85,6 +103,18 @@ export function Journal() {
 
   const updateEntry = (updates: Partial<Trade>) => {
     if (!selectedId) return;
+    
+    // If updating proof, also update cache
+    if (updates.proof) {
+      setProofCache(prev => ({ ...prev, [selectedId]: updates.proof as string }));
+    } else if (updates.proof === null) {
+      setProofCache(prev => {
+        const next = { ...prev };
+        delete next[selectedId];
+        return next;
+      });
+    }
+
     // 1. Optimistically apply to local patch immediately
     setLocalPatch(prev => ({ ...prev, ...updates }));
     // 2. Debounce the actual DB write so rapid clicks batch together
@@ -111,7 +141,7 @@ export function Journal() {
       notes: merged.notes || "",
       emotions: merged.emotions || [],
       tags: merged.tags || (merged.tag ? [merged.tag] : []),
-      proof: merged.proof || null,
+      proof: localPatch.proof !== undefined ? localPatch.proof : (proofCache[selectedId!] || null),
       rating: merged.rating || 0,
       checklist: merged.checklist || defaultChecklist,
       tradeType: merged.tradeType || (merged.tag || "Scalp"),
@@ -124,7 +154,7 @@ export function Journal() {
         : (merged.createdAt ? new Date(merged.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase() : "UNKNOWN DATE"),
       type: merged.action === "BUY" ? "LONG" : "SHORT"
     };
-  }, [selectedEntry, localPatch]);
+  }, [selectedEntry, localPatch, proofCache, selectedId]);
 
   const formatDate = (trade: Trade) => {
     if (trade.date && !trade.date.startsWith('Today')) return trade.date;
@@ -603,6 +633,11 @@ export function Journal() {
                     >
                       <X className="w-4 h-4 text-white" />
                     </button>
+                  </div>
+                ) : isProofLoading ? (
+                  <div className="flex flex-col items-center gap-3">
+                    <Loader2 className="w-8 h-8 text-primary animate-spin" />
+                    <p className="text-[10px] text-gray-500 uppercase tracking-widest font-bold">Loading Proof...</p>
                   </div>
                 ) : (
                   <>
