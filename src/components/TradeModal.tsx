@@ -44,6 +44,9 @@ export function TradeModal({ isOpen, onClose, onSubmit, trade }: TradeModalProps
       const parsed = new Date(dStr);
       if (!isNaN(parsed.getTime())) {
         d = parsed;
+        if (d.getFullYear() < 2020) {
+          d.setFullYear(2026);
+        }
       }
     }
     return d;

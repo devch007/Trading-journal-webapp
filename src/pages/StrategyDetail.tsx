@@ -65,7 +65,7 @@ export function StrategyDetail() {
       }
       const parsed = new Date(dStr);
       if (!isNaN(parsed.getTime())) {
-        if (parsed.getFullYear() < 2020) parsed.setFullYear(new Date().getFullYear());
+        if (parsed.getFullYear() < 2020) parsed.setFullYear(2026);
         return parsed;
       }
       return new Date();

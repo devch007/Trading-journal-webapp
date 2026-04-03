@@ -178,7 +178,7 @@ export function Dashboard() {
       }
       const parsed = new Date(dStr);
       if (!isNaN(parsed.getTime())) {
-        if (parsed.getFullYear() < 2020) parsed.setFullYear(new Date().getFullYear());
+        if (parsed.getFullYear() < 2020) parsed.setFullYear(2026);
         return parsed;
       }
       return new Date();
@@ -334,7 +334,7 @@ export function Dashboard() {
               content: [
                 {
                   type: "text",
-                  text: "Extract the trades from this MT5/trading screenshot. Return ONLY a valid JSON object with a 'trades' array. Each trade should have: symbol (string), type ('BUY' or 'SELL'), volume (number), entry_price (string), exit_price (string), profit (number), commission (number, default 0), date_time (string, extract the exact timestamp of the trade if visible in the row e.g., '2024.01.15 14:30', otherwise null), and confidence ('High', 'Medium', or 'Low' based on how clearly you can read the row). Keep in mind that MT5 usually has two 'Price' columns: the first one is the entry_price, and the second one (further to the right) is the exit_price. Ensure you extract the exact prices as strings (e.g., '145.200'). Do not include any markdown formatting or explanations."
+                  text: "Extract the trades from this MT5/trading screenshot. Return ONLY a valid JSON object with a 'trades' array. Each trade should have: symbol (string), type ('BUY' or 'SELL'), volume (number), entry_price (string), exit_price (string), profit (number), commission (number, default 0), date_time (string, extract the exact timestamp of the trade. If the year is not visible, default to the year 2026 e.g., '2026.04.03 14:30', otherwise null), and confidence ('High', 'Medium', or 'Low' based on how clearly you can read the row). Keep in mind that MT5 usually has two 'Price' columns: the first one is the entry_price, and the second one (further to the right) is the exit_price. Ensure you extract the exact prices as strings (e.g., '145.200'). Do not include any markdown formatting or explanations."
                 },
                 {
                   type: "image_url",
