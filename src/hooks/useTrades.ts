@@ -40,16 +40,28 @@ export function useTrades() {
   const fetchTrades = useCallback(async () => {
     if (!user) return;
     
-    const { data, error } = await supabase
+    // Probe the schema safely to get real columns without hardcoding, to avoid schema mismatch errors
+    const { data: schemaProbe } = await supabase
       .from('trades')
       .select('*')
+      .limit(1);
+
+    let columnsToSelect = '*';
+    if (schemaProbe && schemaProbe.length > 0) {
+      const realCols = Object.keys(schemaProbe[0]);
+      columnsToSelect = realCols.filter(col => col !== 'proof').join(', ');
+    }
+
+    const { data, error } = await supabase
+      .from('trades')
+      .select(columnsToSelect)
       .eq('userId', user.id)
       .order('createdAt', { ascending: false });
 
     if (error) {
       console.error('Error fetching trades:', error);
     } else {
-      setTrades(data as Trade[]);
+      setTrades(data as unknown as Trade[]);
     }
     setLoading(false);
   }, [user]);
