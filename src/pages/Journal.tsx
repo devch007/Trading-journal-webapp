@@ -141,7 +141,7 @@ export function Journal() {
       notes: merged.notes || "",
       emotions: merged.emotions || [],
       tags: merged.tags || (merged.tag ? [merged.tag] : []),
-      proof: localPatch.proof !== undefined ? localPatch.proof : (proofCache[selectedId!] || null),
+      proof: localPatch.proof !== undefined ? localPatch.proof : (selectedId ? (proofCache[selectedId] || null) : null),
       rating: merged.rating || 0,
       checklist: merged.checklist || defaultChecklist,
       tradeType: merged.tradeType || (merged.tag || "Scalp"),
