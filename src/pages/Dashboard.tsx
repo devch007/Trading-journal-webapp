@@ -214,7 +214,8 @@ export function Dashboard() {
     }
 
     // Simple equity curve calculation
-    const initialBalance = selectedAccount ? selectedAccount.initialCapital : 10000;
+    // Priority: selectedAccount.initialCapital -> 5000 (common starting point) -> 10000 (default)
+    const initialBalance = selectedAccount?.initialCapital ?? 5000;
     
     // To calculate the equity at the start of the period, we need to sum PnL of trades BEFORE the cutoff
     const tradesBeforeCutoff = trades.filter(t => {
@@ -222,21 +223,29 @@ export function Dashboard() {
       return tradeDate < cutoff;
     });
     
-    const startingEquity = initialBalance + tradesBeforeCutoff.reduce((sum, t) => sum + (t.pnl || 0), 0);
+    const startingEquity = initialBalance + tradesBeforeCutoff.reduce((sum, t) => sum + (Number(t.pnl) || 0), 0);
     let runningEquity = startingEquity;
 
-    // Sort chronologically for the curve (oldest first going left-to-right)
-    const sortedFilteredTrades = [...periodFilteredTrades].sort((a, b) => getTradeDate(a.date).getTime() - getTradeDate(b.date).getTime());
+    // Stable sort: primary by execution date, secondary by createdAt (DB sequence)
+    const sortedFilteredTrades = [...periodFilteredTrades].sort((a, b) => {
+      const timeA = getTradeDate(a.date).getTime();
+      const timeB = getTradeDate(b.date).getTime();
+      if (timeA !== timeB) return timeA - timeB;
+      
+      // Tie-breaker for same-second trades
+      return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+    });
 
     const newEquityData = sortedFilteredTrades.map((trade, index) => {
-      runningEquity += (trade.pnl || 0);
+      const pnlVal = Number(trade.pnl) || 0;
+      runningEquity += pnlVal;
       const d = getTradeDate(trade.date);
       return {
         name: period === '1D' 
           ? d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) 
           : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
         value: runningEquity,
-        tradePnl: trade.pnl,
+        tradePnl: pnlVal,
         symbol: trade.symbol,
         action: trade.action,
         fullDate: d.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
@@ -245,12 +254,12 @@ export function Dashboard() {
     
     // Add starting point
     newEquityData.unshift({ 
-      name: period === '1D' ? 'Start' : cutoff.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }), 
+      name: period === 'ALL' ? 'Start' : cutoff.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }), 
       value: startingEquity,
       tradePnl: 0,
       symbol: '',
       action: '',
-      fullDate: 'Opening Balance'
+      fullDate: period === 'ALL' ? 'Account Opening' : 'Previous Balance'
     });
     
     setEquityData(newEquityData as any);
