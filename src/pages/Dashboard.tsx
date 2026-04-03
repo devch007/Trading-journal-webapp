@@ -620,7 +620,11 @@ IMPORTANT:
                   <tbody className="text-sm">
                     {(trades.length > 0 ? trades.slice(0, 5) : initialTrades).map((trade: any, index: number) => (
                       <tr key={trade.id || index} className="border-b border-white/5 hover:bg-white/[0.02] transition-colors group animate-in fade-in slide-in-from-top-2 duration-500">
-                        <td className="py-4 type-body text-[12px] text-[#6A6A6A]">{trade.date || 'N/A'}</td>
+                        <td className="py-4 type-body text-[12px] text-[#6A6A6A]">
+                          {trade.date || trade.createdAt 
+                            ? getTradeDate(trade.date || trade.createdAt).toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase() 
+                            : 'N/A'}
+                        </td>
                         <td className="py-4 type-h2 text-[14px] text-white">{trade.symbol || 'N/A'}</td>
                         <td className={`py-4 type-micro ${trade.action === 'BUY' ? 'text-[#1ED760]' : 'text-[#E5534B]'}`}>{trade.action || 'N/A'}</td>
                         <td className="py-4 type-body text-[12px] tnum">{trade.size || 'N/A'}</td>

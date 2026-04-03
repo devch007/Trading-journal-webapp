@@ -28,6 +28,7 @@ import { useTrades, Trade } from "../hooks/useTrades";
 import { GoogleGenAI, Type } from "@google/genai";
 import { useNavigate } from "react-router-dom";
 import { useAccountContext } from "../contexts/AccountContext";
+import { getTradeDate } from "../lib/timeUtils";
 
 export function Journal() {
   const { trades: allTrades, loading, updateTrades, fetchTradeProof } = useTrades();
@@ -68,7 +69,11 @@ export function Journal() {
       );
     }
 
-    return filtered;
+    return filtered.sort((a, b) => {
+      const dateA = getTradeDate(a.date || a.createdAt || new Date().toISOString());
+      const dateB = getTradeDate(b.date || b.createdAt || new Date().toISOString());
+      return dateB.getTime() - dateA.getTime();
+    });
   }, [allTrades, activeTab, searchQuery, selectedAccountId]);
 
   useEffect(() => {
@@ -149,22 +154,25 @@ export function Journal() {
       entryPrice: merged.entry || "0.0000",
       exitPrice: merged.exit || "0.0000",
       duration: merged.duration || "0h 0m",
-      date: merged.date && !merged.date.startsWith('Today') 
-        ? merged.date 
-        : (merged.createdAt ? new Date(merged.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase() : "UNKNOWN DATE"),
+      date: (function() {
+        try {
+          const d = getTradeDate(merged.date || merged.createdAt || new Date().toISOString());
+          return d.toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase() + ' ' + d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+        } catch {
+          return "UNKNOWN DATE";
+        }
+      })(),
       type: merged.action === "BUY" ? "LONG" : "SHORT"
     };
   }, [selectedEntry, localPatch, proofCache, selectedId]);
 
   const formatDate = (trade: Trade) => {
-    if (trade.date && !trade.date.startsWith('Today')) return trade.date;
-    if (trade.createdAt) {
-      const parsed = new Date(trade.createdAt);
-      if (!isNaN(parsed.getTime())) {
-        return parsed.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase();
-      }
+    try {
+      const date = getTradeDate(trade.date || trade.createdAt || new Date().toISOString());
+      return date.toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase();
+    } catch {
+      return "UNKNOWN DATE";
     }
-    return "UNKNOWN DATE";
   };
 
   const handleFileDrop = (e: React.DragEvent) => {
