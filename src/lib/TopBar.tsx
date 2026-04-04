@@ -52,16 +52,66 @@ export function TopBar({ title, subtitle, showAccountSelector = true, showSearch
       <div className="flex items-center gap-6">
         {actionButton}
         {showSearch && (
-          <button 
+          <button
             onClick={() => setIsCommandPaletteOpen(true)}
-            className="relative group flex items-center gap-3 bg-white/5 border border-white/10 rounded-full pl-4 pr-3 py-2 text-[14px] text-[#A7A7A7] hover:bg-white/10 hover:border-white/20 transition-all w-64 text-left"
+            className="relative group flex items-center gap-2.5 px-3 py-2 rounded-xl border transition-all duration-300 text-left overflow-hidden"
+            style={{
+              background: 'rgba(255,255,255,0.04)',
+              borderColor: 'rgba(255,255,255,0.08)',
+              backdropFilter: 'blur(12px)',
+              width: 220,
+              boxShadow: '0 0 0 0 rgba(59,130,246,0)',
+            }}
+            onMouseEnter={e => {
+              (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(59,130,246,0.35)';
+              (e.currentTarget as HTMLButtonElement).style.background = 'rgba(59,130,246,0.07)';
+              (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 0 18px rgba(59,130,246,0.12)';
+            }}
+            onMouseLeave={e => {
+              (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(255,255,255,0.08)';
+              (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.04)';
+              (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 0 0 0 rgba(59,130,246,0)';
+            }}
           >
-            <Search className="w-4 h-4" />
-            <span className="flex-1 type-body">Search...</span>
-            <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-white/5 border border-white/10 type-micro text-[#6A6A6A]">
-              <Command className="w-2.5 h-2.5" />
-              <span>K</span>
-            </div>
+            {/* Animated gradient shimmer on hover */}
+            <span
+              className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
+              style={{
+                background: 'linear-gradient(105deg, transparent 40%, rgba(59,130,246,0.06) 50%, transparent 60%)',
+              }}
+            />
+
+            {/* Icon with subtle pulse dot */}
+            <span className="relative flex-shrink-0">
+              <Search className="w-3.5 h-3.5 text-[#4B5563] group-hover:text-[#60a5fa] transition-colors duration-200" />
+            </span>
+
+            {/* Placeholder text */}
+            <span
+              className="flex-1 transition-colors duration-200 group-hover:text-[#9ca3af]"
+              style={{ fontSize: 12, fontWeight: 500, color: '#374151', letterSpacing: '0.01em' }}
+            >
+              Search anything…
+            </span>
+
+            {/* ⌘K badge */}
+            <span className="flex items-center gap-0.5 flex-shrink-0">
+              <kbd
+                className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-md border transition-colors duration-200"
+                style={{
+                  background: 'rgba(255,255,255,0.06)',
+                  borderColor: 'rgba(255,255,255,0.10)',
+                  fontSize: 10,
+                  fontWeight: 600,
+                  color: '#4B5563',
+                  letterSpacing: '0.03em',
+                  lineHeight: 1,
+                }}
+              >
+                <Command className="w-2.5 h-2.5" />
+                K
+              </kbd>
+            </span>
           </button>
         )}
         <ThemeToggle />
