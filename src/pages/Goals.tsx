@@ -62,7 +62,7 @@ function TodayAtAGlance({ dayTrades }: { dayTrades: any[] }) {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
         {/* Timeline strip */}
-        <div className="flex flex-col gap-3 p-5 rounded-[12px] border border-[#1e2a3a]" style={{ background: '#111827' }}>
+        <div className="glass-card flex flex-col gap-3 p-5 rounded-2xl relative overflow-hidden group">
           <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#4B5563' }}>
             Your trading activity today
           </span>
@@ -125,8 +125,7 @@ function TodayAtAGlance({ dayTrades }: { dayTrades: any[] }) {
           ].map(({ label, value, color, empty }) => (
             <div
               key={label}
-              className="flex flex-col gap-1.5 rounded-[8px] p-3 border border-[#1e2a3a]"
-              style={{ background: '#0d1117' }}
+              className="glass-card flex flex-col gap-1.5 rounded-2xl p-3 relative overflow-hidden group"
             >
               <span style={MICRO_LABEL}>{label}</span>
               <span style={{ ...MICRO_VAL, color: empty ? '#374151' : color }}>{value}</span>

@@ -39,10 +39,7 @@ export function GoalsSummary({ goals, overallPercent }: GoalsSummaryProps) {
   const order: GoalStatus['status'][] = ['achieved', 'safe', 'almost', 'on-track', 'in-progress', 'not-started', 'danger'];
 
   return (
-    <div
-      className="w-full flex flex-col gap-2 px-4 py-3 rounded-[8px] border border-[#1e2a3a]"
-      style={{ background: '#111827' }}
-    >
+    <div className="glass-card w-full flex flex-col gap-2 px-4 py-3 rounded-2xl">
       <div className="flex flex-wrap items-center justify-between gap-3">
         {/* Status groups */}
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1">

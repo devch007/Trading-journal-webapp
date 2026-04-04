@@ -177,20 +177,19 @@ export const GoalCard: React.FC<GoalCardProps> = ({
     <motion.div
       layout
       className={cn(
-        'relative flex flex-col gap-3 rounded-[12px] p-5 border overflow-hidden',
+        'glass-card relative flex flex-col gap-3 rounded-2xl p-5 overflow-hidden group',
         isHero ? 'col-span-full' : '',
-        isAchieved ? 'border-l-[3px] border-l-[#1ED760] border-[#1e2a3a]' : 'border-[#1e2a3a]',
-        pct < 20 && reverse && 'border-[#7f1d1d]',
+        isAchieved ? 'border-l-[3px] !border-l-[#1ED760]' : '',
+        pct < 20 && reverse ? '!border-[#7f1d1d]' : '',
       )}
-      style={{
-        background: isHero
-          ? 'radial-gradient(ellipse at 40% 50%, #1a2332 0%, #111827 70%)'
-          : '#111827',
-      }}
-      whileHover={{ y: -2, boxShadow: '0 8px 24px rgba(0,0,0,0.4)', borderColor: '#2563eb33', backgroundColor: '#1a2332' }}
-      transition={{ duration: 0.15 }}
-      animate={showCelebration ? { backgroundColor: ['#111827', '#052e16', '#111827'] } : {}}
+      whileHover={{ y: -2, boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }}
+      transition={{ duration: 0.2 }}
+      animate={showCelebration ? { backgroundColor: ['rgba(255,255,255,0.04)', '#052e16', 'rgba(255,255,255,0.04)'] } : {}}
     >
+      {/* Decorative glow blob — matches Dashboard cards */}
+      <div className="absolute -right-4 -top-4 w-28 h-28 bg-white/5 rounded-full blur-2xl group-hover:bg-primary/10 transition-colors duration-500 pointer-events-none" />
+      {/* Extra tint for hero card */}
+      {isHero && <div className="absolute -left-8 -bottom-8 w-40 h-40 bg-blue-500/5 rounded-full blur-3xl pointer-events-none" />}
       {/* Floating celebration label */}
       <AnimatePresence>
         {showCelebration && (
