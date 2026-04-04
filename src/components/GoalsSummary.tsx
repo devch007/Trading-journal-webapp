@@ -1,43 +1,80 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { cn } from '../lib/utils';
 
 export interface GoalStatus {
   id: string;
-  status: 'achieved' | 'in-progress' | 'missed';
+  status: 'achieved' | 'on-track' | 'almost' | 'in-progress' | 'not-started' | 'danger' | 'safe';
 }
 
 interface GoalsSummaryProps {
   goals: GoalStatus[];
+  overallPercent: number;
 }
 
-export function GoalsSummary({ goals }: GoalsSummaryProps) {
-  const achievedCount = goals.filter(g => g.status === 'achieved').length;
-  const totalCount = goals.length;
-  
+const STATUS_META: Record<GoalStatus['status'], { color: string; label: string }> = {
+  achieved:    { color: '#1ED760', label: 'Achieved' },
+  safe:        { color: '#1ED760', label: 'Safe' },
+  almost:      { color: '#86efac', label: 'Almost There' },
+  'on-track':  { color: '#60a5fa', label: 'On Track' },
+  'in-progress': { color: '#f59e0b', label: 'In Progress' },
+  'not-started': { color: '#374151', label: 'Not Started' },
+  danger:      { color: '#f87171', label: 'Danger' },
+};
+
+function Dot({ color }: { color: string }) {
+  return <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: color }} />;
+}
+
+export function GoalsSummary({ goals, overallPercent }: GoalsSummaryProps) {
+  const overallColor =
+    overallPercent >= 80 ? '#1ED760'
+    : overallPercent >= 50 ? '#60a5fa'
+    : overallPercent >= 20 ? '#f59e0b'
+    : '#374151';
+
+  // Aggregate counts
+  const groups: Partial<Record<GoalStatus['status'], number>> = {};
+  goals.forEach(g => { groups[g.status] = (groups[g.status] || 0) + 1; });
+
+  const order: GoalStatus['status'][] = ['achieved', 'safe', 'almost', 'on-track', 'in-progress', 'not-started', 'danger'];
+
   return (
-    <div className="flex flex-col md:flex-row items-center gap-4 px-6 py-3 bg-[#111827]/50 border border-white/5 rounded-[12px] backdrop-blur-md">
-      <div className="flex items-center gap-2">
-        <span className="text-[12px] font-bold text-white uppercase tracking-[0.05em]">
-          {achievedCount} of {totalCount} goals on track
+    <div
+      className="w-full flex flex-col gap-2 px-4 py-3 rounded-[8px] border border-[#1e2a3a]"
+      style={{ background: '#111827' }}
+    >
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        {/* Status groups */}
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+          {order.map(s => {
+            const count = groups[s];
+            if (!count) return null;
+            const { color, label } = STATUS_META[s];
+            return (
+              <div key={s} className="flex items-center gap-1.5">
+                <Dot color={color} />
+                <span style={{ fontSize: 10, color: '#9ca3af', fontWeight: 600 }}>
+                  {count} {label}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+        {/* Overall text */}
+        <span style={{ fontSize: 10, color: '#4B5563', fontWeight: 600 }}>
+          Overall: {Math.round(overallPercent)}% complete
         </span>
       </div>
-      
-      <div className="flex items-center gap-1.5 px-3 py-2 bg-[#1a2332] rounded-full border border-white/5">
-        {goals.map((goal, index) => (
-          <motion.div
-            key={goal.id}
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ delay: index * 0.05, type: 'spring', damping: 10, stiffness: 200 }}
-            className={cn(
-              "w-[8px] h-[8px] rounded-full",
-              goal.status === 'achieved' && "bg-[#1ED760] shadow-[0_0_8px_rgba(30,215,96,0.4)]",
-              goal.status === 'in-progress' && "bg-[#f59e0b] shadow-[0_0_8px_rgba(245,158,11,0.4)]",
-              goal.status === 'missed' && "bg-[#f87171] shadow-[0_0_8px_rgba(248,113,113,0.4)]"
-            )}
-          />
-        ))}
+
+      {/* Full-width progress bar */}
+      <div className="w-full rounded-full overflow-hidden" style={{ height: 3, background: '#1e2a3a' }}>
+        <motion.div
+          className="h-full rounded-full"
+          initial={{ width: 0 }}
+          animate={{ width: `${overallPercent}%` }}
+          transition={{ duration: 0.6, ease: 'easeOut' }}
+          style={{ backgroundColor: overallColor }}
+        />
       </div>
     </div>
   );
