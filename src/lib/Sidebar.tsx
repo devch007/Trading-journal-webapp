@@ -10,7 +10,8 @@ import {
   Sparkles,
   ChevronRight,
   ChevronLeft,
-  Layers
+  Layers,
+  Target
 } from "lucide-react";
 import { cn } from "./utils";
 
@@ -24,6 +25,7 @@ export function Sidebar({ isExpanded, setIsExpanded }: SidebarProps) {
 
   const navItems = [
     { icon: LayoutGrid, path: "/", title: "Dashboard" },
+    { icon: Target, path: "/goals", title: "Goals" },
     { icon: Wallet, path: "/accounts", title: "Accounts" },
     { icon: CandlestickChart, path: "/trades", title: "Trades" },
     { icon: Sparkles, path: "/ai-engine", title: "AI Engine" },

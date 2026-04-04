@@ -231,6 +231,16 @@
   @keyframes shimmer {
     100% { transform: translateX(100%); }
   }
+
+  @keyframes achievedPulse {
+    0% { box-shadow: 0 0 0 0 rgba(30, 215, 96, 0.4); }
+    70% { box-shadow: 0 0 0 10px rgba(30, 215, 96, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(30, 215, 96, 0); }
+  }
+
+  .animate-achieved-pulse {
+    animation: achievedPulse 1s cubic-bezier(0.4, 0, 0.6, 1) forwards;
+  }
 }
 
 /* React DatePicker Customization */

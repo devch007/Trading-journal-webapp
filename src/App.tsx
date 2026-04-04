@@ -20,6 +20,7 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { StrategyProvider } from './contexts/StrategyContext';
 import { Strategies } from './pages/Strategies';
 import { StrategyDetail } from './pages/StrategyDetail';
+import { Goals } from './pages/Goals';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, userProfile, loading } = useAuth();
@@ -80,6 +81,7 @@ export default function App() {
                 <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
                   <Route index element={<Navigate to="/dashboard" replace />} />
                   <Route path="dashboard" element={<Dashboard />} />
+                  <Route path="goals" element={<Goals />} />
                   <Route path="accounts" element={<Accounts />} />
                   <Route path="trades" element={<Trades />} />
                   <Route path="ai-engine" element={<AIEngine />} />
