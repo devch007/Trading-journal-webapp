@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Target } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -6,10 +6,12 @@ import { TopBar } from '../lib/TopBar';
 import { GoalCard } from '../components/GoalCard';
 import { GoalsSummary, GoalStatus } from '../components/GoalsSummary';
 import { useTrades } from '../hooks/useTrades';
+import { useAuth } from '../contexts/AuthContext';
 import { useAccountContext } from '../contexts/AccountContext';
 import { getTradeDate } from '../lib/timeUtils';
 import { startOfDay, startOfWeek, startOfMonth, subDays } from 'date-fns';
 import { cn } from '../lib/utils';
+import { supabase } from '../lib/supabase';
 
 type Timeframe = 'Day' | 'Week' | 'Month';
 
@@ -142,16 +144,36 @@ export function Goals() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<Timeframe>('Day');
   const { trades: allTrades, loading } = useTrades();
+  const { user } = useAuth();
   const { selectedAccountId } = useAccountContext();
-  const [targets, setTargets] = useState<Record<string, number>>(() => {
-    const saved = localStorage.getItem('tradova_goal_targets');
-    return saved ? JSON.parse(saved) : DEFAULT_TARGETS;
-  });
+  const [targets, setTargets] = useState<Record<string, number>>(DEFAULT_TARGETS);
+  const [targetsLoading, setTargetsLoading] = useState(true);
 
-  useEffect(() => { localStorage.setItem('tradova_goal_targets', JSON.stringify(targets)); }, [targets]);
+  // Load targets from Supabase
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from('goal_targets')
+      .select('goal_id, target')
+      .eq('userId', user.id)
+      .then(({ data }) => {
+        if (data && data.length > 0) {
+          const loaded: Record<string, number> = { ...DEFAULT_TARGETS };
+          data.forEach((row: any) => { loaded[row.goal_id] = Number(row.target); });
+          setTargets(loaded);
+        }
+        setTargetsLoading(false);
+      });
+  }, [user]);
 
-  const handleTargetChange = (id: string, newTarget: number) =>
+  const handleTargetChange = useCallback(async (id: string, newTarget: number) => {
+    if (!user) return;
     setTargets(prev => ({ ...prev, [id]: newTarget }));
+    await supabase.from('goal_targets').upsert(
+      { userId: user.id, goal_id: id, target: newTarget },
+      { onConflict: 'userId,goal_id' }
+    );
+  }, [user]);
 
   // ── Data: filter by account ─────────────────────────────────────────────
   const trades = useMemo(() =>
