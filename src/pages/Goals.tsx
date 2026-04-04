@@ -151,13 +151,18 @@ export function Goals() {
 
   // Load targets from Supabase
   useEffect(() => {
-    if (!user) return;
+    if (!user) {
+      setTargetsLoading(false);
+      return;
+    }
     supabase
       .from('goal_targets')
       .select('goal_id, target')
       .eq('userId', user.id)
-      .then(({ data }) => {
-        if (data && data.length > 0) {
+      .then(({ data, error }) => {
+        if (error) {
+          console.error('[Goals] Failed to load targets from DB:', error.message);
+        } else if (data && data.length > 0) {
           const loaded: Record<string, number> = { ...DEFAULT_TARGETS };
           data.forEach((row: any) => { loaded[row.goal_id] = Number(row.target); });
           setTargets(loaded);
@@ -168,11 +173,15 @@ export function Goals() {
 
   const handleTargetChange = useCallback(async (id: string, newTarget: number) => {
     if (!user) return;
+    // Optimistic update
     setTargets(prev => ({ ...prev, [id]: newTarget }));
-    await supabase.from('goal_targets').upsert(
+    const { error } = await supabase.from('goal_targets').upsert(
       { userId: user.id, goal_id: id, target: newTarget },
       { onConflict: 'userId,goal_id' }
     );
+    if (error) {
+      console.error('[Goals] Failed to save target to DB:', error.message);
+    }
   }, [user]);
 
   // ── Data: filter by account ─────────────────────────────────────────────
@@ -294,7 +303,7 @@ export function Goals() {
 
   const allZero = stats.day.trades === 0 && activeTab === 'Day';
 
-  if (loading) {
+  if (loading || targetsLoading) {
     return (
       <div className="flex items-center justify-center h-full">
         <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
