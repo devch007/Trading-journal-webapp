@@ -20,6 +20,7 @@ import { TopBar } from '../lib/TopBar';
 import { cn } from '../lib/utils';
 import { useTrades, Trade } from '../hooks/useTrades';
 import { useLocation } from 'react-router-dom';
+import { useAccountContext } from '../contexts/AccountContext';
 
 interface Message {
   id: string;
@@ -37,9 +38,15 @@ interface Insight {
 }
 
 export function AIEngine() {
-  const { trades, loading: tradesLoading } = useTrades();
+  const { trades: allTrades, loading: tradesLoading } = useTrades();
+  const { selectedAccountId } = useAccountContext();
   const location = useLocation();
   const [hasAutoTriggered, setHasAutoTriggered] = useState(false);
+  
+  const trades = useMemo(() => {
+    if (!selectedAccountId) return allTrades || [];
+    return (allTrades || []).filter(t => t.accountId === selectedAccountId);
+  }, [allTrades, selectedAccountId]);
   
   const dynamicPrompts = useMemo(() => {
     if (!trades || trades.length === 0) {
