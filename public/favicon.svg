@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0d0d16" />
+      <stop offset="100%" stop-color="#1a1a2e" />
+    </linearGradient>
+    <linearGradient id="primary" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#2563eb" />
+      <stop offset="100%" stop-color="#60a5fa" />
+    </linearGradient>
+    <linearGradient id="secondary" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4f46e5" />
+      <stop offset="100%" stop-color="#818cf8" />
+    </linearGradient>
+  </defs>
+  
+  <rect width="512" height="512" rx="128" fill="url(#bg)" />
+  
+  <!-- Left to right bottom-up diagonal (part of X) -->
+  <path d="M160 352 L352 160" stroke="url(#primary)" stroke-width="64" stroke-linecap="round" />
+  
+  <!-- Left-top to right-bottom diagonal (part of X) with gap -->
+  <path d="M160 160 L216 216" stroke="url(#secondary)" stroke-width="64" stroke-linecap="round" />
+  <path d="M296 296 L352 352" stroke="url(#secondary)" stroke-width="64" stroke-linecap="round" />
+  
+  <!-- Center glowing circle -->
+  <circle cx="256" cy="256" r="24" fill="#ffffff" />
+</svg>
