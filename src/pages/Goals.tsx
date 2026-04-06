@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { TopBar } from '../lib/TopBar';
 import { GoalCard } from '../components/GoalCard';
 import { GoalsSummary, GoalStatus } from '../components/GoalsSummary';
+import { GoalHeatmap, DailyHeatmapData, DailyGoalStatus } from '../components/GoalHeatmap';
 import { useTrades } from '../hooks/useTrades';
 import { useAuth } from '../contexts/AuthContext';
 import { useAccountContext } from '../contexts/AccountContext';
@@ -304,6 +305,84 @@ export function Goals() {
     return max > 0 ? `Best day this week: +$${max.toFixed(2)}` : undefined;
   }, [last7DaysPnL]);
 
+  // ── Heatmap Data Generation ─────────────────────────────────────────────
+  const heatmapData = useMemo<DailyHeatmapData[]>(() => {
+    if (activeTab === 'Day') return [];
+    
+    const days: Date[] = [];
+    const now = new Date();
+    
+    if (activeTab === 'Week') {
+      const start = startOfWeek(now, { weekStartsOn: 1 }); // Monday
+      for (let i = 0; i < 7; i++) {
+        const d = new Date(start);
+        d.setDate(d.getDate() + i);
+        days.push(d);
+      }
+    } else if (activeTab === 'Month') {
+      const start = startOfMonth(now);
+      const daysInMonth = new Date(start.getFullYear(), start.getMonth() + 1, 0).getDate();
+      for (let i = 0; i < daysInMonth; i++) {
+        const d = new Date(start);
+        d.setDate(d.getDate() + i);
+        days.push(d);
+      }
+    }
+
+    return days.map(day => {
+      const dayStart = startOfDay(day);
+      const dayEnd = new Date(dayStart);
+      dayEnd.setHours(23, 59, 59, 999);
+      
+      const dayT = trades.filter(t => {
+        const d = getTradeDate(t.date);
+        return d >= dayStart && d <= dayEnd;
+      });
+
+      const pnl = dayT.reduce((s, t) => s + (Number(t.pnl) || 0), 0);
+      const winrate = dayT.length ? (dayT.filter(t => t.isPositive).length / dayT.length) * 100 : 0;
+      const tCount = dayT.length;
+
+      const pnlTarget = targets['day-pnl'] || DEFAULT_TARGETS['day-pnl'];
+      const lossLimit = targets['day-loss'] || DEFAULT_TARGETS['day-loss'];
+      const winrateTarget = targets['day-winrate'] || DEFAULT_TARGETS['day-winrate'];
+      
+      const getStat = (current: number, target: number, reverse: boolean) => {
+        const pct = reverse 
+          ? Math.max(0, 100 - (target !== 0 ? (Math.abs(current) / Math.abs(target)) * 100 : 0))
+          : Math.min(Math.max(target !== 0 ? (current / target) * 100 : 0, 0), 100);
+        if (reverse) {
+          if (pct <= 0) return 'breached';
+          if (pct <= 50) return 'in-progress';
+          return 'achieved';
+        } else {
+          if (pct >= 100) return 'achieved';
+          if (pct >= 50) return 'in-progress';
+          return 'not-started';
+        }
+      };
+
+      const active = tCount > 0;
+      
+      const goalStatuses: DailyGoalStatus[] = [
+        { id: 'pnl', label: 'Daily PnL Target', status: active ? (getStat(pnl, pnlTarget, false) as any) : 'not-started' },
+        { id: 'loss', label: 'Max Daily Loss', status: active ? (getStat(pnl, lossLimit, true) as any) : 'not-started' },
+        { id: 'winrate', label: 'Win Rate Target', status: active ? (getStat(winrate, winrateTarget, false) as any) : 'not-started' },
+      ];
+
+      const passedGoals = goalStatuses.filter(g => g.status === 'achieved').length;
+      const score = active ? passedGoals / goalStatuses.length : 0;
+      
+      return {
+        date: day,
+        active,
+        breachedLimits: active && goalStatuses[1].status === 'breached',
+        score,
+        goals: goalStatuses
+      };
+    });
+  }, [activeTab, trades, targets]);
+
   const allZero = stats.day.trades === 0 && activeTab === 'Day';
 
   if (loading || targetsLoading) {
@@ -402,6 +481,18 @@ export function Goals() {
                   />
                 ))}
               </div>
+            )}
+
+            {/* Heatmap Section */}
+            {activeTab !== 'Day' && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: 0.1 }}
+                className="mt-6"
+              >
+                <GoalHeatmap data={heatmapData} mode={activeTab === 'Week' ? 'week' : 'month'} />
+              </motion.div>
             )}
           </motion.div>
         </AnimatePresence>
