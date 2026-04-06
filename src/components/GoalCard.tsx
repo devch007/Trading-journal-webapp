@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Check } from 'lucide-react';
 import { cn } from '../lib/utils';
 
 export interface GoalCardProps {
@@ -33,9 +32,9 @@ function getRingColor(pct: number, reverse: boolean): string {
     if (pct > 80) return '#1ED760';
     if (pct > 50) return '#60a5fa';
     if (pct > 20) return '#f59e0b';
-    return '#f87171';
+    return '#E5534B'; // Danger
   }
-  if (pct === 0) return '#374151';
+  if (pct === 0) return '#6A6A6A';
   if (pct < 50) return '#f59e0b';
   if (pct < 80) return '#60a5fa';
   return '#1ED760';
@@ -43,17 +42,17 @@ function getRingColor(pct: number, reverse: boolean): string {
 
 function getStatusBadge(pct: number, reverse: boolean, current: number): { text: string; bg: string; color: string } {
   if (reverse) {
-    if (Math.abs(current) === 0) return { text: '✓ Safe', bg: '#052e16', color: '#1ED760' };
-    if (pct > 80) return { text: '✓ Safe', bg: '#052e16', color: '#1ED760' };
-    if (pct > 50) return { text: '● Under Limit', bg: '#1e3a5f', color: '#60a5fa' };
-    if (pct > 0) return { text: '↑ Near Limit', bg: '#1e1a05', color: '#f59e0b' };
-    return { text: '⚠ Limit Hit', bg: '#2d0a0a', color: '#f87171' };
+    if (Math.abs(current) === 0) return { text: '✓ Safe', bg: '#1ED7601a', color: '#1ED760' };
+    if (pct > 80) return { text: '✓ Safe', bg: '#1ED7601a', color: '#1ED760' };
+    if (pct > 50) return { text: '● Under Limit', bg: '#60a5fa1a', color: '#60a5fa' };
+    if (pct > 0) return { text: '↑ Near Limit', bg: '#f59e0b1a', color: '#f59e0b' };
+    return { text: '⚠ Limit Hit', bg: '#E5534B1a', color: '#E5534B' };
   }
-  if (pct === 0) return { text: '— Not Started', bg: '#1a1a2e', color: '#6B7280' };
-  if (pct < 50) return { text: '↑ In Progress', bg: '#1e1a05', color: '#f59e0b' };
-  if (pct < 80) return { text: '● On Track', bg: '#1e3a5f', color: '#60a5fa' };
-  if (pct < 100) return { text: '▲ Almost There', bg: '#052e16', color: '#86efac' };
-  return { text: '✓ Achieved', bg: '#052e16', color: '#1ED760' };
+  if (pct === 0) return { text: '— Not Started', bg: '#ffffff0a', color: '#A7A7A7' };
+  if (pct < 50) return { text: '↑ In Progress', bg: '#f59e0b1a', color: '#f59e0b' };
+  if (pct < 80) return { text: '● On Track', bg: '#60a5fa1a', color: '#60a5fa' };
+  if (pct < 100) return { text: '▲ Almost There', bg: '#1ED7601a', color: '#1ED760' };
+  return { text: '✓ Achieved', bg: '#1ED76033', color: '#1ED760' };
 }
 
 function getMotivationalCopy(label: string, pct: number, reverse: boolean, current: number): string {
@@ -102,14 +101,22 @@ function formatTarget(val: number, type: string, unit: string): string {
 
 function Sparkline({ data }: { data: number[] }) {
   if (data.length < 2) return null;
-  const W = 80, H = 32;
+  const W = 100, H = 36;
   const min = Math.min(...data), max = Math.max(...data);
   const range = max - min || 1;
   const pts = data.map((v, i) => `${(i / (data.length - 1)) * W},${H - ((v - min) / range) * (H - 4) - 2}`).join(' ');
   const net = data.reduce((s, v) => s + v, 0);
+  const color = net >= 0 ? '#1ED760' : '#E5534B';
   return (
-    <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} className="opacity-70 flex-shrink-0">
-      <polyline points={pts} fill="none" stroke={net >= 0 ? '#1ED760' : '#f87171'} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
+    <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} className="opacity-90 flex-shrink-0 mt-3 md:mt-0">
+      <defs>
+        <linearGradient id={`spark-${net}`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={color} stopOpacity="0.3" />
+          <stop offset="100%" stopColor={color} stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <polyline points={pts} fill="none" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+      <polygon points={`0,${H} ${pts} ${W},${H}`} fill={`url(#spark-${net})`} />
     </svg>
   );
 }
@@ -135,8 +142,8 @@ export const GoalCard: React.FC<GoalCardProps> = ({
   const isAchieved = !reverse && pct >= 100;
 
   // Ring geometry
-  const RING_SIZE = isHero ? 80 : 64;
-  const RING_R = isHero ? 37 : 29;
+  const RING_SIZE = isHero ? 72 : 60;
+  const RING_R = isHero ? 32 : 26;
   const CIRC = 2 * Math.PI * RING_R;
   const dashOffset = CIRC - (CIRC * pct) / 100;
 
@@ -144,7 +151,7 @@ export const GoalCard: React.FC<GoalCardProps> = ({
   useEffect(() => {
     cancelAnimationFrame(rafRef.current);
     const t0 = performance.now();
-    const dur = 700;
+    const dur = 800; // Smoother
     const end = current;
     const tick = (now: number) => {
       const p = Math.min((now - t0) / dur, 1);
@@ -161,7 +168,7 @@ export const GoalCard: React.FC<GoalCardProps> = ({
     if (isAchieved && !celebrated) {
       setCelebrated(true);
       setShowCelebration(true);
-      const t = setTimeout(() => setShowCelebration(false), 1000);
+      const t = setTimeout(() => setShowCelebration(false), 2000);
       return () => clearTimeout(t);
     }
     if (!isAchieved) setCelebrated(false);
@@ -177,19 +184,21 @@ export const GoalCard: React.FC<GoalCardProps> = ({
     <motion.div
       layout
       className={cn(
-        'glass-card relative flex flex-col gap-3 rounded-2xl p-5 overflow-hidden group',
-        isHero ? 'col-span-full' : '',
-        isAchieved ? 'border-l-[3px] !border-l-[#1ED760]' : '',
-        pct < 20 && reverse ? '!border-[#7f1d1d]' : '',
+        'glass-card relative flex flex-col justify-between gap-5 rounded-[20px] p-6 overflow-hidden group border transition-all duration-300',
+        isHero ? 'col-span-full xl:col-span-2' : '',
+        isAchieved ? 'border-l-[4px] border-l-[#1ED760]' : 'border-white/5 hover:border-white/10',
+        pct < 20 && reverse ? '!border-l-[#E5534B] !border-l-[4px]' : '',
       )}
-      whileHover={{ y: -2, boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }}
-      transition={{ duration: 0.2 }}
-      animate={showCelebration ? { backgroundColor: ['rgba(255,255,255,0.04)', '#052e16', 'rgba(255,255,255,0.04)'] } : {}}
+      whileHover={{ y: -4, boxShadow: '0 12px 40px rgba(0,0,0,0.3)' }}
+      animate={showCelebration ? { backgroundColor: ['rgba(30,215,96,0.1)', 'transparent'] } : {}}
+      transition={{ duration: 0.4 }}
     >
-      {/* Decorative glow blob — matches Dashboard cards */}
-      <div className="absolute -right-4 -top-4 w-28 h-28 bg-white/5 rounded-full blur-2xl group-hover:bg-primary/10 transition-colors duration-500 pointer-events-none" />
-      {/* Extra tint for hero card */}
-      {isHero && <div className="absolute -left-8 -bottom-8 w-40 h-40 bg-blue-500/5 rounded-full blur-3xl pointer-events-none" />}
+      {/* Dynamic Background Gradients */}
+      {isHero && (
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 via-transparent to-transparent opacity-50 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
+      )}
+      <div className="absolute -right-10 -top-10 w-32 h-32 rounded-full blur-[40px] opacity-0 group-hover:opacity-30 transition-opacity duration-700 pointer-events-none" style={{ backgroundColor: ringColor }} />
+
       {/* Floating celebration label */}
       <AnimatePresence>
         {showCelebration && (
@@ -197,137 +206,137 @@ export const GoalCard: React.FC<GoalCardProps> = ({
             initial={{ opacity: 1, y: 0, x: '-50%' }}
             animate={{ opacity: 0, y: -24 }}
             exit={{}}
-            transition={{ duration: 0.8 }}
-            className="absolute top-4 left-1/2 text-[#1ED760] font-bold pointer-events-none z-20 whitespace-nowrap"
-            style={{ fontSize: 10 }}
+            transition={{ duration: 1.2 }}
+            className="absolute top-4 left-1/2 type-h2 text-[#1ED760] pointer-events-none z-20 whitespace-nowrap drop-shadow-md"
           >
             + Goal achieved!
           </motion.span>
         )}
       </AnimatePresence>
 
-      {/* Row 1: Label + Status badge */}
-      <div className="flex justify-between items-center">
-        <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#4B5563' }}>
-          {label}
-        </span>
-        <span
-          className="px-2 py-0.5 rounded-full"
-          style={{ fontSize: 8, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', background: status.bg, color: status.color }}
-        >
-          {status.text}
-        </span>
-      </div>
-
-      {/* Row 2: Progress ring + Value */}
-      <div className="flex items-center gap-4">
-        {/* Ring */}
-        <div className="relative flex-shrink-0" style={{ width: RING_SIZE, height: RING_SIZE }}>
-          <svg width={RING_SIZE} height={RING_SIZE} style={{ transform: 'rotate(-90deg)' }}>
-            <circle cx={RING_SIZE / 2} cy={RING_SIZE / 2} r={RING_R} fill="transparent" stroke="#1e2a3a" strokeWidth={6} />
-            <motion.circle
-              cx={RING_SIZE / 2} cy={RING_SIZE / 2} r={RING_R}
-              fill="transparent" stroke={ringColor} strokeWidth={6}
-              strokeDasharray={CIRC}
-              initial={{ strokeDashoffset: CIRC }}
-              animate={{ strokeDashoffset: dashOffset, stroke: ringColor }}
-              transition={{ duration: 0.9, ease: [0.34, 1.56, 0.64, 1] }}
-              strokeLinecap="round"
-            />
-          </svg>
-          <div className="absolute inset-0 flex items-center justify-center">
-            <span style={{ fontSize: isHero ? 13 : 11, fontWeight: 800, color: '#fff', fontFeatureSettings: "'tnum'" }}>
-              {Math.round(pct)}%
-            </span>
-          </div>
-        </div>
-
-        {/* Value block */}
-        <div className="flex flex-col gap-0.5 flex-1 min-w-0">
-          <div className="flex items-baseline gap-2 flex-wrap">
-            <span style={{ fontSize: isHero ? 28 : 22, fontWeight: 800, letterSpacing: '-0.04em', color: '#fff', fontFeatureSettings: "'tnum'" }}>
-              {formatValue(displayValue, type, prefix, unit)}
-            </span>
-            <span style={{ fontSize: 12, color: '#6B7280', fontWeight: 400 }}>
-              / {formatTarget(target, type, unit)}
-            </span>
-          </div>
-          <p style={{ fontSize: 11, color: '#4B5563', fontStyle: 'italic', fontWeight: 400 }}>
-            {motivationalCopy}
-          </p>
-          {isHero && bestStat && (
-            <p style={{ fontSize: 11, color: '#60a5fa', fontWeight: 700, fontFeatureSettings: "'tnum'" }}>
-              {bestStat}
-            </p>
-          )}
-        </div>
-
-        {/* Sparkline (hero only) */}
-        {isHero && sparklineData && sparklineData.length > 1 && (
-          <Sparkline data={sparklineData} />
-        )}
-      </div>
-
-      {/* Row 3: Progress bar */}
-      <div className="w-full rounded-full overflow-hidden" style={{ height: 5, background: '#1e2a3a' }}>
-        <motion.div
-          className="h-full rounded-full"
-          initial={{ width: '0%' }}
-          animate={{ width: `${pct}%`, backgroundColor: ringColor }}
-          transition={{ duration: 0.7, ease: 'easeOut' }}
-        />
-      </div>
-
-      {/* Row 4: Edit target link + timestamp */}
-      <div className="flex justify-between items-center">
-        <button
-          onClick={() => { setEditValue(String(Math.abs(target))); setIsEditing(v => !v); setTimeout(() => inputRef.current?.focus(), 60); }}
-          style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: isEditing ? '#6B7280' : '#2563eb' }}
-          className="hover:opacity-70 transition-opacity"
-        >
-          {isEditing ? 'Cancel' : 'Edit Target'}
-        </button>
-        <span style={{ fontSize: 10, color: '#374151' }}>Live</span>
-      </div>
-
-      {/* Inline edit panel */}
-      <AnimatePresence>
-        {isEditing && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="overflow-hidden"
+      <div className="flex flex-col gap-4 relative z-10">
+        {/* Row 1: Label + Status badge */}
+        <div className="flex justify-between items-center">
+          <span className="type-label text-[11px]">
+            {label}
+          </span>
+          <span
+            className="px-2.5 py-1 rounded-full type-micro border tracking-wider"
+            style={{ background: status.bg, color: status.color, borderColor: `${status.color}33`, fontSize: '9px' }}
           >
-            <div className="pt-3 border-t border-[#1e2a3a] flex gap-2">
-              <div className="flex-1">
-                <p style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#4B5563', marginBottom: 6 }}>
-                  New Target
-                </p>
-                <input
-                  ref={inputRef}
-                  type="text"
-                  value={editValue}
-                  onChange={e => setEditValue(e.target.value)}
-                  onKeyDown={e => { if (e.key === 'Enter') handleSave(); if (e.key === 'Escape') setIsEditing(false); }}
-                  style={{ background: '#1a2332', border: '1px solid #2563eb', borderRadius: 6, padding: '8px 12px', fontSize: 13, color: '#fff', width: '100%', outline: 'none' }}
-                  placeholder="Enter target..."
+            {status.text}
+          </span>
+        </div>
+
+        {/* Row 2: Progress ring + Value */}
+        <div className="flex items-center justify-between gap-5">
+          <div className="flex items-center gap-5 flex-1 min-w-0">
+            {/* Ring */}
+            <div className="relative flex-shrink-0 drop-shadow-lg" style={{ width: RING_SIZE, height: RING_SIZE }}>
+              <svg width={RING_SIZE} height={RING_SIZE} style={{ transform: 'rotate(-90deg)' }}>
+                <circle cx={RING_SIZE / 2} cy={RING_SIZE / 2} r={RING_R} fill="transparent" stroke="rgba(255,255,255,0.05)" strokeWidth={isHero ? 7 : 6} />
+                <motion.circle
+                  cx={RING_SIZE / 2} cy={RING_SIZE / 2} r={RING_R}
+                  fill="transparent" stroke={ringColor} strokeWidth={isHero ? 7 : 6}
+                  strokeDasharray={CIRC}
+                  initial={{ strokeDashoffset: CIRC }}
+                  animate={{ strokeDashoffset: dashOffset, stroke: ringColor }}
+                  transition={{ duration: 1.2, ease: [0.34, 1.56, 0.64, 1] }}
+                  strokeLinecap="round"
                 />
-              </div>
-              <div className="flex flex-col gap-1 justify-end">
-                <button
-                  onClick={handleSave}
-                  style={{ background: '#1d4ed8', borderRadius: 6, padding: '8px 14px', fontSize: 12, color: '#fff', fontWeight: 700 }}
-                  className="hover:bg-[#1e40af] transition-colors"
-                >
-                  Save
-                </button>
+              </svg>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className={cn("type-h2 tnum", isHero ? "text-[14px]" : "text-[12px]")}>
+                  {Math.round(pct)}%
+                </span>
               </div>
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+
+            {/* Value block */}
+            <div className="flex flex-col gap-1 min-w-0">
+              <div className="flex items-baseline gap-2 flex-wrap">
+                <span className={cn("type-h1 tnum text-white", isHero ? "text-[32px]" : "text-[26px]")}>
+                  {formatValue(displayValue, type, prefix, unit)}
+                </span>
+                <span className="type-label text-[13px] text-[#A7A7A7]">
+                  / {formatTarget(target, type, unit)}
+                </span>
+              </div>
+              <p className="type-body text-[#A7A7A7] mt-1 line-clamp-1">
+                {motivationalCopy}
+              </p>
+              {isHero && bestStat && (
+                <p className="type-body text-primary font-bold mt-0.5" style={{ fontSize: 13 }}>
+                  {bestStat}
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Sparkline (hero only) */}
+          {isHero && sparklineData && sparklineData.length > 1 && (
+            <Sparkline data={sparklineData} />
+          )}
+        </div>
+      </div>
+
+      {/* Row 3: Progress bar & Edit */}
+      <div className="flex flex-col gap-3 relative z-10 w-full mt-2">
+        <div className="w-full rounded-full overflow-hidden" style={{ height: 4, background: 'rgba(255,255,255,0.05)' }}>
+          <motion.div
+            className="h-full rounded-full shadow-[0_0_10px_rgba(255,255,255,0.2)]"
+            initial={{ width: '0%' }}
+            animate={{ width: `${pct}%`, backgroundColor: ringColor }}
+            transition={{ duration: 1.0, ease: 'easeOut' }}
+          />
+        </div>
+
+        <div className="flex justify-between items-center mt-1">
+          <button
+            onClick={() => { setEditValue(String(Math.abs(target))); setIsEditing(v => !v); setTimeout(() => inputRef.current?.focus(), 60); }}
+            className={cn("type-micro transition-colors", isEditing ? "text-[#6A6A6A]" : "text-primary hover:text-primary/70")}
+          >
+            {isEditing ? 'Cancel' : 'Edit Target'}
+          </button>
+          <span className="type-micro text-[#6A6A6A] flex items-center gap-1.5 before:content-[''] before:block before:w-1.5 before:h-1.5 before:bg-[#1ED760] before:rounded-full before:animate-pulse">Live Tracking</span>
+        </div>
+
+        {/* Inline edit panel */}
+        <AnimatePresence>
+          {isEditing && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.3 }}
+              className="overflow-hidden"
+            >
+              <div className="pt-4 border-t border-white/5 flex gap-3">
+                <div className="flex-1">
+                  <p className="type-label mb-2">New Target</p>
+                  <input
+                    ref={inputRef}
+                    type="text"
+                    value={editValue}
+                    onChange={e => setEditValue(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter') handleSave(); if (e.key === 'Escape') setIsEditing(false); }}
+                    className="bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-primary/50 transition-all w-full tnum"
+                    placeholder="Enter target..."
+                  />
+                </div>
+                <div className="flex flex-col justify-end">
+                  <button
+                    onClick={handleSave}
+                    className="bg-primary text-white font-bold rounded-lg px-4 py-2 text-sm hover:bg-primary/80 transition-all shadow-[0_0_15px_rgba(59,130,246,0.3)]"
+                  >
+                    Save
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
     </motion.div>
   );
 };
