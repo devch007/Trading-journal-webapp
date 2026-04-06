@@ -126,74 +126,80 @@ export const GoalHeatmap: React.FC<GoalHeatmapProps> = ({ data, mode }) => {
     );
   }
 
-  // Month View (GitHub-style calendar grid)
-  // Compute empty squares for the start of the month
-  const firstDay = data[0].date;
-  const startOffset = Array.from({ length: firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1 }); // Assuming Monday start
+  // Month View (3 Months Stacked)
+  const monthlyData: Record<string, DailyHeatmapData[]> = {};
+  data.forEach(d => {
+    const monthKey = format(d.date, 'MMM yyyy');
+    if (!monthlyData[monthKey]) monthlyData[monthKey] = [];
+    monthlyData[monthKey].push(d);
+  });
 
   return (
     <div className="glass-card flex flex-col gap-4 p-6 rounded-2xl border border-white/5 relative overflow-hidden">
       <div className="absolute bottom-0 left-0 w-64 h-64 bg-primary/5 rounded-full blur-[60px] pointer-events-none" />
       
-      <div className="flex flex-col gap-1 z-10 mb-2">
-        <h3 className="type-h2 text-[16px] text-white">Discipline Heatmap</h3>
-        <p className="type-body text-[#A7A7A7] text-[13px]">A macro view of your daily goal adherence for the month.</p>
+      <div className="flex flex-col gap-1 z-10 mb-4">
+        <h3 className="type-h2 text-[16px] text-white">Macro Discipline Heatmap</h3>
+        <p className="type-body text-[#A7A7A7] text-[13px]">A macro view of your daily goal adherence for the last 3 months.</p>
       </div>
 
-      <div className="flex z-10">
-        <div className="flex flex-col gap-2 pt-[26px] pr-4">
-          <span className="type-micro text-[#6A6A6A] h-8 flex items-center">Mon</span>
-          <span className="type-micro text-[#6A6A6A] h-8 flex items-center">Wed</span>
-          <span className="type-micro text-[#6A6A6A] h-8 flex items-center">Fri</span>
-        </div>
-
-        <div className="grid grid-cols-[repeat(auto-fill,32px)] gap-2 flex-grow auto-rows-[32px] grid-flow-col">
-          {/* Day Headers (Optional for Month view if using standard github style) */}
-          {startOffset.map((_, i) => <div key={`offset-${i}`} className="w-8 h-8 rounded-md bg-transparent" />)}
-          
-          {data.map((day, i) => {
-            let heatColor = 'rgba(255,255,255,0.02)';
-            let borderColor = 'rgba(255,255,255,0.05)';
-            let isCurrent = isSameDay(day.date, new Date());
-
-            if (day.active) {
-              if (day.breachedLimits) {
-                heatColor = 'rgba(229,83,75,0.2)'; // Deep red
-                borderColor = 'rgba(229,83,75,0.5)';
-              } else if (day.score === 1) {
-                heatColor = 'rgba(30,215,96,0.3)'; // Bright Green
-                borderColor = 'rgba(30,215,96,0.6)';
-              } else if (day.score >= 0.5) {
-                heatColor = 'rgba(30,215,96,0.15)'; // Muted Green
-                borderColor = 'rgba(30,215,96,0.3)';
-              } else {
-                heatColor = 'rgba(245,158,11,0.2)'; // Yellow/Orange
-                borderColor = 'rgba(245,158,11,0.4)';
-              }
-            }
-
+      <div className="flex flex-col gap-3 z-10 overflow-x-auto no-scrollbar pb-2">
+        <div className="min-w-max flex flex-col gap-5">
+          {Object.entries(monthlyData).map(([monthLabel, monthDays]) => {
+            const firstDayOfMonth = monthDays[0].date;
+            const shortMonth = format(firstDayOfMonth, 'MMM');
+            
             return (
-              <motion.div
-                key={i}
-                whileHover={{ scale: 1.15, zIndex: 10 }}
-                className={cn(
-                  "w-8 h-8 rounded-[6px] relative group border",
-                  isCurrent ? "ring-2 ring-primary ring-offset-2 ring-offset-[#0d0d16]" : ""
-                )}
-                style={{ backgroundColor: heatColor, borderColor: borderColor }}
-              >
-                {/* Tooltip */}
-                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max px-3 py-2 bg-[#111827] border border-white/10 rounded-lg shadow-xl opacity-0 group-hover:opacity-100 pointer-events-none transition-all z-50">
-                  <p className="type-label text-white mb-1">{format(day.date, 'MMM do, yyyy')}</p>
-                  {day.active ? (
-                    <p className="type-body text-[#A7A7A7] text-[11px]">
-                      {day.breachedLimits ? 'Risk management breached' : `Followed ${Math.round(day.score * 100)}% of goals`}
-                    </p>
-                  ) : (
-                    <p className="type-body text-[#A7A7A7] text-[11px]">No activity</p>
-                  )}
+              <div key={monthLabel} className="flex gap-4 items-center">
+                <span className="type-micro text-[#6A6A6A] w-8 flex-shrink-0 font-bold tracking-wider uppercase">{shortMonth}</span>
+                <div className="flex gap-1.5">
+                  {monthDays.map((day, i) => {
+                    let heatColor = 'rgba(255,255,255,0.02)';
+                    let borderColor = 'rgba(255,255,255,0.05)';
+                    let isCurrent = isSameDay(day.date, new Date());
+
+                    if (day.active) {
+                      if (day.breachedLimits) {
+                        heatColor = 'rgba(229,83,75,0.2)'; 
+                        borderColor = 'rgba(229,83,75,0.5)';
+                      } else if (day.score === 1) {
+                        heatColor = 'rgba(30,215,96,0.3)'; 
+                        borderColor = 'rgba(30,215,96,0.6)';
+                      } else if (day.score >= 0.5) {
+                        heatColor = 'rgba(30,215,96,0.15)'; 
+                        borderColor = 'rgba(30,215,96,0.3)';
+                      } else {
+                        heatColor = 'rgba(245,158,11,0.2)'; 
+                        borderColor = 'rgba(245,158,11,0.4)';
+                      }
+                    }
+
+                    return (
+                      <motion.div
+                        key={i}
+                        whileHover={{ scale: 1.15, zIndex: 10 }}
+                        className={cn(
+                          "w-7 h-7 rounded-[4px] relative group border",
+                          isCurrent ? "ring-2 ring-primary ring-offset-2 ring-offset-[#0d0d16]" : ""
+                        )}
+                        style={{ backgroundColor: heatColor, borderColor: borderColor }}
+                      >
+                        {/* Tooltip */}
+                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max px-3 py-2 bg-[#111827] border border-white/10 rounded-[8px] shadow-xl opacity-0 group-hover:opacity-100 pointer-events-none transition-all z-50">
+                          <p className="type-label text-white mb-1">{format(day.date, 'MMM do, yyyy')}</p>
+                          {day.active ? (
+                            <p className="type-body text-[#A7A7A7] text-[11px]">
+                              {day.breachedLimits ? 'Risk management breached' : `Followed ${Math.round(day.score * 100)}% of goals`}
+                            </p>
+                          ) : (
+                            <p className="type-body text-[#A7A7A7] text-[11px]">No activity</p>
+                          )}
+                        </div>
+                      </motion.div>
+                    );
+                  })}
                 </div>
-              </motion.div>
+              </div>
             );
           })}
         </div>

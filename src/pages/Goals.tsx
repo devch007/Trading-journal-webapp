@@ -321,8 +321,14 @@ export function Goals() {
       }
     } else if (activeTab === 'Month') {
       const start = startOfMonth(now);
-      const daysInMonth = new Date(start.getFullYear(), start.getMonth() + 1, 0).getDate();
-      for (let i = 0; i < daysInMonth; i++) {
+      start.setMonth(start.getMonth() - 2); // Get current and previous 2 months
+      
+      const end = new Date(now.getFullYear(), now.getMonth() + 1, 0); // End of current month
+      
+      const diffTime = Math.abs(end.getTime() - start.getTime());
+      const daysInPeriod = Math.round(diffTime / (1000 * 60 * 60 * 24)) + 1;
+      
+      for (let i = 0; i < daysInPeriod; i++) {
         const d = new Date(start);
         d.setDate(d.getDate() + i);
         days.push(d);
