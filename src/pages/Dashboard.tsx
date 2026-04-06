@@ -138,7 +138,12 @@ export function Dashboard() {
   }, [trades, selectedAccount]);
 
   const quantInsights = useMemo(() => {
-    if (!trades || trades.length === 0) return initialQuantInsights;
+    if (!trades || trades.length === 0) return [
+      { label: "Avg. Winning Trade", value: 0, isPositive: true },
+      { label: "Avg. Losing Trade", value: 0, isPositive: false },
+      { label: `Best Trade (-)`, value: 0, isPositive: true },
+      { label: `Worst Trade (-)`, value: 0, isPositive: false },
+    ];
     
     const winningTrades = (trades || []).filter(t => t.isPositive);
     const losingTrades = (trades || []).filter(t => !t.isPositive);
@@ -158,7 +163,7 @@ export function Dashboard() {
   }, [trades]);
 
   const performanceByPair = useMemo(() => {
-    if (!trades || trades.length === 0) return initialPerformance;
+    if (!trades || trades.length === 0) return [];
     
     const pairs = Array.from(new Set((trades || []).map(t => t.symbol)));
     return pairs.map(pair => {
@@ -609,7 +614,7 @@ IMPORTANT:
                     </tr>
                   </thead>
                   <tbody className="text-sm">
-                    {(trades.length > 0 ? trades.slice(0, 5) : initialTrades).map((trade: any, index: number) => (
+                    {trades.length > 0 ? trades.slice(0, 5).map((trade: any, index: number) => (
                       <tr key={trade.id || index} className="border-b border-white/5 hover:bg-white/[0.02] transition-colors group animate-in fade-in slide-in-from-top-2 duration-500">
                         <td className="py-4 type-body text-[12px] text-[#6A6A6A]">
                           {trade.date || trade.createdAt 
@@ -621,7 +626,13 @@ IMPORTANT:
                         <td className="py-4 type-body text-[12px] tnum">{trade.size || 'N/A'}</td>
                         <td className={`py-4 text-right font-bold tnum text-[14px] ${trade.isPositive ? 'text-[#1ED760]' : 'text-[#E5534B]'}`}>{trade.result || '$0.00'}</td>
                       </tr>
-                    ))}
+                    )) : (
+                      <tr>
+                        <td colSpan={5} className="py-8 text-center type-body text-[12px] text-[#6A6A6A]">
+                          No recent executions
+                        </td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </div>

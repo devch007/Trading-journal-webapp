@@ -326,7 +326,11 @@ export function Strategies() {
                     pnl={stat.pnl}
                     winRate={winRate}
                     onEdit={() => { setEditTarget(strategy); setShowForm(true); }}
-                    onDelete={() => deleteStrategy(strategy.id)}
+                    onDelete={() => {
+                      if (window.confirm(`Are you sure you want to delete the strategy "${strategy.name}"?`)) {
+                        deleteStrategy(strategy.id);
+                      }
+                    }}
                   />
                 );
               })}
