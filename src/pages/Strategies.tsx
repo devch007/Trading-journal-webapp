@@ -177,7 +177,7 @@ const StrategyCard: React.FC<StrategyCardProps> = ({ strategy, onEdit, onDelete,
 
 export function Strategies() {
   const { strategies, loading, addStrategy, updateStrategy, deleteStrategy } = useStrategies();
-  const { trades } = useTrades();
+  const { trades, updateTrades } = useTrades();
 
   const [showForm, setShowForm] = useState(false);
   const [editTarget, setEditTarget] = useState<Strategy | undefined>(undefined);
@@ -326,9 +326,15 @@ export function Strategies() {
                     pnl={stat.pnl}
                     winRate={winRate}
                     onEdit={() => { setEditTarget(strategy); setShowForm(true); }}
-                    onDelete={() => {
-                      if (window.confirm(`Are you sure you want to delete the strategy "${strategy.name}"?`)) {
-                        deleteStrategy(strategy.id);
+                    onDelete={async () => {
+                      if (window.confirm(`Are you sure you want to delete the strategy "${strategy.name}"? This will also remove the strategy tag from all associated trades.`)) {
+                        if (!strategy.id.startsWith('auto-')) {
+                          deleteStrategy(strategy.id);
+                        }
+                        const tradeIds = trades.filter(t => t.strategy === strategy.name || t.tag === strategy.name).map(t => t.id);
+                        if (tradeIds.length > 0) {
+                          await updateTrades(tradeIds, { strategy: '', tag: '' });
+                        }
                       }
                     }}
                   />
