@@ -510,7 +510,6 @@ IMPORTANT:
           </div>
         </div>
 
-        {/* Stats Row */}
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
           <StatCard 
             title="Total P&L" 
@@ -518,6 +517,7 @@ IMPORTANT:
             trend={stats.roiPercent !== null ? `${stats.roiPercent >= 0 ? '+' : ''}${stats.roiPercent.toFixed(2)}% ROI` : 'No balance set'} 
             isPositive={stats.totalPnl >= 0} 
             icon={<Activity className="text-primary w-5 h-5" />} 
+            color="#3b82f6"
           />
           <StatCard 
             title="Win Rate" 
@@ -525,6 +525,7 @@ IMPORTANT:
             trend={`${stats.winRate >= 50 ? '+' : ''}${(stats.winRate - 50).toFixed(1)}% vs 50%`}
             isPositive={stats.winRate >= 50} 
             icon={<Target className="text-secondary w-5 h-5" />} 
+            color="#10b981"
           />
           <StatCard 
             title="Profit Factor" 
@@ -532,6 +533,7 @@ IMPORTANT:
             trend={`${stats.profitFactor >= 1 ? '+' : ''}${(stats.profitFactor - 1).toFixed(2)} vs 1.0`}
             isPositive={stats.profitFactor >= 1} 
             icon={<TrendingUp className="text-tertiary w-5 h-5" />} 
+            color="#f59e0b"
           />
           <StatCard 
             title="Active Trades" 
@@ -539,6 +541,7 @@ IMPORTANT:
             trend={`${stats.activeTrades} total`}
             isPositive={true} 
             icon={<TrendingDown className="text-error w-5 h-5" />} 
+            color="#8b5cf6"
           />
         </div>
 
@@ -681,20 +684,25 @@ IMPORTANT:
   );
 }
 
-function StatCard({ title, value, trend, isPositive, icon }: { title: string, value: string, trend: string, isPositive: boolean, icon: React.ReactNode }) {
+function StatCard({ title, value, trend, isPositive, icon, color = '#3b82f6' }: { title: string, value: string, trend: string, isPositive: boolean, icon: React.ReactNode, color?: string }) {
   return (
-    <div className="glass-card p-6 rounded-2xl flex flex-col gap-4 relative overflow-hidden group">
-      <div className="absolute -right-4 -top-4 w-24 h-24 bg-white/5 rounded-full blur-2xl group-hover:bg-primary/10 transition-colors duration-500"></div>
-      <div className="flex justify-between items-start">
+    <div className="glass-card p-6 rounded-2xl flex flex-col gap-4 relative overflow-hidden group border border-white/5 hover:border-white/10 transition-colors hover:shadow-[0_12px_40px_rgba(0,0,0,0.3)]">
+      <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-transparent opacity-50 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
+      <div 
+        className="absolute -right-10 -top-10 w-32 h-32 rounded-full blur-[40px] opacity-10 group-hover:opacity-30 transition-opacity duration-700 pointer-events-none" 
+        style={{ backgroundColor: color }}
+      />
+      
+      <div className="flex justify-between items-start z-10">
         <div className="p-2 bg-white/5 rounded-lg border border-white/10">
           {icon}
         </div>
-        <div className={`flex items-center gap-1 type-micro px-2 py-1 rounded-full ${isPositive ? 'bg-[#1ED760]/10 text-[#1ED760]' : 'bg-[#E5534B]/10 text-[#E5534B]'}`}>
+        <div className={`flex items-center gap-1 type-micro px-2 py-1 rounded-[8px] z-10 ${isPositive ? 'bg-[#1ED760]/10 text-[#1ED760]' : 'bg-[#E5534B]/10 text-[#E5534B]'}`}>
           {isPositive ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
           {trend}
         </div>
       </div>
-      <div>
+      <div className="z-10">
         <p className="type-label mb-1">{title}</p>
         <h2 className="type-metric text-white transition-all duration-500">{value}</h2>
       </div>
