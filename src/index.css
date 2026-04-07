@@ -315,3 +315,237 @@
 .react-datepicker__navigation:hover *::before {
   border-color: var(--color-on-surface) !important;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   LIQUID GLASS MORPHISM SIDEBAR
+═══════════════════════════════════════════════════════════════════════ */
+
+/* ── Main sidebar shell ─────────────────────────────────────────────── */
+.sidebar-glass {
+  background: linear-gradient(
+    168deg,
+    rgba(15, 25, 60, 0.72) 0%,
+    rgba(10, 18, 48, 0.78) 35%,
+    rgba(8, 14, 40, 0.85) 70%,
+    rgba(5, 10, 30, 0.92) 100%
+  );
+  backdrop-filter: blur(28px) saturate(1.6) brightness(1.05);
+  -webkit-backdrop-filter: blur(28px) saturate(1.6) brightness(1.05);
+  border-right: 1px solid rgba(100, 160, 255, 0.13);
+  box-shadow:
+    1px 0 0 0 rgba(100, 160, 255, 0.08),
+    inset -1px 0 24px rgba(30, 80, 200, 0.06),
+    4px 0 40px rgba(0, 0, 0, 0.45);
+}
+
+/* ── Logo gem ───────────────────────────────────────────────────────── */
+.sidebar-logo-gem {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, rgba(59,130,246,0.35) 0%, rgba(30,60,160,0.55) 100%);
+  border: 1px solid rgba(100, 160, 255, 0.25);
+  box-shadow:
+    0 0 14px rgba(59, 130, 246, 0.28),
+    inset 0 1px 0 rgba(160, 210, 255, 0.18);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: box-shadow 0.3s ease, transform 0.3s ease;
+}
+.sidebar-logo-gem:hover {
+  box-shadow:
+    0 0 22px rgba(59, 130, 246, 0.5),
+    inset 0 1px 0 rgba(160, 210, 255, 0.3);
+  transform: scale(1.04);
+}
+.sidebar-logo-letter {
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  background: linear-gradient(135deg, #93c5fd 0%, #60a5fa 50%, #3b82f6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1;
+}
+.sidebar-wordmark {
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  background: linear-gradient(90deg, #e0eaff 0%, #93c5fd 60%, #60a5fa 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  white-space: nowrap;
+}
+
+/* ── Nav item base ──────────────────────────────────────────────────── */
+.sidebar-nav-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 9px 10px;
+  border-radius: 12px;
+  overflow: hidden;
+  cursor: pointer;
+  text-decoration: none;
+  transition:
+    background 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+    transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid transparent;
+  -webkit-tap-highlight-color: transparent;
+}
+.sidebar-nav-item:active {
+  transform: scale(0.97);
+}
+
+/* ── Active state ───────────────────────────────────────────────────── */
+.sidebar-nav-active {
+  background: linear-gradient(
+    135deg,
+    rgba(59, 130, 246, 0.22) 0%,
+    rgba(30, 80, 200, 0.18) 50%,
+    rgba(20, 55, 160, 0.14) 100%
+  );
+  border-color: rgba(100, 160, 255, 0.22);
+  box-shadow:
+    0 0 0 1px rgba(100, 160, 255, 0.1) inset,
+    0 2px 20px rgba(59, 130, 246, 0.18),
+    0 0 40px rgba(59, 130, 246, 0.08);
+}
+
+/* ── Idle / hover state ─────────────────────────────────────────────── */
+.sidebar-nav-idle {
+  background: transparent;
+  border-color: transparent;
+}
+.sidebar-nav-idle:hover {
+  background: linear-gradient(
+    135deg,
+    rgba(59, 130, 246, 0.09) 0%,
+    rgba(30, 80, 200, 0.07) 100%
+  );
+  border-color: rgba(100, 160, 255, 0.1);
+  box-shadow:
+    0 0 0 1px rgba(100, 160, 255, 0.07) inset,
+    0 2px 12px rgba(59, 130, 246, 0.08);
+}
+
+/* ── Active glow blob behind active item ────────────────────────────── */
+.sidebar-active-glow {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(ellipse 70% 60% at 20% 50%, rgba(59, 130, 246, 0.18) 0%, transparent 75%);
+  pointer-events: none;
+}
+
+/* ── Shimmer sweep ──────────────────────────────────────────────────── */
+.sidebar-shimmer {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    105deg,
+    transparent 30%,
+    rgba(150, 200, 255, 0.09) 50%,
+    transparent 70%
+  );
+  transform: translateX(-100%);
+  pointer-events: none;
+  z-index: 1;
+}
+.sidebar-nav-item:hover .sidebar-shimmer {
+  animation: sidebar-shimmer-sweep 0.55s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+@keyframes sidebar-shimmer-sweep {
+  0%   { transform: translateX(-110%); opacity: 0; }
+  15%  { opacity: 1; }
+  100% { transform: translateX(110%); opacity: 0; }
+}
+
+/* ── Icons ──────────────────────────────────────────────────────────── */
+.sidebar-nav-icon {
+  width: 19px;
+  height: 19px;
+  transition: color 0.25s ease, filter 0.25s ease, transform 0.2s ease;
+  position: relative;
+  z-index: 2;
+}
+.sidebar-icon-active {
+  color: #93c5fd;
+  filter: drop-shadow(0 0 6px rgba(147, 197, 253, 0.65)) drop-shadow(0 0 2px rgba(59, 130, 246, 0.5));
+}
+.sidebar-icon-idle {
+  color: rgba(148, 163, 184, 0.65);
+}
+.sidebar-nav-item:hover .sidebar-icon-idle {
+  color: rgba(147, 197, 253, 0.75);
+  filter: drop-shadow(0 0 4px rgba(147, 197, 253, 0.35));
+  transform: scale(1.08);
+}
+
+/* ── Labels ─────────────────────────────────────────────────────────── */
+.sidebar-nav-label {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: rgba(148, 163, 184, 0.7);
+  white-space: nowrap;
+  position: relative;
+  z-index: 2;
+  transition: color 0.25s ease;
+}
+.sidebar-label-active {
+  color: #bfdbfe;
+}
+.sidebar-nav-item:hover .sidebar-nav-label {
+  color: rgba(191, 219, 254, 0.85);
+}
+
+/* ── Divider ─────────────────────────────────────────────────────────── */
+.sidebar-divider {
+  height: 1px;
+  margin: 0 4px;
+  background: linear-gradient(90deg, transparent, rgba(100, 160, 255, 0.12), transparent);
+}
+
+/* ── Collapse button ─────────────────────────────────────────────────── */
+.sidebar-collapse-btn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 9px 10px;
+  border-radius: 12px;
+  overflow: hidden;
+  width: 100%;
+  cursor: pointer;
+  background: transparent;
+  border: 1px solid transparent;
+  transition:
+    background 0.25s ease,
+    border-color 0.25s ease,
+    transform 0.2s ease;
+}
+.sidebar-collapse-btn:hover {
+  background: rgba(59, 130, 246, 0.07);
+  border-color: rgba(100, 160, 255, 0.1);
+}
+.sidebar-collapse-btn:active {
+  transform: scale(0.97);
+}
+.sidebar-collapse-btn:hover .sidebar-shimmer {
+  animation: sidebar-shimmer-sweep 0.55s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+.sidebar-collapse-btn:hover .sidebar-icon-idle {
+  color: rgba(147, 197, 253, 0.75);
+  filter: drop-shadow(0 0 4px rgba(147, 197, 253, 0.35));
+}
+.sidebar-collapse-btn:hover .sidebar-nav-label {
+  color: rgba(191, 219, 254, 0.85);
+}

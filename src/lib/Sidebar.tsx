@@ -24,99 +24,143 @@ export function Sidebar({ isExpanded, setIsExpanded }: SidebarProps) {
   const location = useLocation();
 
   const navItems = [
-    { icon: LayoutGrid, path: "/", title: "Dashboard" },
-    { icon: Crosshair, path: "/goals", title: "Goals" },
-    { icon: Wallet, path: "/accounts", title: "Accounts" },
-    { icon: CandlestickChart, path: "/trades", title: "Trades" },
-    { icon: Sparkles, path: "/ai-engine", title: "AI Engine" },
-    { icon: Notebook, path: "/journal", title: "Journal" },
-    { icon: Layers, path: "/strategies", title: "Strategies" },
-    { icon: TrendingUp, path: "/market", title: "Market" },
-    { icon: Settings2, path: "/settings", title: "Settings" },
+    { icon: LayoutGrid,      path: "/dashboard",  title: "Dashboard" },
+    { icon: Crosshair,       path: "/goals",       title: "Goals" },
+    { icon: Wallet,          path: "/accounts",    title: "Accounts" },
+    { icon: CandlestickChart,path: "/trades",      title: "Trades" },
+    { icon: Sparkles,        path: "/ai-engine",   title: "AI Engine" },
+    { icon: Notebook,        path: "/journal",     title: "Journal" },
+    { icon: Layers,          path: "/strategies",  title: "Strategies" },
+    { icon: TrendingUp,      path: "/market",      title: "Market" },
+    { icon: Settings2,       path: "/settings",    title: "Settings" },
   ];
 
+  const isPathActive = (path: string) => {
+    if (path === "/dashboard") return location.pathname === "/dashboard" || location.pathname === "/";
+    return location.pathname.startsWith(path);
+  };
+
   return (
-    <aside className={cn(
-      "fixed left-0 top-0 h-screen border-r border-blue-500/40 bg-gradient-to-b from-blue-900/50 via-blue-950/30 to-[#0d0d16] flex flex-col py-8 z-50 transition-all duration-300 backdrop-blur-xl",
-      isExpanded ? "w-64 px-6" : "w-16 items-center"
-    )}>
-      <div className={cn("mb-12", isExpanded ? "flex items-center gap-3" : "flex justify-center")}>
-        <div className="w-8 h-8 rounded-lg bg-blue-500/20 flex items-center justify-center shadow-[0_0_15px_rgba(59,130,246,0.3)]">
-          <span className="text-primary type-h2 text-xl">
-            T
-          </span>
-        </div>
-        {isExpanded && (
-          <span className="text-white text-lg tracking-tight type-h2">
-            TRADOVA
-          </span>
+    <>
+      {/* Ambient glow source behind sidebar */}
+      <div
+        className="sidebar-ambient-glow"
+        style={{
+          position: "fixed",
+          left: 0,
+          top: 0,
+          width: isExpanded ? "280px" : "96px",
+          height: "100vh",
+          background: "radial-gradient(ellipse 60% 80% at 0% 30%, rgba(30,80,200,0.18) 0%, transparent 80%)",
+          pointerEvents: "none",
+          zIndex: 49,
+          transition: "width 0.35s cubic-bezier(0.4,0,0.2,1)",
+        }}
+      />
+
+      <aside
+        className={cn(
+          "sidebar-glass fixed left-0 top-0 h-screen flex flex-col py-7 z-50 transition-all duration-350",
+          isExpanded ? "w-[220px] px-5" : "w-[68px] items-center px-3"
         )}
-      </div>
-
-      <nav className="flex flex-col gap-4 flex-1 w-full">
-        {navItems.map((item) => {
-          const isActive = location.pathname === item.path;
-          return (
-            <Link
-              key={item.path}
-              to={item.path}
-              className={cn(
-                "group relative flex items-center transition-all duration-300 active:scale-95 px-4 py-2.5 rounded-xl border-x-2 border-y border-transparent mx-2",
-                isExpanded ? "gap-4 hover:bg-blue-500/10 hover:border-blue-500/20" : "justify-center",
-                isActive ? "text-primary bg-primary/20 border-x-primary border-y-primary/10" : "text-gray-500 hover:text-blue-300"
-              )}
-            >
-              {isActive && !isExpanded && (
-                <div className="absolute left-[-16px] w-[3px] h-6 bg-primary rounded-r-full shadow-[4px_0_12px_rgba(59,130,246,0.5)]" />
-              )}
-              {isActive && isExpanded && (
-                <div className="absolute left-0 w-[3px] h-6 bg-primary rounded-r-full shadow-[4px_0_12px_rgba(59,130,246,0.5)]" />
-              )}
-              <item.icon className={cn("w-6 h-6 shrink-0 transition-transform duration-300", !isExpanded && "group-hover:scale-110")} />
-              {isExpanded && (
-                <span className="type-nav whitespace-nowrap">
-                  {item.title}
-                </span>
-              )}
-            </Link>
-          );
-        })}
-      </nav>
-
-      <div className="mt-auto flex flex-col gap-6 w-full">
-        <Link
-          to="/profile"
-          className={cn(
-            "group relative flex items-center transition-all duration-300 active:scale-95 px-4 py-2.5 rounded-xl border-x-2 border-y border-transparent mx-2",
-            isExpanded ? "gap-4 hover:bg-blue-500/10 hover:border-blue-500/20" : "justify-center",
-            location.pathname === "/profile" ? "text-primary bg-primary/20 border-x-primary border-y-primary/10" : "text-gray-500 hover:text-indigo-300"
-          )}
-        >
-          <CircleUser className="w-6 h-6 shrink-0" />
+      >
+        {/* Top: Logo */}
+        <div className={cn("mb-10 flex items-center gap-3", !isExpanded && "justify-center")}>
+          <div className="sidebar-logo-gem">
+            <span className="sidebar-logo-letter">T</span>
+          </div>
           {isExpanded && (
-            <span className="type-nav">
-              Profile
-            </span>
+            <span className="sidebar-wordmark">TRADOVA</span>
           )}
-        </Link>
+        </div>
 
-        <button
-          onClick={() => setIsExpanded(!isExpanded)}
-          className={cn(
-            "flex items-center transition-all duration-300 hover:text-primary active:scale-90 px-4 py-2.5 rounded-xl hover:bg-blue-500/10 border border-transparent hover:border-blue-500/20 mx-2",
-            isExpanded ? "gap-4 text-gray-400" : "justify-center text-gray-500"
-          )}
-        >
-          {isExpanded ? (
-            <>
-              <ChevronLeft className="w-6 h-6 shrink-0" />
-              <span className="type-nav">Collapse</span>
-            </>
-          ) : (
-            <ChevronRight className="w-6 h-6 shrink-0" />
-          )}
-        </button>
-      </div>
-    </aside>
+        {/* Main nav */}
+        <nav className="flex flex-col gap-1 flex-1 w-full">
+          {navItems.map((item) => {
+            const active = isPathActive(item.path);
+            return (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={cn(
+                  "sidebar-nav-item group",
+                  active ? "sidebar-nav-active" : "sidebar-nav-idle",
+                  !isExpanded && "justify-center"
+                )}
+              >
+                {/* Shimmer sweep on hover */}
+                <span className="sidebar-shimmer" aria-hidden />
+
+                {/* Active glow backdrop */}
+                {active && <span className="sidebar-active-glow" aria-hidden />}
+
+                <item.icon
+                  className={cn(
+                    "sidebar-nav-icon shrink-0",
+                    active ? "sidebar-icon-active" : "sidebar-icon-idle"
+                  )}
+                />
+
+                {isExpanded && (
+                  <span className={cn("sidebar-nav-label", active && "sidebar-label-active")}>
+                    {item.title}
+                  </span>
+                )}
+              </Link>
+            );
+          })}
+        </nav>
+
+        {/* Bottom section */}
+        <div className="mt-auto flex flex-col gap-1 w-full">
+          {/* Divider */}
+          <div className="sidebar-divider mb-2" />
+
+          {/* Profile */}
+          <Link
+            to="/profile"
+            className={cn(
+              "sidebar-nav-item group",
+              isPathActive("/profile") ? "sidebar-nav-active" : "sidebar-nav-idle",
+              !isExpanded && "justify-center"
+            )}
+          >
+            <span className="sidebar-shimmer" aria-hidden />
+            {isPathActive("/profile") && <span className="sidebar-active-glow" aria-hidden />}
+            <CircleUser
+              className={cn(
+                "sidebar-nav-icon shrink-0",
+                isPathActive("/profile") ? "sidebar-icon-active" : "sidebar-icon-idle"
+              )}
+            />
+            {isExpanded && (
+              <span className={cn("sidebar-nav-label", isPathActive("/profile") && "sidebar-label-active")}>
+                Profile
+              </span>
+            )}
+          </Link>
+
+          {/* Collapse toggle */}
+          <button
+            onClick={() => setIsExpanded(!isExpanded)}
+            className={cn(
+              "sidebar-collapse-btn group",
+              !isExpanded && "justify-center"
+            )}
+            aria-label={isExpanded ? "Collapse sidebar" : "Expand sidebar"}
+          >
+            <span className="sidebar-shimmer" aria-hidden />
+            {isExpanded ? (
+              <>
+                <ChevronLeft className="sidebar-nav-icon sidebar-icon-idle shrink-0" />
+                <span className="sidebar-nav-label">Collapse</span>
+              </>
+            ) : (
+              <ChevronRight className="sidebar-nav-icon sidebar-icon-idle shrink-0" />
+            )}
+          </button>
+        </div>
+      </aside>
+    </>
   );
 }
