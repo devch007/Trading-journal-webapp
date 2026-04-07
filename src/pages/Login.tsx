@@ -116,9 +116,8 @@ export function Login() {
         {/* Floating stat badges */}
         <StatBadge value="94.7%" label="Win Rate" delay="0s" />
         <StatBadge value="+$18.2K" label="Avg Monthly" delay="0.3s" />
-        <StatBadge value="12,400+" label="Active Traders" delay="0.6s" />
 
-        {/* Mascot — floating animation */}
+        {/* Mascot — full-bleed with rounded corners */}
         <div className="lp-mascot-wrap">
           <img
             src="/login-mascot.png"
@@ -136,20 +135,7 @@ export function Login() {
             <p className="lp-footer-sub">
               Join thousands of traders who turned data into profit.
             </p>
-            {/* Review dots */}
-            <div className="lp-review-row">
-              <div className="lp-avatars">
-                {['A','B','C','D'].map((l, i) => (
-                  <div key={l} className="lp-avatar" style={{ marginLeft: i === 0 ? 0 : -10, zIndex: 4 - i }}>
-                    {l}
-                  </div>
-                ))}
-              </div>
-              <div className="lp-review-text">
-                <div className="lp-stars">{'★★★★★'}</div>
-                <p>Trusted by <strong>12,400+</strong> traders worldwide</p>
-              </div>
-            </div>
+
           </div>
         </div>
       </div>
