@@ -457,7 +457,7 @@ IMPORTANT:
         initialData={extractedData}
       />
       
-      <div className="px-8 flex flex-col gap-8">
+      <div className="px-4 md:px-8 flex flex-col gap-6 md:gap-8">
         {/* Quick Actions */}
         <div className="flex flex-col gap-4">
           <h3 className="type-h2 text-white">Quick Actions</h3>

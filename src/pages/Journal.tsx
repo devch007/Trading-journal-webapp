@@ -237,7 +237,7 @@ export function Journal() {
         showSearch={true}
       />
 
-      <div className="px-8 flex-1 grid grid-cols-1 lg:grid-cols-[380px_1fr] gap-8 relative z-10">
+      <div className="px-4 md:px-8 flex-1 grid grid-cols-1 lg:grid-cols-[380px_1fr] gap-8 relative z-10">
         
         {/* Left Column: List */}
         <div className="flex flex-col gap-6 h-[calc(100vh-180px)]">

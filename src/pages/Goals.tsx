@@ -403,7 +403,7 @@ export function Goals() {
     <div className="flex flex-col min-h-full pb-10">
       <TopBar title="Goals" subtitle="Track and manage your performance targets" showSearch />
 
-      <div className="px-8 flex flex-col gap-8">
+      <div className="px-4 md:px-8 flex flex-col gap-8">
         {/* Tab switcher + Summary bar */}
         <div className="flex flex-col gap-5">
           <div className="flex p-1.5 self-start bg-white/[0.02] border border-white/5 rounded-xl relative">

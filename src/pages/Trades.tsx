@@ -299,7 +299,7 @@ export function Trades() {
         )}
       </AnimatePresence>
       
-      <div className="px-8 flex flex-col gap-6">
+      <div className="px-4 md:px-8 flex flex-col gap-6">
         
         <div className="glass-card rounded-2xl p-6 flex flex-col gap-6">
           <div className="flex justify-between items-center">

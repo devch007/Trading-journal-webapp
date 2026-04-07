@@ -459,7 +459,7 @@ Deliver a complete, integrated report summarizing all essential performance aspe
         }
       />
 
-      <div className="px-8 flex-1 grid grid-cols-1 lg:grid-cols-[1fr_1.5fr] gap-8 relative z-10">
+      <div className="px-4 md:px-8 flex-1 grid grid-cols-1 lg:grid-cols-[1fr_1.5fr] gap-8 relative z-10">
         
         {/* LEFT SIDE — AI Insights Panel */}
         <div className="flex flex-col gap-6">

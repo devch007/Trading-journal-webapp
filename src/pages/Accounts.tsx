@@ -114,7 +114,7 @@ export function Accounts() {
         initialData={editingAccount}
       />
 
-      <div className="px-8 flex flex-col gap-8">
+      <div className="px-4 md:px-8 flex flex-col gap-8">
         {/* Active Accounts Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           

@@ -185,7 +185,7 @@ export function StrategyDetail() {
       )}
 
       {/* Header */}
-      <div className={`px-8 ${strategy.imageUrl ? 'pt-4' : 'pt-8'} pb-4 border-b border-white/5 flex items-center justify-between z-10 sticky top-0 bg-[#06060c]/80 backdrop-blur-md`}>
+      <div className={`px-4 md:px-8 ${strategy.imageUrl ? 'pt-4' : 'pt-8'} pb-4 border-b border-white/5 flex items-center justify-between z-10 sticky top-0 bg-[#06060c]/80 backdrop-blur-md`}>
         <div className="flex items-center gap-4">
           <button 
             onClick={() => navigate('/strategies')}
@@ -221,7 +221,7 @@ export function StrategyDetail() {
         </button>
       </div>
 
-      <div className="px-8 mt-6 flex-1 flex flex-col xl:flex-row gap-6 z-10 w-full">
+      <div className="px-4 md:px-8 mt-6 flex-1 flex flex-col xl:flex-row gap-6 z-10 w-full">
         {/* Left Column (Main) */}
         <div className="flex-1 flex flex-col gap-6 w-full xl:w-2/3">
           

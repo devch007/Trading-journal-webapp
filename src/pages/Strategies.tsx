@@ -245,7 +245,7 @@ export function Strategies() {
 
       <TopBar title="Strategy Builder" subtitle="Build, track & manage your trading playbooks" showSearch={false} />
 
-      <div className="px-8 flex-1 space-y-8 relative z-10">
+      <div className="px-4 md:px-8 flex-1 space-y-8 relative z-10">
 
         {/* Summary Strip */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-5">

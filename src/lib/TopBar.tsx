@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Bell, Wallet, ChevronDown, Search, LogOut, Command } from "lucide-react";
+import { Bell, Wallet, ChevronDown, Search, LogOut, Command, Menu } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import { useAccountContext } from "../contexts/AccountContext";
 import { CommandPalette } from "../components/CommandPalette";
@@ -42,19 +42,27 @@ export function TopBar({ title, subtitle, showAccountSelector = true, showSearch
   }, []);
 
   return (
-    <header className="flex justify-between items-center w-full px-8 py-10">
-      <div>
-        <h1 className="type-h1 text-primary">{title}</h1>
-        <p className="type-label mt-1">
-          {subtitle}
-        </p>
+    <header className="flex justify-between items-center w-full px-4 py-6 md:px-8 md:py-10">
+      <div className="flex items-center gap-3">
+        <button 
+          className="md:hidden p-2 -ml-2 text-white/70 hover:text-white transition-colors"
+          onClick={() => document.dispatchEvent(new CustomEvent('toggleMobileSidebar'))}
+        >
+          <Menu className="w-6 h-6" />
+        </button>
+        <div>
+          <h1 className="type-h1 text-primary text-[20px] md:text-[28px]">{title}</h1>
+          <p className="type-label mt-0.5 md:mt-1 hidden sm:block">
+            {subtitle}
+          </p>
+        </div>
       </div>
-      <div className="flex items-center gap-6">
+      <div className="flex items-center gap-3 md:gap-6">
         {actionButton}
         {showSearch && (
           <button
             onClick={() => setIsCommandPaletteOpen(true)}
-            className="relative group flex items-center gap-2.5 px-3 py-2 rounded-xl border transition-all duration-300 text-left overflow-hidden"
+            className="relative group hidden sm:flex items-center gap-2.5 px-3 py-2 rounded-xl border transition-all duration-300 text-left overflow-hidden"
             style={{
               background: 'rgba(255,255,255,0.04)',
               borderColor: 'rgba(255,255,255,0.08)',
@@ -114,9 +122,11 @@ export function TopBar({ title, subtitle, showAccountSelector = true, showSearch
             </span>
           </button>
         )}
-        <ThemeToggle />
+        <div className="hidden sm:block">
+          <ThemeToggle />
+        </div>
         <div className="relative group">
-          <Bell className="text-[#efecf9]/60 hover:text-white transition-colors cursor-pointer w-6 h-6" />
+          <Bell className="text-[#efecf9]/60 hover:text-white transition-colors cursor-pointer w-5 h-5 md:w-6 md:h-6" />
           <span className="absolute top-0 right-0 w-2 h-2 bg-error rounded-full border border-background"></span>
         </div>
         
@@ -124,10 +134,10 @@ export function TopBar({ title, subtitle, showAccountSelector = true, showSearch
           <div className="relative group" ref={dropdownRef}>
             <button 
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-              className="flex items-center gap-3 bg-surface-container-high hover:bg-white/5 px-4 py-2.5 rounded-xl border border-white/10 transition-all focus-within:ring-2 focus-within:ring-primary/50 group"
+              className="flex items-center gap-2 md:gap-3 bg-surface-container-high hover:bg-white/5 px-2.5 md:px-4 py-2 md:py-2.5 rounded-xl border border-white/10 transition-all focus-within:ring-2 focus-within:ring-primary/50 group"
             >
               <Wallet className="text-primary w-5 h-5" />
-              <div className="flex flex-col items-start leading-tight">
+              <div className="hidden md:flex flex-col items-start leading-tight">
                 <span className="type-micro text-[#6A6A6A]">
                   {selectedAccount ? selectedAccount.name : 'No Account'}
                 </span>
@@ -135,7 +145,7 @@ export function TopBar({ title, subtitle, showAccountSelector = true, showSearch
                   ${selectedAccount ? (selectedAccount.currentEquity ?? selectedAccount.initialCapital).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00'}
                 </span>
               </div>
-              <ChevronDown className={`text-on-surface-variant w-4 h-4 ml-1 group-hover:text-white transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
+              <ChevronDown className={`text-on-surface-variant w-4 h-4 group-hover:text-white transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
             </button>
             
             {isDropdownOpen && accounts && accounts.length > 0 && (
@@ -165,13 +175,13 @@ export function TopBar({ title, subtitle, showAccountSelector = true, showSearch
           </div>
         ) : (
           <button className="text-[#efecf9]/60 hover:text-white transition-colors">
-            <Wallet className="w-6 h-6" />
+            <Wallet className="w-5 h-5 md:w-6 md:h-6" />
           </button>
         )}
         
         <button 
           onClick={logout}
-          className="p-2 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-on-surface-variant hover:text-[#E5534B] transition-colors"
+          className="p-1.5 md:p-2 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-on-surface-variant hover:text-[#E5534B] transition-colors"
           title="Logout"
         >
           <LogOut className="w-5 h-5" />

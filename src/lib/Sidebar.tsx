@@ -11,16 +11,19 @@ import {
   ChevronRight,
   ChevronLeft,
   Layers,
-  Crosshair
+  Crosshair,
+  X
 } from "lucide-react";
 import { cn } from "./utils";
 
 interface SidebarProps {
   isExpanded: boolean;
   setIsExpanded: (val: boolean) => void;
+  isMobileOpen?: boolean;
+  setIsMobileOpen?: (val: boolean) => void;
 }
 
-export function Sidebar({ isExpanded, setIsExpanded }: SidebarProps) {
+export function Sidebar({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen }: SidebarProps) {
   const location = useLocation();
 
   const navItems = [
@@ -42,9 +45,9 @@ export function Sidebar({ isExpanded, setIsExpanded }: SidebarProps) {
 
   return (
     <>
-      {/* Ambient glow source behind sidebar */}
+      {/* Ambient glow source behind sidebar (hidden on mobile to save performance/clean look) */}
       <div
-        className="sidebar-ambient-glow"
+        className="sidebar-ambient-glow hidden md:block"
         style={{
           position: "fixed",
           left: 0,
@@ -61,16 +64,26 @@ export function Sidebar({ isExpanded, setIsExpanded }: SidebarProps) {
       <aside
         className={cn(
           "sidebar-glass fixed left-0 top-0 h-screen flex flex-col py-7 z-50 transition-all duration-350",
-          isExpanded ? "w-[220px] px-5" : "w-[68px] items-center px-3"
+          !isMobileOpen ? "-translate-x-full md:translate-x-0" : "translate-x-0",
+          (isExpanded || isMobileOpen) ? "w-[280px] md:w-[220px] px-5" : "w-[68px] items-center px-3"
         )}
       >
         {/* Top: Logo */}
-        <div className={cn("mb-10 flex items-center gap-3", !isExpanded && "justify-center")}>
-          <div className="sidebar-logo-gem">
+        <div className={cn("mb-10 flex items-center gap-3 w-full", (!(isExpanded || isMobileOpen)) && "justify-center relative")}>
+          <div className="sidebar-logo-gem shrink-0">
             <span className="sidebar-logo-letter">T</span>
           </div>
-          {isExpanded && (
+          {(isExpanded || isMobileOpen) && (
             <span className="sidebar-wordmark">TRADOVA</span>
+          )}
+          {/* Mobile close button */}
+          {isMobileOpen && (
+            <button 
+              className="md:hidden ml-auto p-2 text-white/60 hover:text-white transition-colors"
+              onClick={() => setIsMobileOpen && setIsMobileOpen(false)}
+            >
+              <X className="w-5 h-5" />
+            </button>
           )}
         </div>
 
@@ -101,7 +114,7 @@ export function Sidebar({ isExpanded, setIsExpanded }: SidebarProps) {
                   )}
                 />
 
-                {isExpanded && (
+                {(isExpanded || isMobileOpen) && (
                   <span className={cn("sidebar-nav-label", active && "sidebar-label-active")}>
                     {item.title}
                   </span>
@@ -133,18 +146,18 @@ export function Sidebar({ isExpanded, setIsExpanded }: SidebarProps) {
                 isPathActive("/profile") ? "sidebar-icon-active" : "sidebar-icon-idle"
               )}
             />
-            {isExpanded && (
+            {(isExpanded || isMobileOpen) && (
               <span className={cn("sidebar-nav-label", isPathActive("/profile") && "sidebar-label-active")}>
                 Profile
               </span>
             )}
           </Link>
 
-          {/* Collapse toggle */}
+          {/* Collapse toggle (hidden on mobile) */}
           <button
             onClick={() => setIsExpanded(!isExpanded)}
             className={cn(
-              "sidebar-collapse-btn group",
+              "sidebar-collapse-btn group hidden md:flex",
               !isExpanded && "justify-center"
             )}
             aria-label={isExpanded ? "Collapse sidebar" : "Expand sidebar"}
@@ -153,7 +166,9 @@ export function Sidebar({ isExpanded, setIsExpanded }: SidebarProps) {
             {isExpanded ? (
               <>
                 <ChevronLeft className="sidebar-nav-icon sidebar-icon-idle shrink-0" />
-                <span className="sidebar-nav-label">Collapse</span>
+                {(isExpanded || isMobileOpen) && (
+                  <span className="sidebar-nav-label">{isExpanded ? "Collapse" : "Expand"}</span>
+                )}
               </>
             ) : (
               <ChevronRight className="sidebar-nav-icon sidebar-icon-idle shrink-0" />
