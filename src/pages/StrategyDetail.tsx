@@ -12,13 +12,20 @@ import { useTrades, Trade } from '../hooks/useTrades';
 import { cn } from '../lib/utils';
 import { StrategyModal } from '../components/StrategyModal';
 import { TradeModal } from '../components/TradeModal';
+import { useAccountContext } from '../contexts/AccountContext';
 import { getTradeDate } from '../lib/timeUtils';
 
 export function StrategyDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { strategies, updateStrategy } = useStrategies();
-  const { trades, updateTrades } = useTrades();
+  const { trades: allTrades, updateTrades } = useTrades();
+  const { selectedAccountId } = useAccountContext();
+  
+  const trades = useMemo(() => {
+    if (!selectedAccountId) return allTrades;
+    return allTrades.filter(t => t.accountId === selectedAccountId);
+  }, [allTrades, selectedAccountId]);
 
   const [timeRange, setTimeRange] = useState<'1W' | '1M' | 'ALL'>('ALL');
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);

@@ -11,6 +11,7 @@ import { useStrategies, Strategy } from '../contexts/StrategyContext';
 import { useTrades } from '../hooks/useTrades';
 import { StrategyModal } from '../components/StrategyModal';
 import { STRATEGY_COLORS } from '../constants/strategy';
+import { useAccountContext } from '../contexts/AccountContext';
 
 
 interface StrategyCardProps {
@@ -177,7 +178,13 @@ const StrategyCard: React.FC<StrategyCardProps> = ({ strategy, onEdit, onDelete,
 
 export function Strategies() {
   const { strategies, loading, addStrategy, updateStrategy, deleteStrategy } = useStrategies();
-  const { trades, updateTrades } = useTrades();
+  const { trades: allTrades, updateTrades } = useTrades();
+  const { selectedAccountId } = useAccountContext();
+
+  const trades = useMemo(() => {
+    if (!selectedAccountId) return allTrades;
+    return allTrades.filter(t => t.accountId === selectedAccountId);
+  }, [allTrades, selectedAccountId]);
 
   const [showForm, setShowForm] = useState(false);
   const [editTarget, setEditTarget] = useState<Strategy | undefined>(undefined);
