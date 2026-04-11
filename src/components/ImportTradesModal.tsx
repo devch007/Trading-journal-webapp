@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { X, Plus, Trash2, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { X, Plus, Trash2, AlertCircle, CheckCircle2, Square, CheckSquare, Layers } from 'lucide-react';
 import { useStrategies } from '../contexts/StrategyContext';
 
 export interface ExtractedTrade {
@@ -26,6 +26,7 @@ interface ImportTradesModalProps {
 
 export function ImportTradesModal({ isOpen, onClose, onSave, initialData }: ImportTradesModalProps) {
   const [trades, setTrades] = useState<ExtractedTrade[]>([]);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const { strategies } = useStrategies();
 
   useEffect(() => {
@@ -85,6 +86,51 @@ export function ImportTradesModal({ isOpen, onClose, onSave, initialData }: Impo
     }));
   };
 
+  const toggleSelection = (id: string) => {
+    setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
+  };
+
+  const handleClubSelected = () => {
+    if (selectedIds.length < 2) return;
+
+    const selectedTrades = trades.filter(t => selectedIds.includes(t.id));
+    const unselectedTrades = trades.filter(t => !selectedIds.includes(t.id));
+
+    let totalVolume = 0;
+    let totalProfit = 0;
+    let totalCommission = 0;
+    let weightedEntrySum = 0;
+    let weightedExitSum = 0;
+
+    selectedTrades.forEach(t => {
+      const vol = parseFloat(t.volume as string) || 0;
+      totalVolume += vol;
+      totalProfit += parseFloat(t.profit as string) || 0;
+      totalCommission += parseFloat(t.commission as string) || 0;
+      
+      weightedEntrySum += (parseFloat(t.entry_price as string) || 0) * vol;
+      weightedExitSum += (parseFloat(t.exit_price as string) || 0) * vol;
+    });
+
+    const avgEntry = totalVolume > 0 ? (weightedEntrySum / totalVolume) : 0;
+    const avgExit = totalVolume > 0 ? (weightedExitSum / totalVolume) : 0;
+
+    // Base trade for symbol, session, strategy, date
+    const baseTrade = selectedTrades[0]; 
+
+    const mergedTrade: ExtractedTrade = {
+      ...baseTrade,
+      volume: totalVolume.toFixed(2),
+      profit: totalProfit.toFixed(2),
+      commission: totalCommission.toFixed(2),
+      entry_price: avgEntry > 0 ? avgEntry.toFixed(5) : '',
+      exit_price: avgExit > 0 ? avgExit.toFixed(5) : '',
+    };
+
+    setTrades([...unselectedTrades, mergedTrade]);
+    setSelectedIds([]);
+  };
+
   const summary = useMemo(() => {
     const totalTrades = trades.length;
     const totalProfit = trades.reduce((sum, t) => {
@@ -135,7 +181,25 @@ export function ImportTradesModal({ isOpen, onClose, onSave, initialData }: Impo
         {/* Table Content */}
         <div className="flex-1 overflow-auto p-6">
           <div className="min-w-[1100px]">
-            <div className="grid grid-cols-[1.2fr_1.5fr_0.8fr_0.8fr_1fr_1fr_0.8fr_0.8fr_1fr_0.8fr_auto] gap-3 mb-4 px-4 type-label text-[10px]">
+            <div className="grid grid-cols-[auto_1.2fr_1.5fr_0.8fr_0.8fr_1fr_1fr_0.8fr_0.8fr_1fr_0.8fr_auto] gap-3 mb-4 px-4 type-label text-[10px]">
+              <div className="w-5 text-center">
+                <button 
+                  onClick={() => {
+                    if (selectedIds.length === trades.length && trades.length > 0) {
+                      setSelectedIds([]);
+                    } else {
+                      setSelectedIds(trades.map(t => t.id));
+                    }
+                  }}
+                  className="hover:text-primary transition-colors mt-0.5"
+                >
+                  {selectedIds.length === trades.length && trades.length > 0 ? (
+                    <CheckSquare className="w-4 h-4 text-primary" />
+                  ) : (
+                    <Square className="w-4 h-4 text-gray-500" />
+                  )}
+                </button>
+              </div>
               <div>Date / Time</div>
               <div>Symbol</div>
               <div>Type</div>
@@ -156,8 +220,22 @@ export function ImportTradesModal({ isOpen, onClose, onSave, initialData }: Impo
                 return (
                   <div 
                     key={trade.id} 
-                    className={`grid grid-cols-[1.2fr_1.5fr_0.8fr_0.8fr_1fr_1fr_0.8fr_0.8fr_1fr_0.8fr_auto] gap-3 items-center p-3 rounded-xl border bg-[#12121A] transition-colors ${isInvalid ? 'border-[#E5534B]/50' : 'border-white/5 hover:border-white/20'}`}
+                    className={`grid grid-cols-[auto_1.2fr_1.5fr_0.8fr_0.8fr_1fr_1fr_0.8fr_0.8fr_1fr_0.8fr_auto] gap-3 items-center p-3 rounded-xl border bg-[#12121A] transition-colors ${isInvalid ? 'border-[#E5534B]/50' : 'border-white/5 hover:border-white/20'}`}
                   >
+                    {/* Checkbox */}
+                    <div className="flex justify-center">
+                      <button 
+                        onClick={() => toggleSelection(trade.id)}
+                        className="p-1 hover:bg-white/5 rounded transition-colors"
+                      >
+                        {selectedIds.includes(trade.id) ? (
+                          <CheckSquare className="w-4 h-4 text-primary" />
+                        ) : (
+                          <Square className="w-4 h-4 text-gray-600" />
+                        )}
+                      </button>
+                    </div>
+
                     {/* Date / Time */}
                     <div>
                       <input
@@ -310,13 +388,24 @@ export function ImportTradesModal({ isOpen, onClose, onSave, initialData }: Impo
               })}
             </div>
 
-            <button 
-              onClick={handleAddRow}
-              className="mt-4 flex items-center gap-2 text-sm font-bold text-primary hover:text-primary/80 transition-colors px-4 py-2 rounded-lg hover:bg-primary/10"
-            >
-              <Plus className="w-4 h-4" />
-              Add Trade
-            </button>
+            <div className="flex gap-3">
+              <button 
+                onClick={handleAddRow}
+                className="mt-4 flex items-center gap-2 text-sm font-bold text-primary hover:text-primary/80 transition-colors px-4 py-2 rounded-lg hover:bg-primary/10"
+              >
+                <Plus className="w-4 h-4" />
+                Add Trade
+              </button>
+              {selectedIds.length > 1 && (
+                <button 
+                  onClick={handleClubSelected}
+                  className="mt-4 flex items-center gap-2 text-sm font-bold text-[#E2A233] hover:text-[#E2A233]/80 transition-colors px-4 py-2 rounded-lg hover:bg-[#E2A233]/10"
+                >
+                  <Layers className="w-4 h-4" />
+                  Club Selected ({selectedIds.length})
+                </button>
+              )}
+            </div>
           </div>
         </div>
 

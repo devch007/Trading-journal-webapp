@@ -3,7 +3,7 @@ import { TopBar } from "../lib/TopBar";
 import { useTrades } from "../hooks/useTrades";
 import { useAccountContext } from "../contexts/AccountContext";
 import { TradeModal } from "../components/TradeModal";
-import { Plus, ChevronDown, Calendar, Trash2, Tag, X, CheckSquare, Square } from "lucide-react";
+import { Plus, ChevronDown, Calendar, Trash2, Tag, X, CheckSquare, Square, Layers } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { getTradeDate, parseDurationToMinutes, formatMinutesToDuration } from "../lib/timeUtils";
 
@@ -180,6 +180,54 @@ export function Trades() {
     setSelectedTradeIds([]);
   };
 
+  const handleBulkClub = async () => {
+    if (selectedTradeIds.length < 2) return;
+
+    const selectedTrades = allTrades.filter(t => selectedTradeIds.includes(t.id));
+    if (selectedTrades.length === 0) return;
+
+    // Sort to find the oldest trade to use as base (preserve ID, date)
+    const sortedTrades = [...selectedTrades].sort((a, b) => getTradeDate(a.date).getTime() - getTradeDate(b.date).getTime());
+    const baseTrade = sortedTrades[0];
+    const tradeIdsToDelete = sortedTrades.slice(1).map(t => t.id);
+
+    let totalPnl = 0;
+    let totalSize = 0;
+    let weightedEntrySum = 0;
+    let weightedExitSum = 0;
+
+    selectedTrades.forEach(t => {
+      totalPnl += t.pnl || 0;
+      
+      const sizeVal = parseFloat((t.size || "0").replace(/[^\d.]/g, '')) || 0;
+      totalSize += sizeVal;
+      
+      weightedEntrySum += (parseFloat(t.entry || "0") || 0) * sizeVal;
+      weightedExitSum += (parseFloat(t.exit || "0") || 0) * sizeVal;
+    });
+
+    const avgEntry = totalSize > 0 ? (weightedEntrySum / totalSize).toFixed(5) : "";
+    const avgExit = totalSize > 0 ? (weightedExitSum / totalSize).toFixed(5) : "";
+
+    const cleanUpdates: Record<string, any> = {
+      pnl: parseFloat(totalPnl.toFixed(2)),
+      size: `${totalSize.toFixed(2)} Lot`,
+      entry: avgEntry,
+      exit: avgExit,
+      isPositive: totalPnl >= 0,
+      result: totalPnl >= 0 ? 'WIN' : 'LOSS'
+    };
+
+    // Update the base trade and delete the rest
+    await updateTrades([baseTrade.id], cleanUpdates);
+    
+    if (tradeIdsToDelete.length > 0) {
+      await deleteTrades(tradeIdsToDelete);
+    }
+    
+    setSelectedTradeIds([]);
+  };
+
   const handleBulkTag = async () => {
     if (newTag.trim()) {
       const tagToAdd = newTag.trim().toUpperCase();
@@ -277,6 +325,16 @@ export function Trades() {
                 >
                   <Tag className="w-4 h-4 text-primary" />
                   TAG
+                </button>
+              )}
+
+              {selectedTradeIds.length > 1 && (
+                <button 
+                  onClick={handleBulkClub}
+                  className="flex items-center gap-2 px-4 py-2 hover:bg-[#E2A233]/10 rounded-xl text-[#E2A233] transition-colors text-xs font-bold"
+                >
+                  <Layers className="w-4 h-4" />
+                  CLUB
                 </button>
               )}
 
