@@ -148,27 +148,33 @@ export function TopBar({ title, subtitle, showAccountSelector = true, showSearch
               <ChevronDown className={`text-on-surface-variant w-4 h-4 group-hover:text-white transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
             </button>
             
-            {isDropdownOpen && accounts && accounts.length > 0 && (
+            {isDropdownOpen && accounts && (
               <div className="absolute top-full right-0 mt-2 w-64 bg-surface-container-high border border-white/10 rounded-xl shadow-2xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
                 <div className="max-h-64 overflow-y-auto">
-                  {(accounts || []).map(account => (
-                    <button
-                      key={account.id}
-                      onClick={() => {
-                        setSelectedAccountId(account.id);
-                        setIsDropdownOpen(false);
-                      }}
-                      className={`w-full flex items-center justify-between px-4 py-3 hover:bg-white/5 transition-colors text-left ${selectedAccount?.id === account.id ? 'bg-primary/10' : ''}`}
-                    >
-                      <div className="flex flex-col">
-                        <span className="type-h2 text-[14px] text-white">{account.name}</span>
-                        <span className="type-body text-[12px]">{account.firm}</span>
-                      </div>
-                      <span className="tnum text-[14px] font-bold text-primary">
-                        ${(account.currentEquity ?? account.initialCapital).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                      </span>
-                    </button>
-                  ))}
+                  {accounts.filter(a => a.status === 'ACTIVE').length > 0 ? (
+                    accounts.filter(a => a.status === 'ACTIVE').map(account => (
+                      <button
+                        key={account.id}
+                        onClick={() => {
+                          setSelectedAccountId(account.id);
+                          setIsDropdownOpen(false);
+                        }}
+                        className={`w-full flex items-center justify-between px-4 py-3 hover:bg-white/5 transition-colors text-left ${selectedAccount?.id === account.id ? 'bg-primary/10' : ''}`}
+                      >
+                        <div className="flex flex-col">
+                          <span className="type-h2 text-[14px] text-white">{account.name}</span>
+                          <span className="type-body text-[12px]">{account.firm}</span>
+                        </div>
+                        <span className="tnum text-[14px] font-bold text-primary">
+                          ${(account.currentEquity ?? account.initialCapital).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </span>
+                      </button>
+                    ))
+                  ) : (
+                    <div className="px-4 py-4 text-center type-micro text-gray-500">
+                      No active accounts
+                    </div>
+                  )}
                 </div>
               </div>
             )}
