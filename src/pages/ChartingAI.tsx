@@ -197,7 +197,8 @@ export function ChartingAI() {
       });
     }
     series.setMarkers(markers);
-    chart.timeScale().scrollToRealTime();
+    // fitContent ensures all candle data is always in view (scrollToRealTime pushed to current time, off-screen)
+    chart.timeScale().fitContent();
   }, [currentIndex, fullData, selectedTrade]);
 
   // ─── Playback interval ────────────────────────────────────────────────────
