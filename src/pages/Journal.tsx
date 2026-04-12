@@ -509,22 +509,64 @@ export function Journal() {
                 </div>
               </div>
 
-              <div className="space-y-3">
-                <div className="flex justify-between items-center">
+              <div className="space-y-2 relative group">
+                <div className="flex justify-between items-end mb-1">
                   <label className="text-[10px] text-on-surface-variant type-label flex items-center gap-2">
-                    <Star className="w-3 h-3 text-amber-400" /> Rating
+                    <Star className="w-3 h-3 text-amber-400 drop-shadow-[0_0_5px_rgba(251,191,36,0.5)]" /> Execution Rating
                   </label>
-                  <span className="text-xs font-bold text-white">{normalizedEntry.rating}/10</span>
+                  <div className="text-right">
+                    <span className={cn(
+                      "text-xl font-black tnum transition-colors duration-300 drop-shadow-md",
+                      normalizedEntry.rating >= 8 ? "text-[#1ED760]" : normalizedEntry.rating >= 5 ? "text-amber-400" : "text-[#E5534B]"
+                    )}>
+                      {normalizedEntry.rating}
+                    </span>
+                    <span className="text-[10px] text-gray-500 font-bold ml-0.5">/10</span>
+                  </div>
                 </div>
-                <div className="pt-2">
-                  <input 
-                    type="range" min="1" max="10" 
-                    key={`${normalizedEntry.id}-rating`}
-                    defaultValue={normalizedEntry.rating}
-                    onMouseUp={e => updateEntry({ rating: parseInt((e.target as HTMLInputElement).value) })}
-                    onTouchEnd={e => updateEntry({ rating: parseInt((e.target as HTMLInputElement).value) })}
-                    className="w-full h-1.5 bg-white/10 rounded-full appearance-none cursor-pointer accent-primary"
-                  />
+                
+                <div className="flex gap-1 h-8">
+                  {[...Array(10)].map((_, i) => {
+                    const val = i + 1;
+                    const isActive = val <= normalizedEntry.rating;
+                    
+                    let activeColor = "bg-primary";
+                    let shadowColor = "rgba(59,130,246,0.5)";
+                    
+                    if (val <= 3) { 
+                      activeColor = "bg-[#E5534B]"; 
+                      shadowColor = "rgba(229,83,75,0.6)"; 
+                    } else if (val <= 7) { 
+                      activeColor = "bg-amber-400"; 
+                      shadowColor = "rgba(251,191,36,0.6)"; 
+                    } else { 
+                      activeColor = "bg-[#1ED760]"; 
+                      shadowColor = "rgba(30,215,96,0.6)"; 
+                    }
+
+                    return (
+                      <motion.button
+                        key={val}
+                        whileHover={{ scale: 1.1, y: -2 }}
+                        whileTap={{ scale: 0.9 }}
+                        onClick={() => updateEntry({ rating: val })}
+                        className={cn(
+                          "flex-1 rounded-sm transition-all duration-300 relative overflow-hidden",
+                          isActive ? activeColor : "bg-white/5 hover:bg-white/10"
+                        )}
+                        style={isActive ? { boxShadow: `0 0 10px ${shadowColor}` } : {}}
+                      >
+                        {isActive && (
+                          <div className="absolute inset-0 bg-white/20 opacity-0 hover:opacity-100 transition-opacity" />
+                        )}
+                      </motion.button>
+                    )
+                  })}
+                </div>
+                <div className="flex justify-between text-[9px] text-gray-500 uppercase tracking-widest font-bold mt-2 opacity-50 group-hover:opacity-100 transition-opacity">
+                  <span className="hover:text-[#E5534B] transition-colors cursor-pointer" onClick={() => updateEntry({ rating: 1 })}>Poor</span>
+                  <span className="hover:text-amber-400 transition-colors cursor-pointer" onClick={() => updateEntry({ rating: 5 })}>Average</span>
+                  <span className="hover:text-[#1ED760] transition-colors cursor-pointer" onClick={() => updateEntry({ rating: 10 })}>Perfect</span>
                 </div>
               </div>
             </div>

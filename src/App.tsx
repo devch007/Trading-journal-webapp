@@ -11,6 +11,7 @@ import { Accounts } from './pages/Accounts';
 import { Trades } from './pages/Trades';
 import { Journal } from './pages/Journal';
 import { AIEngine } from './pages/AIEngine';
+import { ChartingAI } from './pages/ChartingAI';
 import { TopBar } from './lib/TopBar';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { AccountProvider } from './contexts/AccountContext';
@@ -85,6 +86,7 @@ export default function App() {
                   <Route path="accounts" element={<Accounts />} />
                   <Route path="trades" element={<Trades />} />
                   <Route path="ai-engine" element={<AIEngine />} />
+                  <Route path="charting-ai" element={<ChartingAI />} />
                   <Route path="journal" element={<Journal />} />
                   <Route path="strategies" element={<Strategies />} />
                   <Route path="strategies/:id" element={<StrategyDetail />} />

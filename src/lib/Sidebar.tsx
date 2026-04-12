@@ -12,6 +12,7 @@ import {
   ChevronLeft,
   Layers,
   Crosshair,
+  Activity,
   X
 } from "lucide-react";
 import { cn } from "./utils";
@@ -32,6 +33,7 @@ export function Sidebar({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOp
     { icon: Wallet,          path: "/accounts",    title: "Accounts" },
     { icon: CandlestickChart,path: "/trades",      title: "Trades" },
     { icon: Sparkles,        path: "/ai-engine",   title: "AI Engine" },
+    { icon: Activity,        path: "/charting-ai", title: "Charting AI" },
     { icon: Notebook,        path: "/journal",     title: "Journal" },
     { icon: Layers,          path: "/strategies",  title: "Strategies" },
     { icon: TrendingUp,      path: "/market",      title: "Market" },
