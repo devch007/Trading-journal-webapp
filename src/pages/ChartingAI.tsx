@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { createChart, CandlestickSeries, ColorType } from 'lightweight-charts';
-import type { IChartApi, ISeriesApi, CandlestickData, Time, SeriesMarker } from 'lightweight-charts';
+import { createChart, CandlestickSeries, ColorType, createSeriesMarkers } from 'lightweight-charts';
+import type { IChartApi, ISeriesApi, ISeriesMarkersPluginApi, CandlestickData, Time, SeriesMarker } from 'lightweight-charts';
 import { TopBar } from '../lib/TopBar';
 import { useTrades, Trade } from '../hooks/useTrades';
 import { useAccountContext } from '../contexts/AccountContext';
@@ -59,6 +59,7 @@ export function ChartingAI() {
   const [selectedTrade, setSelectedTrade] = useState<Trade | null>(null);
   const chartApiRef = useRef<IChartApi | null>(null);
   const seriesApiRef = useRef<ISeriesApi<'Candlestick'> | null>(null);
+  const markersApiRef = useRef<ISeriesMarkersPluginApi<Time> | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const [isPlaying, setIsPlaying] = useState(false);
@@ -130,8 +131,12 @@ export function ChartingAI() {
         wickDownColor: '#ef5350',
       });
 
+      // Create markers plugin (v5 API)
+      const markersPlugin = createSeriesMarkers(series);
+
       chartApiRef.current = chart;
       seriesApiRef.current = series;
+      markersApiRef.current = markersPlugin;
       setChartReady(true);
 
       // Handle resize
@@ -168,28 +173,30 @@ export function ChartingAI() {
     const slice = fullData.slice(0, currentIndex + 1);
     series.setData(slice);
 
-    // Markers
-    const markers: SeriesMarker<Time>[] = [];
-    if (currentIndex >= ENTRY_IDX && selectedTrade) {
-      const isLong = selectedTrade.action?.toUpperCase() === 'BUY';
-      markers.push({
-        time: fullData[ENTRY_IDX].time,
-        position: isLong ? 'belowBar' : 'aboveBar',
-        color: isLong ? '#1ED760' : '#E5534B',
-        shape: isLong ? 'arrowUp' : 'arrowDown',
-        text: `ENTRY @ ${selectedTrade.entry}`,
-      });
+    // Markers (v5: use the markers plugin API)
+    if (markersApiRef.current) {
+      const markers: SeriesMarker<Time>[] = [];
+      if (currentIndex >= ENTRY_IDX && selectedTrade) {
+        const isLong = selectedTrade.action?.toUpperCase() === 'BUY';
+        markers.push({
+          time: fullData[ENTRY_IDX].time,
+          position: isLong ? 'belowBar' : 'aboveBar',
+          color: isLong ? '#1ED760' : '#E5534B',
+          shape: isLong ? 'arrowUp' : 'arrowDown',
+          text: `ENTRY @ ${selectedTrade.entry}`,
+        });
+      }
+      if (currentIndex >= fullData.length - 1 && selectedTrade) {
+        markers.push({
+          time: fullData[fullData.length - 1].time,
+          position: 'aboveBar',
+          color: '#3B82F6',
+          shape: 'circle',
+          text: `EXIT @ ${selectedTrade.exit || '—'}`,
+        });
+      }
+      markersApiRef.current.setMarkers(markers);
     }
-    if (currentIndex >= fullData.length - 1 && selectedTrade) {
-      markers.push({
-        time: fullData[fullData.length - 1].time,
-        position: 'aboveBar',
-        color: '#3B82F6',
-        shape: 'circle',
-        text: `EXIT @ ${selectedTrade.exit || '—'}`,
-      });
-    }
-    series.setMarkers(markers);
     chart.timeScale().fitContent();
   }, [currentIndex, fullData, selectedTrade, chartReady]);
 
