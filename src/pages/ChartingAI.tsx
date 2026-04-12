@@ -17,7 +17,7 @@ import { getTradeDate } from '../lib/timeUtils';
 import { cn } from '../lib/utils';
 import { motion } from 'motion/react';
 
-// ─── Synthetic OHLCV Generator ────────────────────────────────────────────────
+// ─── OHLCV Generator ──────────────────────────────────────────────────────────
 function generateMockCandles(
   basePrice: number,
   isLong: boolean,
@@ -36,14 +36,13 @@ function generateMockCandles(
     if (i < candlesBefore) {
       price += (basePrice - price) / (candlesBefore - i + 1) + (Math.random() - 0.5) * vol;
     } else {
-      const trend = isLong ? 0.3 : -0.3;
-      price += trend * vol + (Math.random() - 0.5) * vol * 1.5;
+      price += (isLong ? 0.3 : -0.3) * vol + (Math.random() - 0.5) * vol * 1.5;
     }
 
     const o = price;
-    const spread = Math.random() * vol * 2;
-    const h = o + spread * (0.4 + Math.random() * 0.6);
-    const l = o - spread * (0.4 + Math.random() * 0.6);
+    const sp = Math.random() * vol * 2;
+    const h = o + sp * (0.4 + Math.random() * 0.6);
+    const l = o - sp * (0.4 + Math.random() * 0.6);
     const c = l + (h - l) * Math.random();
 
     data.push({
@@ -60,10 +59,27 @@ function generateMockCandles(
 
 const ENTRY_IDX = 60;
 
+// ─── Hook: live chart dimensions from window ───────────────────────────────────
+// sidebar nav ≈ 68px, trade list = 272px, topbar ≈ 100px
+function useChartSize() {
+  const getSize = () => ({
+    w: Math.max(window.innerWidth - 68 - 272, 200),
+    h: Math.max(window.innerHeight - 100, 200),
+  });
+  const [size, setSize] = useState(getSize);
+  useEffect(() => {
+    const onResize = () => setSize(getSize());
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+  return size;
+}
+
 // ─── Component ────────────────────────────────────────────────────────────────
 export function ChartingAI() {
   const { trades, loading } = useTrades();
   const { selectedAccountId } = useAccountContext();
+  const { w: chartW, h: chartH } = useChartSize();
 
   const accountTrades = selectedAccountId
     ? trades.filter(t => t.accountId === selectedAccountId)
@@ -71,9 +87,7 @@ export function ChartingAI() {
 
   const [selectedTrade, setSelectedTrade] = useState<Trade | null>(null);
 
-  // The chart container — lightweight-charts v5 supports autoSize so it
-  // reads container dimensions automatically via ResizeObserver internally.
-  const chartWrapperRef = useRef<HTMLDivElement>(null);
+  const chartContainerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const seriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null);
 
@@ -89,14 +103,14 @@ export function ChartingAI() {
     }
   }, [accountTrades.length]);
 
-  // ─── Init chart (once wrapper div is in DOM) ───────────────────────────────
+  // ─── Initialize chart with REAL pixel dimensions ───────────────────────────
   useEffect(() => {
-    const el = chartWrapperRef.current;
+    const el = chartContainerRef.current;
     if (!el || chartRef.current) return;
 
-    // v5: autoSize:true → chart manages its own ResizeObserver
     const chart = createChart(el, {
-      autoSize: true,
+      width: chartW,
+      height: chartH,
       layout: {
         background: { type: ColorType.Solid, color: '#0A0A12' },
         textColor: '#6B7280',
@@ -115,20 +129,15 @@ export function ChartingAI() {
         timeVisible: true,
         secondsVisible: false,
       },
-      rightPriceScale: {
-        borderColor: 'rgba(255,255,255,0.08)',
-      },
+      rightPriceScale: { borderColor: 'rgba(255,255,255,0.08)' },
     });
 
-    // v5 API: addSeries(SeriesClass, options)
     const series = chart.addSeries(CandlestickSeries, {
       upColor: '#1ED760',
       downColor: '#E5534B',
       borderVisible: false,
       wickUpColor: '#1ED760',
       wickDownColor: '#E5534B',
-      borderUpColor: '#1ED760',
-      borderDownColor: '#E5534B',
     });
 
     chartRef.current = chart;
@@ -139,28 +148,27 @@ export function ChartingAI() {
       chartRef.current = null;
       seriesRef.current = null;
     };
-  }, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // only once on mount
 
-  // ─── Generate candles when trade is selected ───────────────────────────────
+  // ─── Keep chart resized when window changes ────────────────────────────────
+  useEffect(() => {
+    chartRef.current?.resize(chartW, chartH);
+  }, [chartW, chartH]);
+
+  // ─── Generate candles when trade changes ──────────────────────────────────
   useEffect(() => {
     if (!selectedTrade) return;
     setIsPlaying(false);
-
     let dateObj = new Date();
-    try {
-      dateObj = getTradeDate(
-        selectedTrade.date || selectedTrade.createdAt || new Date().toISOString()
-      );
-    } catch { /* ignore */ }
-
+    try { dateObj = getTradeDate(selectedTrade.date || selectedTrade.createdAt || new Date().toISOString()); } catch { /* ignore */ }
     const isLong = selectedTrade.action?.toUpperCase() === 'BUY';
     const entryPrice = parseFloat(selectedTrade.entry) || 1.1;
-    const generated = generateMockCandles(entryPrice, isLong, dateObj);
-    setFullData(generated);
+    setFullData(generateMockCandles(entryPrice, isLong, dateObj));
     setCurrentIndex(ENTRY_IDX);
   }, [selectedTrade]);
 
-  // ─── Update chart when index changes ──────────────────────────────────────
+  // ─── Update chart series & markers ────────────────────────────────────────
   useEffect(() => {
     const chart = chartRef.current;
     const series = seriesRef.current;
@@ -168,7 +176,6 @@ export function ChartingAI() {
 
     series.setData(fullData.slice(0, currentIndex + 1));
 
-    // Markers
     const markers: SeriesMarker<Time>[] = [];
     if (currentIndex >= ENTRY_IDX && selectedTrade) {
       const isLong = selectedTrade.action?.toUpperCase() === 'BUY';
@@ -193,7 +200,7 @@ export function ChartingAI() {
     chart.timeScale().scrollToRealTime();
   }, [currentIndex, fullData, selectedTrade]);
 
-  // ─── Playback ─────────────────────────────────────────────────────────────
+  // ─── Playback interval ────────────────────────────────────────────────────
   useEffect(() => {
     if (!isPlaying) return;
     if (currentIndex >= fullData.length - 1) { setIsPlaying(false); return; }
@@ -208,40 +215,31 @@ export function ChartingAI() {
   const stepForward = () => { if (currentIndex < fullData.length - 1) setCurrentIndex(p => p + 1); };
   const reset = () => { setIsPlaying(false); setCurrentIndex(ENTRY_IDX); };
 
-  const progress =
-    fullData.length <= ENTRY_IDX
-      ? 0
-      : Math.round(((Math.max(0, currentIndex - ENTRY_IDX)) / (fullData.length - 1 - ENTRY_IDX)) * 100);
+  const progress = fullData.length <= ENTRY_IDX
+    ? 0
+    : Math.round(((Math.max(0, currentIndex - ENTRY_IDX)) / (fullData.length - 1 - ENTRY_IDX)) * 100);
 
-  // ─── Render ───────────────────────────────────────────────────────────────
-  if (loading) {
-    return (
-      <div className="flex flex-col bg-[#0A0A12]" style={{ height: '100vh' }}>
-        <TopBar title="Charting AI" subtitle="Candle-by-candle trade replay" />
-        <div className="flex-1 flex items-center justify-center">
-          <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-        </div>
+  if (loading) return (
+    <div className="flex flex-col bg-[#0A0A12] h-screen">
+      <TopBar title="Charting AI" subtitle="Candle-by-candle trade replay" />
+      <div className="flex-1 flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
       </div>
-    );
-  }
+    </div>
+  );
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#0A0A12' }}>
+    <div className="flex flex-col bg-[#0A0A12] h-screen overflow-hidden">
       <TopBar title="Charting AI" subtitle="Candle-by-candle trade replay" showSearch={false} />
 
-      <div style={{ display: 'flex', flex: 1, overflow: 'hidden', minHeight: 0 }}>
+      <div className="flex flex-1 overflow-hidden min-h-0">
 
-        {/* ── Trade list sidebar ─────────────────────────────────── */}
-        <div style={{
-          width: 272,
-          flexShrink: 0,
-          display: 'flex',
-          flexDirection: 'column',
-          overflow: 'hidden',
-          borderRight: '1px solid rgba(255,255,255,0.05)',
-          background: '#0D0D18',
-        }}>
-          <div style={{ padding: '16px', borderBottom: '1px solid rgba(255,255,255,0.05)', background: 'rgba(0,0,0,0.3)', flexShrink: 0 }}>
+        {/* ── Trade List ── */}
+        <div
+          className="shrink-0 flex flex-col overflow-hidden border-r border-white/5 bg-[#0D0D18]"
+          style={{ width: 272 }}
+        >
+          <div className="p-4 border-b border-white/5 bg-black/20 shrink-0">
             <h3 className="text-xs font-bold text-white uppercase tracking-widest flex items-center gap-2">
               <Target className="w-3.5 h-3.5 text-primary" />
               Trades ({accountTrades.length})
@@ -285,53 +283,36 @@ export function ChartingAI() {
           )}
         </div>
 
-        {/* ── Chart area ───────────────────────────────────────────── */}
-        <div style={{ flex: 1, position: 'relative', minWidth: 0, minHeight: 0 }}>
+        {/* ── Chart Area ── */}
+        <div className="flex-1 relative overflow-hidden" style={{ height: chartH }}>
 
           {/* 
-            The key: This div fills its parent via width/height 100%.
-            lightweight-charts v5 with autoSize:true will observe this element
-            and size the canvas correctly — no explicit pixel reads needed.
+            Explicit pixel dimensions via JS — completely bypasses CSS flex height issues.
+            The div is sized via the `useChartSize` hook and populated by lightweight-charts.
           */}
           <div
-            ref={chartWrapperRef}
-            style={{ width: '100%', height: '100%' }}
+            ref={chartContainerRef}
+            style={{ width: chartW, height: chartH }}
           />
 
-          {/* Empty state */}
+          {/* Empty state overlay */}
           {!selectedTrade && (
-            <div
-              style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12, zIndex: 10, background: '#0A0A12' }}
-            >
+            <div className="absolute inset-0 z-10 bg-[#0A0A12] flex flex-col items-center justify-center gap-3">
               <Target className="w-14 h-14 opacity-20 text-gray-600" />
               <p className="text-xs font-bold uppercase tracking-widest text-gray-600 opacity-40">Select a trade to replay</p>
             </div>
           )}
 
-          {/* ── Floating replay toolbar ────────────────────────────── */}
+          {/* ── Floating Replay Toolbar ── */}
           {selectedTrade && (
             <motion.div
               initial={{ y: 40, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
-              style={{
-                position: 'absolute',
-                bottom: 24,
-                left: '50%',
-                transform: 'translateX(-50%)',
-                zIndex: 20,
-                display: 'flex',
-                alignItems: 'center',
-                gap: 20,
-                padding: '12px 24px',
-                borderRadius: 9999,
-                border: '1px solid rgba(255,255,255,0.1)',
-                boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
-                background: 'rgba(10,10,18,0.92)',
-                backdropFilter: 'blur(24px)',
-              }}
+              className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex items-center gap-5 px-6 py-3 rounded-full border border-white/10 shadow-2xl"
+              style={{ background: 'rgba(10,10,18,0.92)', backdropFilter: 'blur(24px)' }}
             >
               {/* Speed */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingRight: 20, borderRight: '1px solid rgba(255,255,255,0.1)' }}>
+              <div className="flex items-center gap-2 pr-5 border-r border-white/10">
                 <span className="text-[9px] font-bold text-gray-500 uppercase tracking-widest">Speed</span>
                 <select
                   value={speed}
@@ -359,7 +340,7 @@ export function ChartingAI() {
                 {isPlaying ? <Pause className="w-5 h-5 text-white" /> : <Play className="w-5 h-5 text-white ml-0.5" />}
               </button>
 
-              {/* Step forward */}
+              {/* Step */}
               <button
                 onClick={stepForward}
                 disabled={isPlaying || currentIndex >= fullData.length - 1}
@@ -369,13 +350,14 @@ export function ChartingAI() {
               </button>
 
               {/* Progress */}
-              <div style={{ paddingLeft: 20, borderLeft: '1px solid rgba(255,255,255,0.1)', display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 48 }}>
+              <div className="pl-5 border-l border-white/10 flex flex-col items-center min-w-[48px]">
                 <span className="text-[9px] font-bold text-gray-500 uppercase tracking-widest">Progress</span>
                 <span className="text-sm font-black text-primary tnum">{progress}%</span>
               </div>
             </motion.div>
           )}
         </div>
+
       </div>
     </div>
   );
