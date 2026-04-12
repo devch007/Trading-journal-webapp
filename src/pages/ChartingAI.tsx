@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   createChart,
+  CandlestickSeries,
+  ColorType,
   IChartApi,
   ISeriesApi,
   CandlestickData,
@@ -96,7 +98,7 @@ export function ChartingAI() {
     const chart = createChart(el, {
       autoSize: true,
       layout: {
-        background: { type: 'solid', color: '#0A0A12' },
+        background: { type: ColorType.Solid, color: '#0A0A12' },
         textColor: '#6B7280',
         fontFamily: "'Inter', sans-serif",
       },
@@ -118,12 +120,15 @@ export function ChartingAI() {
       },
     });
 
-    const series = chart.addCandlestickSeries({
+    // v5 API: addSeries(SeriesClass, options)
+    const series = chart.addSeries(CandlestickSeries, {
       upColor: '#1ED760',
       downColor: '#E5534B',
       borderVisible: false,
       wickUpColor: '#1ED760',
       wickDownColor: '#E5534B',
+      borderUpColor: '#1ED760',
+      borderDownColor: '#E5534B',
     });
 
     chartRef.current = chart;
