@@ -4,49 +4,10 @@ import type { IChartApi, ISeriesApi, ISeriesMarkersPluginApi, CandlestickData, T
 import { TopBar } from '../lib/TopBar';
 import { useTrades, Trade } from '../hooks/useTrades';
 import { useAccountContext } from '../contexts/AccountContext';
-import { Play, Pause, SkipForward, Target, RefreshCw } from 'lucide-react';
+import { Play, Pause, SkipForward, Target, RefreshCw, Clock } from 'lucide-react';
 import { getTradeDate } from '../lib/timeUtils';
 import { cn } from '../lib/utils';
 import { motion } from 'motion/react';
-
-// ─── OHLCV Generator ────────────────────────────────────────────────────────
-function generateMockCandles(
-  basePrice: number,
-  isLong: boolean,
-  entryDate: Date,
-  candlesBefore = 60,
-  candlesAfter = 40
-): CandlestickData[] {
-  const data: CandlestickData[] = [];
-  const startMs = entryDate.getTime() - candlesBefore * 15 * 60 * 1000;
-  const vol = basePrice * 0.0015;
-  let price = isLong ? basePrice * 0.99 : basePrice * 1.01;
-
-  for (let i = 0; i < candlesBefore + candlesAfter; i++) {
-    const time = Math.floor((startMs + i * 15 * 60 * 1000) / 1000) as Time;
-    if (i < candlesBefore) {
-      price += (basePrice - price) / (candlesBefore - i + 1) + (Math.random() - 0.5) * vol;
-    } else {
-      price += (isLong ? 0.3 : -0.3) * vol + (Math.random() - 0.5) * vol * 1.5;
-    }
-    const o = price;
-    const sp = Math.random() * vol * 2;
-    const h = o + sp * (0.4 + Math.random() * 0.6);
-    const l = o - sp * (0.4 + Math.random() * 0.6);
-    const c = l + (h - l) * Math.random();
-    data.push({
-      time,
-      open: +o.toFixed(5),
-      high: +Math.max(o, h, c).toFixed(5),
-      low: +Math.min(o, l, c).toFixed(5),
-      close: +c.toFixed(5),
-    });
-    price = c;
-  }
-  return data;
-}
-
-const ENTRY_IDX = 60;
 
 export function ChartingAI() {
   const { trades, loading } = useTrades();
@@ -64,9 +25,11 @@ export function ChartingAI() {
 
   const [isPlaying, setIsPlaying] = useState(false);
   const [speed, setSpeed] = useState(800);
-  const [currentIndex, setCurrentIndex] = useState(ENTRY_IDX);
+  const [currentIndex, setCurrentIndex] = useState(0);
   const [fullData, setFullData] = useState<CandlestickData[]>([]);
   const [chartReady, setChartReady] = useState(false);
+  const [timeframe, setTimeframe] = useState<string>('5min');
+  const [chartLoading, setChartLoading] = useState(false);
 
   // Auto-select first trade
   useEffect(() => {
@@ -152,17 +115,42 @@ export function ChartingAI() {
     });
   }, []);
 
-  // ─── Generate candles when trade changes ──────────────────────────────────
+  // ─── Fetch candles from TwelveData when trade or timeframe changes ────────
   useEffect(() => {
     if (!selectedTrade) return;
-    setIsPlaying(false);
-    let dateObj = new Date();
-    try { dateObj = getTradeDate(selectedTrade.date || selectedTrade.createdAt || new Date().toISOString()); } catch {}
-    const isLong = selectedTrade.action?.toUpperCase() === 'BUY';
-    const entryPrice = parseFloat(selectedTrade.entry) || 1.1;
-    setFullData(generateMockCandles(entryPrice, isLong, dateObj));
-    setCurrentIndex(ENTRY_IDX);
-  }, [selectedTrade]);
+    const fetchCandles = async () => {
+      setChartLoading(true);
+      setIsPlaying(false);
+      try {
+        const symbol = selectedTrade.symbol || 'AAPL';
+        // Use outputsize=100 for enough data context, free API limits may apply
+        const res = await fetch(`https://api.twelvedata.com/time_series?symbol=${symbol}&interval=${timeframe}&apikey=4191086498ac4468940a3b9c45367831&outputsize=100`);
+        const json = await res.json();
+        
+        if (json.status === 'ok' && json.values) {
+          const formattedData: CandlestickData[] = json.values.map((v: any) => ({
+            time: (new Date(v.datetime.replace(' ', 'T') + 'Z').getTime() / 1000) as Time,
+            open: parseFloat(v.open),
+            high: parseFloat(v.high),
+            low: parseFloat(v.low),
+            close: parseFloat(v.close),
+          })).reverse();
+          
+          setFullData(formattedData);
+          setCurrentIndex(Math.floor(formattedData.length / 2));
+        } else {
+          console.error("API Error", json);
+          setFullData([]);
+        }
+      } catch (err) {
+        console.error(err);
+        setFullData([]);
+      } finally {
+        setChartLoading(false);
+      }
+    };
+    fetchCandles();
+  }, [selectedTrade, timeframe]);
 
   // ─── Push data to chart ───────────────────────────────────────────────────
   useEffect(() => {
@@ -175,11 +163,12 @@ export function ChartingAI() {
 
     // Markers (v5: use the markers plugin API)
     if (markersApiRef.current) {
+      const entryIdx = Math.floor(fullData.length / 2);
       const markers: SeriesMarker<Time>[] = [];
-      if (currentIndex >= ENTRY_IDX && selectedTrade) {
+      if (currentIndex >= entryIdx && selectedTrade) {
         const isLong = selectedTrade.action?.toUpperCase() === 'BUY';
         markers.push({
-          time: fullData[ENTRY_IDX].time,
+          time: fullData[entryIdx].time,
           position: isLong ? 'belowBar' : 'aboveBar',
           color: isLong ? '#1ED760' : '#E5534B',
           shape: isLong ? 'arrowUp' : 'arrowDown',
@@ -208,15 +197,16 @@ export function ChartingAI() {
     return () => clearInterval(id);
   }, [isPlaying, currentIndex, fullData.length, speed]);
 
+  const entryIdx = fullData.length > 0 ? Math.floor(fullData.length / 2) : 0;
   const togglePlay = () => {
-    if (currentIndex >= fullData.length - 1) setCurrentIndex(ENTRY_IDX);
+    if (currentIndex >= fullData.length - 1) setCurrentIndex(entryIdx);
     setIsPlaying(p => !p);
   };
   const stepForward = () => { if (currentIndex < fullData.length - 1) setCurrentIndex(p => p + 1); };
-  const reset = () => { setIsPlaying(false); setCurrentIndex(ENTRY_IDX); };
+  const reset = () => { setIsPlaying(false); setCurrentIndex(entryIdx); };
 
-  const progress = fullData.length <= ENTRY_IDX ? 0
-    : Math.round(((Math.max(0, currentIndex - ENTRY_IDX)) / (fullData.length - 1 - ENTRY_IDX)) * 100);
+  const progress = (fullData.length === 0 || currentIndex < entryIdx) ? 0
+    : Math.round(((currentIndex - entryIdx) / (fullData.length - 1 - entryIdx)) * 100);
 
   if (loading) return (
     <div className="flex flex-col min-h-screen pb-10">
@@ -280,6 +270,31 @@ export function ChartingAI() {
 
         {/* ── Chart Area ── */}
         <div className="flex-1 relative rounded-2xl border border-white/5 overflow-hidden bg-[#0A0A12]">
+
+          {/* Timeframe Selector */}
+          {selectedTrade && (
+            <div className="absolute top-4 left-4 z-20 flex bg-[#0D0D18] border border-white/10 rounded-lg overflow-hidden shadow-lg">
+              {['1min', '5min', '15min', '1h', '1day'].map(tf => (
+                <button
+                  key={tf}
+                  onClick={() => setTimeframe(tf)}
+                  className={cn(
+                    "px-3 py-1.5 text-xs font-bold transition-colors",
+                    timeframe === tf ? "bg-primary text-white" : "text-gray-400 hover:text-white hover:bg-white/5"
+                  )}
+                >
+                  {tf.replace('min', 'm')}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Chart Loading State */}
+          {chartLoading && (
+             <div className="absolute inset-0 z-10 bg-[#0A0A12]/80 backdrop-blur-sm flex flex-col items-center justify-center gap-3">
+               <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+             </div>
+          )}
 
           {/* 
             Chart container: uses ref callback so we can guarantee DOM is ready.
