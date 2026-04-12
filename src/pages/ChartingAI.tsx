@@ -8,6 +8,17 @@ import { Play, Pause, SkipForward, Target, RefreshCw, Clock } from 'lucide-react
 import { getTradeDate } from '../lib/timeUtils';
 import { cn } from '../lib/utils';
 import { motion } from 'motion/react';
+// ─── Utility to clean MT4/MT5 symbols for API ───────────────────────────────
+function cleanSymbol(sym: string): string {
+  if (!sym) return 'AAPL';
+  let s = sym.toUpperCase().split('.')[0];
+  if (s.length === 6 && ['EUR', 'GBP', 'AUD', 'NZD', 'USD', 'CAD', 'CHF', 'JPY', 'XAU', 'XAG'].some(c => s.startsWith(c))) {
+    s = s.substring(0, 3) + '/' + s.substring(3);
+  }
+  if (s === 'US30' || s === 'DJI') return 'DJI';
+  if (s === 'NAS100' || s === 'US100' || s === 'NDX') return 'NDX';
+  return s;
+}
 
 export function ChartingAI() {
   const { trades, loading } = useTrades();
@@ -122,7 +133,7 @@ export function ChartingAI() {
       setChartLoading(true);
       setIsPlaying(false);
       try {
-        const symbol = selectedTrade.symbol || 'AAPL';
+        const symbol = cleanSymbol(selectedTrade.symbol || 'AAPL');
         // Use outputsize=100 for enough data context, free API limits may apply
         const res = await fetch(`https://api.twelvedata.com/time_series?symbol=${symbol}&interval=${timeframe}&apikey=4191086498ac4468940a3b9c45367831&outputsize=100`);
         const json = await res.json();
@@ -306,12 +317,17 @@ export function ChartingAI() {
           />
 
           {/* Empty state */}
-          {!selectedTrade && (
+          {!selectedTrade ? (
             <div className="absolute inset-0 z-10 bg-[#0A0A12] flex flex-col items-center justify-center gap-3">
               <Target className="w-14 h-14 opacity-20 text-gray-600" />
               <p className="text-xs font-bold uppercase tracking-widest text-gray-600 opacity-40">Select a trade to replay</p>
             </div>
-          )}
+          ) : fullData.length === 0 && !chartLoading ? (
+            <div className="absolute inset-0 z-10 bg-[#0A0A12] flex flex-col items-center justify-center gap-3">
+              <Target className="w-14 h-14 opacity-20 text-gray-600" />
+              <p className="text-xs font-bold uppercase tracking-widest text-gray-600 opacity-40">No historical data found</p>
+            </div>
+          ) : null}
 
           {/* ── Floating Replay Toolbar ── */}
           {selectedTrade && (
