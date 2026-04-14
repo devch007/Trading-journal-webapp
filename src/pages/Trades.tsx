@@ -119,7 +119,7 @@ export function Trades() {
       // Update existing trade — only send safe, updatable fields
       const { id } = tradeData;
       const cleanUpdates: Record<string, any> = {};
-      const allowedFields = ['accountId','symbol','action','size','entry','exit','pnl','result','isPositive','session','confidence','duration','tags','tag','strategy','commission'];
+      const allowedFields = ['accountId','symbol','action','size','entry','exit','pnl','result','isPositive','session','confidence','duration','tags','tag','strategy'];
       for (const key of allowedFields) {
         if (tradeData[key] !== undefined) {
           cleanUpdates[key] = tradeData[key];
@@ -260,9 +260,19 @@ export function Trades() {
       const commValue = parseFloat(bulkCommission) || 0;
       
       for (const id of selectedTradeIds) {
-        await updateTrades([id], { 
-          commission: commValue
-        });
+        const trade = allTrades.find(t => t.id === id);
+        if (trade) {
+          const currentPnl = Number(trade.pnl) || 0;
+          // Commission is an expense, so we subtract its absolute value from the P&L
+          const newPnl = currentPnl - Math.abs(commValue);
+          const isPositive = newPnl >= 0;
+          
+          await updateTrades([id], { 
+            pnl: parseFloat(newPnl.toFixed(2)),
+            result: `${isPositive ? '+' : '-'}$${Math.abs(newPnl).toFixed(2)}`,
+            isPositive: isPositive
+          });
+        }
       }
       
       setSelectedTradeIds([]);

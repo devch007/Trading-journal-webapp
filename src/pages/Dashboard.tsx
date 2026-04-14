@@ -284,14 +284,15 @@ export function Dashboard() {
       size: newTrade.size,
       result: newTrade.result,
       isPositive: newTrade.isPositive,
-      pnl: newTrade.pnl,
-      commission: newTrade.commission || 0
+      pnl: newTrade.pnl
     });
   };
 
   const handleSaveImportedTrades = async (extractedTrades: any[]) => {
     for (const t of extractedTrades) {
-      const pnl = parseFloat(t.profit) || 0;
+      const grossPnl = parseFloat(t.profit) || 0;
+      const comm = parseFloat(t.commission) || 0;
+      const pnl = grossPnl - Math.abs(comm);
 
       // Try to use the AI-extracted date_time; normalizeImportedDateTime handles
       // MT5 format ("2026.04.03 14:30") and forces year to 2026.
@@ -318,7 +319,6 @@ export function Dashboard() {
         tag: "",
         tags: [],
         strategy: t.strategy || "",
-        commission: t.commission || 0,
       });
     }
   };

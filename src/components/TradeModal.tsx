@@ -123,8 +123,10 @@ export function TradeModal({ isOpen, onClose, onSubmit, trade }: TradeModalProps
     e.preventDefault();
     
     const pnlNum = parseFloat(pnl) || 0;
+    const commNum = parseFloat(commission) || 0;
+    const finalPnl = pnlNum - Math.abs(commNum);
     const sizeFormatted = `${parseFloat(size).toFixed(2)} Lot`;
-    const isPositive = pnlNum >= 0;
+    const isPositive = finalPnl >= 0;
 
     if (trade) {
       // EDIT: only send the fields we want to update - not the entire trade object
@@ -138,8 +140,8 @@ export function TradeModal({ isOpen, onClose, onSubmit, trade }: TradeModalProps
         size: sizeFormatted,
         entry: entry || trade.entry || "",
         exit: exit || trade.exit || "",
-        pnl: pnlNum,
-        result: `${isPositive ? '+' : '-'}$${Math.abs(pnlNum).toFixed(2)}`,
+        pnl: finalPnl,
+        result: `${isPositive ? '+' : '-'}$${Math.abs(finalPnl).toFixed(2)}`,
         isPositive,
         session,
         confidence,
@@ -147,7 +149,6 @@ export function TradeModal({ isOpen, onClose, onSubmit, trade }: TradeModalProps
         tags,
         tag: tags[0] || trade.tag || "",
         strategy,
-        commission: parseFloat(commission) || 0,
       };
       onSubmit(updates);
     } else {
@@ -164,16 +165,15 @@ export function TradeModal({ isOpen, onClose, onSubmit, trade }: TradeModalProps
         size: sizeFormatted,
         entry: entry || "0.0000",
         exit: exit || "0.0000",
-        result: `${isPositive ? '+' : '-'}$${Math.abs(pnlNum).toFixed(2)}`,
+        result: `${isPositive ? '+' : '-'}$${Math.abs(finalPnl).toFixed(2)}`,
         isPositive,
-        pnl: pnlNum,
+        pnl: finalPnl,
         session,
         confidence,
         duration: duration || "",
         tags,
         tag: tags[0] || "",
         strategy,
-        commission: parseFloat(commission) || 0,
       };
       onSubmit(newTrade);
     }
