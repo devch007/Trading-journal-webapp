@@ -16,6 +16,8 @@ export function AccountModal({ isOpen, onClose, onSubmit, initialData }: Account
   const [initialCapital, setInitialCapital] = useState("100000");
   const [maxDrawdown, setMaxDrawdown] = useState("5.0");
   const [dailyDrawdown, setDailyDrawdown] = useState("1.2");
+  const [commissionForex, setCommissionForex] = useState("5.0");
+  const [commissionMetals, setCommissionMetals] = useState("5.0");
   const [status, setStatus] = useState("ACTIVE");
 
   useEffect(() => {
@@ -27,6 +29,8 @@ export function AccountModal({ isOpen, onClose, onSubmit, initialData }: Account
       setInitialCapital(initialData.initialCapital.toString());
       setMaxDrawdown(initialData.maxDrawdown.toString());
       setDailyDrawdown(initialData.dailyDrawdown.toString());
+      setCommissionForex(initialData.commissionForex !== undefined ? initialData.commissionForex.toString() : "5.0");
+      setCommissionMetals(initialData.commissionMetals !== undefined ? initialData.commissionMetals.toString() : "5.0");
       setStatus(initialData.status);
     } else {
       setName("");
@@ -36,6 +40,8 @@ export function AccountModal({ isOpen, onClose, onSubmit, initialData }: Account
       setInitialCapital("100000");
       setMaxDrawdown("5.0");
       setDailyDrawdown("1.2");
+      setCommissionForex("5.0");
+      setCommissionMetals("5.0");
       setStatus("ACTIVE");
     }
   }, [initialData, isOpen]);
@@ -53,6 +59,8 @@ export function AccountModal({ isOpen, onClose, onSubmit, initialData }: Account
       initialCapital: parseFloat(initialCapital),
       maxDrawdown: parseFloat(maxDrawdown),
       dailyDrawdown: parseFloat(dailyDrawdown),
+      commissionForex: parseFloat(commissionForex) || 0,
+      commissionMetals: parseFloat(commissionMetals) || 0,
       status
     };
 
@@ -158,6 +166,35 @@ export function AccountModal({ isOpen, onClose, onSubmit, initialData }: Account
                 onChange={(e) => setMaxDrawdown(e.target.value)}
                 className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white tnum focus:outline-none focus:border-primary/50 transition-colors"
                 placeholder="10.0"
+                required
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="flex flex-col gap-2">
+              <label className="text-xs type-label text-on-surface-variant uppercase tracking-wider">Forex Comm ($/Lot)</label>
+              <input 
+                type="number" 
+                step="0.1"
+                min="0"
+                value={commissionForex}
+                onChange={(e) => setCommissionForex(e.target.value)}
+                className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white tnum focus:outline-none focus:border-primary/50 transition-colors"
+                placeholder="5.0"
+                required
+              />
+            </div>
+            <div className="flex flex-col gap-2">
+              <label className="text-xs type-label text-on-surface-variant uppercase tracking-wider">Metals Comm ($/Lot)</label>
+              <input 
+                type="number" 
+                step="0.1"
+                min="0"
+                value={commissionMetals}
+                onChange={(e) => setCommissionMetals(e.target.value)}
+                className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white tnum focus:outline-none focus:border-primary/50 transition-colors"
+                placeholder="5.0"
                 required
               />
             </div>

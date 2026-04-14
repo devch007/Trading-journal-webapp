@@ -14,6 +14,8 @@ export interface Account {
   status: 'ACTIVE' | 'SUCCESS' | 'FAILED';
   maxDrawdown: number;
   dailyDrawdown: number;
+  commissionForex?: number;
+  commissionMetals?: number;
   createdAt: string;
   dateClosed?: string;
 }

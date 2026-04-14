@@ -291,7 +291,14 @@ export function Dashboard() {
   const handleSaveImportedTrades = async (extractedTrades: any[]) => {
     for (const t of extractedTrades) {
       const grossPnl = parseFloat(t.profit) || 0;
-      const comm = parseFloat(t.commission) || 0;
+      let comm = parseFloat(t.commission) || 0;
+      
+      if (comm === 0) {
+        const isMetal = t.symbol.toUpperCase().includes('XAU') || t.symbol.toUpperCase().includes('XAG') || t.symbol.toUpperCase().includes('GOLD') || t.symbol.toUpperCase().includes('SILVER');
+        const rate = isMetal ? (selectedAccount?.commissionMetals ?? 5) : (selectedAccount?.commissionForex ?? 5);
+        comm = (parseFloat(t.volume) || 0) * rate;
+      }
+      
       const pnl = grossPnl - Math.abs(comm);
 
       // Try to use the AI-extracted date_time; normalizeImportedDateTime handles

@@ -102,6 +102,19 @@ export function TradeModal({ isOpen, onClose, onSubmit, trade }: TradeModalProps
     }
   }, [isOpen, trade, selectedAccountId, accounts]);
 
+  useEffect(() => {
+    // Auto-calculate commission based on Account settings for new trades
+    if (trade) return;
+    const vol = parseFloat(size);
+    if (!isNaN(vol)) {
+      const isMetal = symbol.toUpperCase().includes('XAU') || symbol.toUpperCase().includes('XAG') || symbol.toUpperCase().includes('GOLD') || symbol.toUpperCase().includes('SILVER');
+      const account = accounts.find(a => a.id === accountId);
+      const rate = isMetal ? (account?.commissionMetals ?? 5) : (account?.commissionForex ?? 5);
+      const calculatedComm = (vol * rate).toFixed(2);
+      setCommission(calculatedComm);
+    }
+  }, [size, symbol, accountId, accounts, trade]);
+
   if (!isOpen) return null;
 
   const handleAddTag = (e: React.KeyboardEvent) => {
