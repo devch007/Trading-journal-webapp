@@ -284,7 +284,8 @@ export function Dashboard() {
       size: newTrade.size,
       result: newTrade.result,
       isPositive: newTrade.isPositive,
-      pnl: newTrade.pnl
+      pnl: newTrade.pnl,
+      commission: newTrade.commission || 0
     });
   };
 
@@ -317,6 +318,7 @@ export function Dashboard() {
         tag: "",
         tags: [],
         strategy: t.strategy || "",
+        commission: t.commission || 0,
       });
     }
   };

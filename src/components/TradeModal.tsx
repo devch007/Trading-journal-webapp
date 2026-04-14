@@ -22,6 +22,7 @@ export function TradeModal({ isOpen, onClose, onSubmit, trade }: TradeModalProps
   const [entry, setEntry] = useState("");
   const [exit, setExit] = useState("");
   const [pnl, setPnl] = useState("");
+  const [commission, setCommission] = useState("");
   const [session, setSession] = useState<'Asian' | 'London' | 'NY' | 'Else'>("Else");
   const [confidence, setConfidence] = useState<'High' | 'Medium' | 'Low'>("High");
   const [duration, setDuration] = useState("");
@@ -71,6 +72,7 @@ export function TradeModal({ isOpen, onClose, onSubmit, trade }: TradeModalProps
         setEntry(trade.entry || "");
         setExit(trade.exit || "");
         setPnl(trade.pnl?.toString() || "0");
+        setCommission(trade.commission?.toString() || "");
         setSession(trade.session || "Else");
         setConfidence(trade.confidence || "High");
         setDuration(trade.duration || "");
@@ -90,6 +92,7 @@ export function TradeModal({ isOpen, onClose, onSubmit, trade }: TradeModalProps
         setEntry("");
         setExit("");
         setPnl("");
+        setCommission("");
         setSession("Else");
         setConfidence("High");
         setDuration("");
@@ -144,6 +147,7 @@ export function TradeModal({ isOpen, onClose, onSubmit, trade }: TradeModalProps
         tags,
         tag: tags[0] || trade.tag || "",
         strategy,
+        commission: parseFloat(commission) || 0,
       };
       onSubmit(updates);
     } else {
@@ -169,6 +173,7 @@ export function TradeModal({ isOpen, onClose, onSubmit, trade }: TradeModalProps
         tags,
         tag: tags[0] || "",
         strategy,
+        commission: parseFloat(commission) || 0,
       };
       onSubmit(newTrade);
     }
@@ -299,8 +304,8 @@ export function TradeModal({ isOpen, onClose, onSubmit, trade }: TradeModalProps
             </div>
           </div>
 
-          {/* Size & P&L */}
-          <div className="grid grid-cols-2 gap-4">
+          {/* Size & P&L & Commission */}
+          <div className="grid grid-cols-3 gap-4">
             <div className="flex flex-col gap-2">
               <label className="text-xs type-label text-on-surface-variant uppercase tracking-wider">Size (Lots)</label>
               <input 
@@ -322,8 +327,19 @@ export function TradeModal({ isOpen, onClose, onSubmit, trade }: TradeModalProps
                 value={pnl}
                 onChange={(e) => setPnl(e.target.value)}
                 className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white tnum focus:outline-none focus:border-primary/50 transition-colors"
-                placeholder="e.g. 150.00 or -50.00"
+                placeholder="e.g. 150.00"
                 required
+              />
+            </div>
+            <div className="flex flex-col gap-2">
+              <label className="text-xs type-label text-on-surface-variant uppercase tracking-wider">Comms ($)</label>
+              <input 
+                type="number" 
+                step="0.01"
+                value={commission}
+                onChange={(e) => setCommission(e.target.value)}
+                className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white tnum focus:outline-none focus:border-primary/50 transition-colors"
+                placeholder="e.g. -5.00"
               />
             </div>
           </div>

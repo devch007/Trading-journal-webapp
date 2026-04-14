@@ -29,14 +29,14 @@ export function MonthlyPnLCalendar({ trades }: MonthlyPnLCalendarProps) {
       let tradeDate = new Date();
       const pnl = Number(trade.pnl || 0);
 
-      if (trade.createdAt) {
+      if (trade.date) {
+        // Use getTradeDate which handles ISO, MT5 dot-format, and relative strings
+        tradeDate = getTradeDate(trade.date);
+      } else if (trade.createdAt) {
         const parsed = new Date(trade.createdAt);
         if (!isNaN(parsed.getTime())) {
           tradeDate = parsed;
         }
-      } else if (trade.date) {
-        // Use getTradeDate which handles ISO, MT5 dot-format, and relative strings
-        tradeDate = getTradeDate(trade.date);
       }
       
       if (tradeDate.getFullYear() === year && tradeDate.getMonth() === month) {

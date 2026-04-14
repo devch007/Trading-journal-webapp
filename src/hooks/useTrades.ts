@@ -20,6 +20,7 @@ export interface Trade {
   session?: 'Asian' | 'London' | 'NY' | 'Else';
   confidence?: 'High' | 'Medium' | 'Low';
   tag?: string;
+  commission?: number;
   // Journaling fields
   strategy?: string;
   notes?: string;

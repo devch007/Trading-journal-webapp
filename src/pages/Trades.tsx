@@ -15,6 +15,8 @@ export function Trades() {
   const [selectedTradeIds, setSelectedTradeIds] = useState<string[]>([]);
   const [isTagging, setIsTagging] = useState(false);
   const [newTag, setNewTag] = useState("");
+  const [isCommissioning, setIsCommissioning] = useState(false);
+  const [bulkCommission, setBulkCommission] = useState("");
   
   const [filterSymbol, setFilterSymbol] = useState("ALL");
   const [filterAction, setFilterAction] = useState("ALL");
@@ -117,7 +119,7 @@ export function Trades() {
       // Update existing trade — only send safe, updatable fields
       const { id } = tradeData;
       const cleanUpdates: Record<string, any> = {};
-      const allowedFields = ['accountId','symbol','action','size','entry','exit','pnl','result','isPositive','session','confidence','duration','tags','tag','strategy'];
+      const allowedFields = ['accountId','symbol','action','size','entry','exit','pnl','result','isPositive','session','confidence','duration','tags','tag','strategy','commission'];
       for (const key of allowedFields) {
         if (tradeData[key] !== undefined) {
           cleanUpdates[key] = tradeData[key];
@@ -253,6 +255,22 @@ export function Trades() {
     }
   };
 
+  const handleBulkCommission = async () => {
+    if (bulkCommission.trim()) {
+      const commValue = parseFloat(bulkCommission) || 0;
+      
+      for (const id of selectedTradeIds) {
+        await updateTrades([id], { 
+          commission: commValue
+        });
+      }
+      
+      setSelectedTradeIds([]);
+      setIsCommissioning(false);
+      setBulkCommission("");
+    }
+  };
+
   return (
     <div className="flex flex-col min-h-full pb-10 relative">
       <TopBar 
@@ -325,6 +343,40 @@ export function Trades() {
                 >
                   <Tag className="w-4 h-4 text-primary" />
                   TAG
+                </button>
+              )}
+
+              {isCommissioning ? (
+                <div className="flex items-center gap-2 ml-2 border-l border-white/10 pl-2">
+                  <input 
+                    type="number" 
+                    step="0.01"
+                    value={bulkCommission}
+                    onChange={(e) => setBulkCommission(e.target.value)}
+                    placeholder="COMM (-$)..."
+                    className="bg-black/40 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-primary/50 w-28 tnum"
+                    autoFocus
+                  />
+                  <button 
+                    onClick={handleBulkCommission}
+                    className="p-2 bg-primary text-background rounded-lg hover:bg-primary/90 transition-colors uppercase text-[10px] font-bold"
+                  >
+                    Set
+                  </button>
+                  <button 
+                    onClick={() => setIsCommissioning(false)}
+                    className="p-2 hover:bg-white/5 rounded-lg text-gray-400 transition-colors"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              ) : (
+                <button 
+                  onClick={() => setIsCommissioning(true)}
+                  className="flex items-center gap-2 px-4 py-2 hover:bg-white/5 rounded-xl text-gray-300 transition-colors text-xs font-bold"
+                >
+                  <span className="text-primary font-bold">$</span>
+                  COMMISSION
                 </button>
               )}
 
