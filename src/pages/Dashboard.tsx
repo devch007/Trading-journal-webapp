@@ -3,13 +3,15 @@ import { useNavigate } from "react-router-dom";
 import { TopBar } from "../lib/TopBar";
 import { TradeModal } from "../components/TradeModal";
 import { ImportTradesModal } from "../components/ImportTradesModal";
-import { TrendingUp, TrendingDown, Target, Activity, ArrowUpRight, ArrowDownRight, Plus, Upload, Loader2, AlertCircle } from "lucide-react";
+import { TrendingUp, TrendingDown, Target, Activity, ArrowUpRight, ArrowDownRight, Plus, Upload, Loader2, AlertCircle, Shield, X } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useTrades } from "../hooks/useTrades";
 import { useAuth } from "../contexts/AuthContext";
 import { useAccountContext } from "../contexts/AccountContext";
 import { MonthlyPnLCalendar } from "../components/MonthlyPnLCalendar";
 import { getTradeDate, normalizeImportedDateTime } from "../lib/timeUtils";
+import { useRuleViolations } from "../hooks/useRuleViolations";
+import { motion, AnimatePresence } from "motion/react";
 
 // Initial static data
 const initialEquityData = [
@@ -100,6 +102,14 @@ export function Dashboard() {
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [equityData, setEquityData] = useState(initialEquityData);
   const [period, setPeriod] = useState('ALL');
+  const [dismissedViolations, setDismissedViolations] = useState<Set<string>>(new Set());
+  
+  // Rule violations
+  const violations = useRuleViolations(selectedAccount, allTrades);
+  const activeViolations = violations.filter(v => !dismissedViolations.has(v.ruleId));
+  const dismissViolation = (ruleId: string) => {
+    setDismissedViolations(prev => new Set(prev).add(ruleId));
+  };
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isExtracting, setIsExtracting] = useState(false);
@@ -468,6 +478,47 @@ IMPORTANT:
       />
       
       <div className="px-4 md:px-8 flex flex-col gap-6 md:gap-8">
+        {/* Rule Violation Alerts */}
+        <AnimatePresence>
+          {activeViolations.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.3, ease: "easeOut" }}
+              className="flex flex-col gap-2"
+            >
+              {activeViolations.map((violation) => (
+                <motion.div
+                  key={violation.ruleId}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 20, transition: { duration: 0.2 } }}
+                  className={`flex items-center gap-3 px-4 py-3 rounded-xl border backdrop-blur-sm ${
+                    violation.severity === 'critical'
+                      ? 'bg-[#E5534B]/10 border-[#E5534B]/30 text-[#E5534B]'
+                      : 'bg-[#F59E0B]/10 border-[#F59E0B]/30 text-[#F59E0B]'
+                  }`}
+                >
+                  <Shield className="w-4 h-4 shrink-0" />
+                  <div className="flex-1 flex flex-col">
+                    <span className="text-xs font-bold uppercase tracking-wider">
+                      {violation.severity === 'critical' ? '⚠ RULE BREACHED' : '⚡ WARNING'}: {violation.ruleName}
+                    </span>
+                    <span className="text-[12px] opacity-80">{violation.detail}</span>
+                  </div>
+                  <button
+                    onClick={() => dismissViolation(violation.ruleId)}
+                    className="p-1 rounded-lg hover:bg-white/10 transition-colors shrink-0"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </motion.div>
+              ))}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* Quick Actions */}
         <div className="flex flex-col gap-4">
           <h3 className="type-h2 text-white">Quick Actions</h3>

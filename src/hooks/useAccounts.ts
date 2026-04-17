@@ -2,6 +2,15 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 
+export interface TradingRule {
+  id: string;
+  name: string;
+  type: 'max_trades_per_day' | 'max_loss_per_trade' | 'daily_loss_limit' | 'custom';
+  value: number;
+  unit: string; // e.g. "trades", "$", "%"
+  enabled: boolean;
+}
+
 export interface Account {
   id: string;
   userId: string;
@@ -16,6 +25,7 @@ export interface Account {
   dailyDrawdown: number;
   commissionForex?: number;
   commissionMetals?: number;
+  rules?: TradingRule[];
   createdAt: string;
   dateClosed?: string;
 }
