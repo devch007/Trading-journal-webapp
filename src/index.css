@@ -85,16 +85,51 @@
 }
 
 @layer base {
+  html {
+    scroll-behavior: smooth;
+  }
   * {
     font-family: "Circular Std", "Inter", "DM Sans", sans-serif;
+    /* Hardware-accelerated rendering for all elements */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    box-sizing: border-box;
+  }
+  /* Smooth transitions on all interactive elements */
+  a, button, input, select, textarea, [role="button"] {
+    transition-property: color, background-color, border-color, box-shadow, opacity, transform, filter;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 200ms;
   }
   body {
-    @apply bg-background text-on-surface selection:bg-primary/30 selection:text-primary min-h-screen overflow-x-hidden transition-colors duration-300;
+    @apply bg-background text-on-surface selection:bg-primary/30 selection:text-primary min-h-screen overflow-x-hidden;
     font-family: "Circular Std", "Inter", "DM Sans", sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    /* Smooth color transitions across theme changes */
+    transition: background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1), color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    /* Prevent content jumping from scrollbar appearing */
+    scrollbar-gutter: stable;
+  }
+  /* Smooth page-level scrolling containers */
+  .overflow-y-auto, .overflow-y-scroll, .overflow-auto {
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+  }
+  /* Use will-change for frequently animated elements */
+  .glass-card, .sidebar-nav-item, .sidebar-collapse-btn {
+    will-change: transform, box-shadow;
+  }
+  /* Reduce motion for users who prefer it */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
   }
 }
+
 
 @layer utilities {
   /* ── Spotify Type Scale Utilities ── */

@@ -15,8 +15,8 @@ import {
   useSpring,
   useTransform,
 } from "motion/react";
-
 import { useRef, useState } from "react";
+import { Link } from "react-router-dom";
 
 export const FloatingDock = ({
   items,
@@ -68,13 +68,13 @@ const FloatingDockMobile = ({
                 }}
                 transition={{ delay: (items.length - 1 - idx) * 0.05 }}
               >
-                <a
-                  href={item.href}
+                <Link
+                  to={item.href}
                   key={item.title}
-                  className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-50 dark:bg-neutral-900"
+                  className="flex h-10 w-10 items-center justify-center rounded-full bg-[#1a1a2e]"
                 >
                   <div className="h-4 w-4">{item.icon}</div>
-                </a>
+                </Link>
               </motion.div>
             ))}
           </motion.div>
@@ -82,9 +82,9 @@ const FloatingDockMobile = ({
       </AnimatePresence>
       <button
         onClick={() => setOpen(!open)}
-        className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-50 dark:bg-neutral-800"
+        className="flex h-10 w-10 items-center justify-center rounded-full bg-[#1a1a2e] shadow-lg"
       >
-        <Menu className="h-5 w-5 text-neutral-500 dark:text-neutral-400" />
+        <Menu className="h-5 w-5 text-neutral-300" />
       </button>
     </div>
   );
@@ -145,36 +145,36 @@ function IconContainer({
 
   let width = useSpring(widthTransform, {
     mass: 0.1,
-    stiffness: 150,
-    damping: 12,
+    stiffness: 180,
+    damping: 16,
   });
   let height = useSpring(heightTransform, {
     mass: 0.1,
-    stiffness: 150,
-    damping: 12,
+    stiffness: 180,
+    damping: 16,
   });
 
   let widthIcon = useSpring(widthTransformIcon, {
     mass: 0.1,
-    stiffness: 150,
-    damping: 12,
+    stiffness: 180,
+    damping: 16,
   });
   let heightIcon = useSpring(heightTransformIcon, {
     mass: 0.1,
-    stiffness: 150,
-    damping: 12,
+    stiffness: 180,
+    damping: 16,
   });
 
   const [hovered, setHovered] = useState(false);
 
   return (
-    <a href={href}>
+    <Link to={href}>
       <motion.div
         ref={ref}
         style={{ width, height }}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
-        className="relative flex aspect-square items-center justify-center rounded-full bg-gray-200 dark:bg-neutral-800"
+        className="relative flex aspect-square items-center justify-center rounded-full bg-[#1a1a2e] shadow-md hover:shadow-blue-500/20"
       >
         <AnimatePresence>
           {hovered && (
@@ -182,7 +182,8 @@ function IconContainer({
               initial={{ opacity: 0, y: 10, x: "-50%" }}
               animate={{ opacity: 1, y: 0, x: "-50%" }}
               exit={{ opacity: 0, y: 2, x: "-50%" }}
-              className="absolute -top-8 left-1/2 w-fit rounded-md border border-gray-200 bg-gray-100 px-2 py-0.5 text-xs whitespace-pre text-neutral-700 dark:border-neutral-900 dark:bg-neutral-800 dark:text-white"
+              transition={{ duration: 0.15, ease: "easeOut" }}
+              className="absolute -top-9 left-1/2 w-fit rounded-lg border border-white/10 bg-[#1a1a2e] px-2.5 py-1 text-xs whitespace-pre text-white shadow-xl"
             >
               {title}
             </motion.div>
@@ -195,6 +196,6 @@ function IconContainer({
           {icon}
         </motion.div>
       </motion.div>
-    </a>
+    </Link>
   );
 }

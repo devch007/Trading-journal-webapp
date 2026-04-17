@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
-import { TextFlippingBoard } from "../components/ui/text-flipping-board";
 import { useNavigate } from "react-router-dom";
 import { TopBar } from "../lib/TopBar";
 import { TradeModal } from "../components/TradeModal";
@@ -91,14 +90,6 @@ const CustomTooltip = ({ active, payload }: any) => {
   return null;
 };
 
-const BOARD_MESSAGES: string[] = [
-  "DISCIPLINE\nBEATS\nTALENT",
-  "PROTECT\nYOUR\nCAPITAL FIRST",
-  "THE TREND\nIS YOUR\nFRIEND",
-  "CUT LOSSES\nLET PROFITS\nRUN FREE",
-  "RISK IS\nYOUR ONLY\nREAL ENEMY",
-  "PATIENCE\nPAYS MORE\nTHAN PANIC",
-];
 
 export function Dashboard() {
   const { user } = useAuth();
@@ -109,12 +100,6 @@ export function Dashboard() {
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [equityData, setEquityData] = useState(initialEquityData);
   const [period, setPeriod] = useState('ALL');
-  const [boardMsgIdx, setBoardMsgIdx] = useState(0);
-  const nextBoardMsg = useCallback(() => setBoardMsgIdx((i) => (i + 1) % BOARD_MESSAGES.length), []);
-  useEffect(() => {
-    const id = setInterval(nextBoardMsg, 7000);
-    return () => clearInterval(id);
-  }, [nextBoardMsg]);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isExtracting, setIsExtracting] = useState(false);
@@ -669,23 +654,6 @@ IMPORTANT:
 
           {/* Right Column (Spans 1) */}
           <div className="flex flex-col gap-6">
-            {/* Motivation Board */}
-            <div className="glass-card p-4 rounded-2xl flex flex-col gap-3">
-              <div className="flex items-center justify-between">
-                <h3 className="type-h2 text-white">Trader's Board</h3>
-                <button
-                  onClick={nextBoardMsg}
-                  className="type-micro text-[10px] px-2 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-[#A7A7A7] hover:text-white transition-colors"
-                >
-                  Next →
-                </button>
-              </div>
-              <TextFlippingBoard
-                text={BOARD_MESSAGES[boardMsgIdx]}
-                className="!bg-[#0a0a14] !shadow-none border border-white/5 !rounded-xl"
-              />
-            </div>
-
             {/* Quant Insights */}
             <div className="glass-card p-6 rounded-2xl flex flex-col gap-4">
               <h3 className="type-h2 text-white mb-2">Quant Insights</h3>
