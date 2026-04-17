@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Target } from 'lucide-react';
+import { Target, Shield } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { TopBar } from '../lib/TopBar';
 import { GoalCard } from '../components/GoalCard';
@@ -9,6 +9,7 @@ import { GoalHeatmap, DailyHeatmapData, DailyGoalStatus } from '../components/Go
 import { useTrades } from '../hooks/useTrades';
 import { useAuth } from '../contexts/AuthContext';
 import { useAccountContext } from '../contexts/AccountContext';
+import { TradingRule } from '../hooks/useAccounts';
 import { getTradeDate } from '../lib/timeUtils';
 import { startOfDay, startOfWeek, startOfMonth, subDays } from 'date-fns';
 import { cn } from '../lib/utils';
@@ -149,9 +150,12 @@ export function Goals() {
   const [activeTab, setActiveTab] = useState<Timeframe>('Day');
   const { trades: allTrades, loading } = useTrades();
   const { user } = useAuth();
-  const { selectedAccountId } = useAccountContext();
+  const { selectedAccountId, selectedAccount } = useAccountContext();
   const [targets, setTargets] = useState<Record<string, number>>(DEFAULT_TARGETS);
   const [targetsLoading, setTargetsLoading] = useState(true);
+
+  // Account trading rules
+  const accountRules = useMemo(() => selectedAccount?.rules?.filter(r => r.enabled) || [], [selectedAccount]);
 
   // Load targets from Supabase
   useEffect(() => {
@@ -247,13 +251,80 @@ export function Goals() {
   // ── Current goals ───────────────────────────────────────────────────────
   const currentGoals = useMemo(() => {
     const T = targets;
-    if (activeTab === 'Day') return [
-      { id: 'day-pnl',     label: 'Daily P&L Target',    current: stats.day.pnl,      target: T['day-pnl'],     type: 'pnl' as const,        isHero: true  },
-      { id: 'day-loss',    label: 'Max Daily Loss Limit', current: stats.day.loss,     target: T['day-loss'],    type: 'pnl' as const,        reverse: true },
-      { id: 'day-trades',  label: 'Trades Today',        current: stats.day.trades,   target: T['day-trades']                                              },
-      { id: 'day-winrate', label: 'Win Rate Today',      current: stats.day.winrate,  target: T['day-winrate'], type: 'percentage' as const               },
-      { id: 'day-journal', label: 'Journal Completion',  current: stats.day.journal,  target: stats.day.totalJournalable || T['day-journal']               },
-    ];
+    if (activeTab === 'Day') {
+      const baseGoals = [
+        { id: 'day-pnl',     label: 'Daily P&L Target',    current: stats.day.pnl,      target: T['day-pnl'],     type: 'pnl' as const,        isHero: true  },
+        { id: 'day-loss',    label: 'Max Daily Loss Limit', current: stats.day.loss,     target: T['day-loss'],    type: 'pnl' as const,        reverse: true },
+        { id: 'day-trades',  label: 'Trades Today',        current: stats.day.trades,   target: T['day-trades']                                              },
+        { id: 'day-winrate', label: 'Win Rate Today',      current: stats.day.winrate,  target: T['day-winrate'], type: 'percentage' as const               },
+        { id: 'day-journal', label: 'Journal Completion',  current: stats.day.journal,  target: stats.day.totalJournalable || T['day-journal']               },
+      ];
+
+      // Add account trading rules as goal cards
+      const ruleGoals = accountRules.map(rule => {
+        const dayTrades = stats.dayTrades;
+        const todayPnl = dayTrades.reduce((s: number, t: any) => s + (Number(t.pnl) || 0), 0);
+        const equity = selectedAccount?.currentEquity || selectedAccount?.initialCapital || 100000;
+
+        let current = 0;
+        let type: 'count' | 'pnl' | 'percentage' = 'count';
+        let reverse = false;
+        let unit: string | undefined;
+
+        switch (rule.type) {
+          case 'max_trades_per_day':
+            current = dayTrades.length;
+            reverse = true;
+            unit = ' trades';
+            break;
+          case 'max_loss_per_trade': {
+            const worst = dayTrades.reduce((w: number, t: any) => Math.min(w, t.pnl || 0), 0);
+            current = Math.abs(worst);
+            type = 'pnl';
+            reverse = true;
+            break;
+          }
+          case 'daily_loss_limit':
+            if (rule.unit === '%') {
+              current = equity > 0 ? (Math.abs(Math.min(0, todayPnl)) / equity) * 100 : 0;
+              type = 'percentage';
+            } else {
+              current = Math.abs(Math.min(0, todayPnl));
+              type = 'pnl';
+            }
+            reverse = true;
+            break;
+          case 'custom':
+            if (rule.unit === 'trades') {
+              current = dayTrades.length;
+              reverse = true;
+              unit = ' trades';
+            } else if (rule.unit === '$') {
+              current = Math.abs(Math.min(0, todayPnl));
+              type = 'pnl';
+              reverse = true;
+            } else {
+              current = equity > 0 ? (Math.abs(Math.min(0, todayPnl)) / equity) * 100 : 0;
+              type = 'percentage';
+              reverse = true;
+            }
+            break;
+        }
+
+        return {
+          id: `rule-${rule.id}`,
+          label: `⛡ ${rule.name}`,
+          current,
+          target: reverse ? -rule.value : rule.value,
+          type,
+          reverse,
+          unit,
+          isRule: true,
+        };
+      });
+
+      return [...baseGoals, ...ruleGoals];
+    }
     if (activeTab === 'Week') return [
       { id: 'week-pnl',         label: 'Weekly P&L Target',    current: stats.week.pnl,         target: T['week-pnl'],         type: 'pnl' as const,        isHero: true  },
       { id: 'week-loss',        label: 'Max Weekly Drawdown',  current: stats.week.loss,        target: T['week-loss'],        type: 'pnl' as const,        reverse: true },
@@ -376,18 +447,60 @@ export function Goals() {
         { id: 'winrate', label: 'Win Rate Target', status: active ? (getStat(winrate, winrateTarget, false) as any) : 'not-started' },
       ];
 
+      // Add account rule compliance to heatmap
+      const equity = selectedAccount?.currentEquity || selectedAccount?.initialCapital || 100000;
+      for (const rule of accountRules) {
+        let ruleStatus: DailyGoalStatus['status'] = 'not-started';
+        if (active) {
+          switch (rule.type) {
+            case 'max_trades_per_day':
+              ruleStatus = tCount > rule.value ? 'breached' : tCount === rule.value ? 'in-progress' : 'achieved';
+              break;
+            case 'max_loss_per_trade': {
+              const worstTrade = dayT.reduce((w, t) => Math.min(w, t.pnl || 0), 0);
+              ruleStatus = Math.abs(worstTrade) > rule.value ? 'breached' : 'achieved';
+              break;
+            }
+            case 'daily_loss_limit': {
+              const loss = Math.abs(Math.min(0, pnl));
+              if (rule.unit === '%') {
+                const lossPct = equity > 0 ? (loss / equity) * 100 : 0;
+                ruleStatus = lossPct > rule.value ? 'breached' : lossPct >= rule.value * 0.8 ? 'in-progress' : 'achieved';
+              } else {
+                ruleStatus = loss > rule.value ? 'breached' : 'achieved';
+              }
+              break;
+            }
+            case 'custom': {
+              if (rule.unit === 'trades') {
+                ruleStatus = tCount > rule.value ? 'breached' : 'achieved';
+              } else if (rule.unit === '$') {
+                const totalLoss = Math.abs(Math.min(0, pnl));
+                ruleStatus = totalLoss > rule.value ? 'breached' : 'achieved';
+              } else {
+                const lossPct = equity > 0 ? (Math.abs(Math.min(0, pnl)) / equity) * 100 : 0;
+                ruleStatus = lossPct > rule.value ? 'breached' : 'achieved';
+              }
+              break;
+            }
+          }
+        }
+        goalStatuses.push({ id: `rule-${rule.id}`, label: `⛡ ${rule.name}`, status: ruleStatus });
+      }
+
       const passedGoals = goalStatuses.filter(g => g.status === 'achieved').length;
+      const breachedAny = goalStatuses.some(g => g.status === 'breached');
       const score = active ? passedGoals / goalStatuses.length : 0;
       
       return {
         date: day,
         active,
-        breachedLimits: active && goalStatuses[1].status === 'breached',
+        breachedLimits: active && breachedAny,
         score,
         goals: goalStatuses
       };
     });
-  }, [activeTab, trades, targets]);
+  }, [activeTab, trades, targets, accountRules, selectedAccount]);
 
   const allZero = stats.day.trades === 0 && activeTab === 'Day';
 
