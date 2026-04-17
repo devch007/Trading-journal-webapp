@@ -104,12 +104,20 @@ export function Dashboard() {
   const [period, setPeriod] = useState('ALL');
   const [dismissedViolations, setDismissedViolations] = useState<Set<string>>(new Set());
   
-  // Rule violations
+  // Rule violations & Discipline Score
   const violations = useRuleViolations(selectedAccount, allTrades);
   const activeViolations = violations.filter(v => !dismissedViolations.has(v.ruleId));
   const dismissViolation = (ruleId: string) => {
     setDismissedViolations(prev => new Set(prev).add(ruleId));
   };
+  
+  const accountRules = useMemo(() => selectedAccount?.rules?.filter(r => r.enabled) || [], [selectedAccount]);
+  const disciplineScore = useMemo(() => {
+    if (accountRules.length === 0) return null;
+    const breachedCount = violations.filter(v => v.severity === 'critical').length;
+    const passedCount = accountRules.length - breachedCount;
+    return Math.max(0, (passedCount / accountRules.length) * 100);
+  }, [accountRules, violations]);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isExtracting, setIsExtracting] = useState(false);
@@ -571,7 +579,7 @@ IMPORTANT:
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-6">
           <StatCard 
             title="Total P&L" 
             value={formatCurrency(stats.totalPnl)} 
@@ -604,6 +612,48 @@ IMPORTANT:
             icon={<TrendingDown className="text-error w-5 h-5" />} 
             color="#8b5cf6"
           />
+          
+          {/* Discipline Score Gradient Card */}
+          <div className="glass-card flex flex-col justify-between p-6 rounded-2xl relative overflow-hidden group border border-white/5 hover:border-white/10 transition-colors">
+            <div className={`absolute -top-10 -right-10 w-32 h-32 rounded-full blur-[50px] opacity-20 pointer-events-none transition-all duration-500 group-hover:opacity-40 group-hover:scale-125
+              ${disciplineScore === null ? 'bg-[#6A6A6A]' : disciplineScore >= 80 ? 'bg-[#1ED760]' : disciplineScore >= 50 ? 'bg-[#F59E0B]' : 'bg-[#E5534B]'}`} />
+            
+            <div className="flex justify-between items-start z-10 relative">
+              <div className="flex flex-col gap-1">
+                <span className="type-label text-[#A7A7A7]">Daily Discipline</span>
+                <span className="type-h1 text-white tnum text-[28px] mt-1 tracking-tight">
+                  {disciplineScore === null ? 'N/A' : `${Math.round(disciplineScore)}%`}
+                </span>
+              </div>
+              <div className={`p-2.5 rounded-xl border transition-colors
+                ${disciplineScore === null ? 'bg-white/5 border-white/10' : disciplineScore >= 80 ? 'bg-[#1ED760]/10 border-[#1ED760]/20' : disciplineScore >= 50 ? 'bg-[#F59E0B]/10 border-[#F59E0B]/20' : 'bg-[#E5534B]/10 border-[#E5534B]/20'}
+              `}>
+                <Shield className={`w-5 h-5 ${disciplineScore === null ? 'text-[#6A6A6A]' : disciplineScore >= 80 ? 'text-[#1ED760]' : disciplineScore >= 50 ? 'text-[#F59E0B]' : 'text-[#E5534B]'}`} />
+              </div>
+            </div>
+            
+            <div className="flex flex-col gap-3 mt-4 z-10 relative">
+              <div className="flex items-center gap-2">
+                 <div className={`text-[12px] font-bold ${disciplineScore === null ? 'text-[#6A6A6A]' : disciplineScore >= 80 ? 'text-[#1ED760]' : disciplineScore >= 50 ? 'text-[#F59E0B]' : 'text-[#E5534B]'}`}>
+                   {disciplineScore === null ? 'Setup rules to track' : disciplineScore >= 80 ? 'Excellent Focus' : disciplineScore >= 50 ? 'Warning Zone' : 'Limits Breached'}
+                 </div>
+                 <span className="text-[11px] text-[#A7A7A7] border-l border-white/10 pl-2">Today's Rules</span>
+              </div>
+              
+              <div className="w-full h-1.5 bg-black/40 rounded-full overflow-hidden border border-white/5">
+                {disciplineScore !== null && (
+                  <motion.div 
+                     initial={{ width: 0 }}
+                     animate={{ width: `${disciplineScore}%` }}
+                     transition={{ duration: 1.5, ease: 'easeOut', delay: 0.2 }}
+                     className={`h-full rounded-full transition-colors duration-500 shadow-[0_0_10px_currentColor]
+                       ${disciplineScore >= 80 ? 'bg-[#1ED760]' : disciplineScore >= 50 ? 'bg-[#F59E0B]' : 'bg-[#E5534B]'}
+                     `}
+                  />
+                )}
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Main Content Grid */}
