@@ -35,8 +35,8 @@ export function Layout() {
         setIsMobileOpen={setIsMobileOpen}
       />
       
-      <main className={`flex-1 flex flex-col transition-all duration-[350ms] cubic-bezier(0.4,0,0.2,1) ml-0 ${isExpanded ? 'md:ml-[220px]' : 'md:ml-[68px]'} h-full overflow-hidden relative z-10 w-full md:w-auto`}>
-        <div className="flex-1 overflow-y-auto no-scrollbar">
+      <main className="flex-1 flex flex-col h-full overflow-hidden relative z-10 w-full">
+        <div className="flex-1 overflow-y-auto no-scrollbar pb-24">
           <Outlet />
         </div>
       </main>
