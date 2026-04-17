@@ -118,6 +118,74 @@ export function Dashboard() {
     const passedCount = accountRules.length - breachedCount;
     return Math.max(0, (passedCount / accountRules.length) * 100);
   }, [accountRules, violations]);
+
+  const weeklyDisciplineScore = useMemo(() => {
+    if (accountRules.length === 0) return null;
+    
+    // Get last 7 days trades
+    const now = new Date();
+    const startOfWeek = new Date(now);
+    startOfWeek.setDate(now.getDate() - 6);
+    startOfWeek.setHours(0, 0, 0, 0);
+
+    const weekTrades = allTrades.filter(t => t.accountId === selectedAccountId && getTradeDate(t.date) >= startOfWeek);
+    
+    // Group by day string
+    const tradesByDay: Record<string, typeof allTrades> = {};
+    weekTrades.forEach(t => {
+      const dateStr = getTradeDate(t.date).toDateString();
+      if (!tradesByDay[dateStr]) tradesByDay[dateStr] = [];
+      tradesByDay[dateStr].push(t);
+    });
+
+    const activeDays = Object.keys(tradesByDay);
+    if (activeDays.length === 0) return null; // No trading this week
+    
+    let totalScore = 0;
+    
+    activeDays.forEach(dayKey => {
+      const dayTrades = tradesByDay[dayKey];
+      const pnl = dayTrades.reduce((s, t) => s + (Number(t.pnl) || 0), 0);
+      const equity = selectedAccount?.currentEquity || selectedAccount?.initialCapital || 100000;
+      
+      let dayPassedRules = 0;
+      
+      accountRules.forEach(rule => {
+        let isBreached = false;
+        switch (rule.type) {
+          case 'max_trades_per_day':
+            isBreached = dayTrades.length > rule.value;
+            break;
+          case 'max_loss_per_trade': {
+            const worstTrade = dayTrades.reduce((w, t) => Math.min(w, t.pnl || 0), 0);
+            isBreached = Math.abs(worstTrade) > rule.value;
+            break;
+          }
+          case 'daily_loss_limit': {
+            const loss = Math.abs(Math.min(0, pnl));
+            isBreached = rule.unit === '%' ? (equity > 0 && (loss / equity) * 100 > rule.value) : loss > rule.value;
+            break;
+          }
+          case 'custom': {
+            if (rule.unit === 'trades') {
+              isBreached = dayTrades.length > rule.value;
+            } else if (rule.unit === '$') {
+              isBreached = Math.abs(Math.min(0, pnl)) > rule.value;
+            } else {
+              const lossPct = equity > 0 ? (Math.abs(Math.min(0, pnl)) / equity) * 100 : 0;
+              isBreached = lossPct > rule.value;
+            }
+            break;
+          }
+        }
+        if (!isBreached) dayPassedRules++;
+      });
+      
+      totalScore += (dayPassedRules / accountRules.length) * 100;
+    });
+    
+    return totalScore / activeDays.length;
+  }, [accountRules, allTrades, selectedAccount, selectedAccountId]);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isExtracting, setIsExtracting] = useState(false);
@@ -615,42 +683,64 @@ IMPORTANT:
           
           {/* Discipline Score Gradient Card */}
           <div className="glass-card flex flex-col justify-between p-6 rounded-2xl relative overflow-hidden group border border-white/5 hover:border-white/10 transition-colors">
-            <div className={`absolute -top-10 -right-10 w-32 h-32 rounded-full blur-[50px] opacity-20 pointer-events-none transition-all duration-500 group-hover:opacity-40 group-hover:scale-125
-              ${disciplineScore === null ? 'bg-[#6A6A6A]' : disciplineScore >= 80 ? 'bg-[#1ED760]' : disciplineScore >= 50 ? 'bg-[#F59E0B]' : 'bg-[#E5534B]'}`} />
+            <div className={`absolute -top-10 -right-10 w-40 h-40 rounded-full blur-[60px] opacity-20 pointer-events-none transition-all duration-500 group-hover:opacity-40 group-hover:scale-110
+              ${disciplineScore === null ? 'bg-[#6A6A6A]' : (disciplineScore + (weeklyDisciplineScore||100)) / 2 >= 80 ? 'bg-[#1ED760]' : 'bg-[#F59E0B]'}`} />
             
-            <div className="flex justify-between items-start z-10 relative">
-              <div className="flex flex-col gap-1">
-                <span className="type-label text-[#A7A7A7]">Daily Discipline</span>
-                <span className="type-h1 text-white tnum text-[28px] mt-1 tracking-tight">
-                  {disciplineScore === null ? 'N/A' : `${Math.round(disciplineScore)}%`}
-                </span>
+            <div className="flex justify-between items-start z-10 relative mb-2">
+              <div className="flex flex-col gap-0.5">
+                <span className="type-label text-[#A7A7A7]">Discipline Tracker</span>
+                <div className={`text-[12px] font-bold ${disciplineScore === null ? 'text-[#6A6A6A]' : disciplineScore >= 80 ? 'text-[#1ED760]' : disciplineScore >= 50 ? 'text-[#F59E0B]' : 'text-[#E5534B]'}`}>
+                   {disciplineScore === null ? 'Setup rules to track' : disciplineScore >= 80 ? 'Excellent Focus' : disciplineScore >= 50 ? 'Warning Zone' : 'Limits Breached'}
+                 </div>
               </div>
-              <div className={`p-2.5 rounded-xl border transition-colors
-                ${disciplineScore === null ? 'bg-white/5 border-white/10' : disciplineScore >= 80 ? 'bg-[#1ED760]/10 border-[#1ED760]/20' : disciplineScore >= 50 ? 'bg-[#F59E0B]/10 border-[#F59E0B]/20' : 'bg-[#E5534B]/10 border-[#E5534B]/20'}
-              `}>
-                <Shield className={`w-5 h-5 ${disciplineScore === null ? 'text-[#6A6A6A]' : disciplineScore >= 80 ? 'text-[#1ED760]' : disciplineScore >= 50 ? 'text-[#F59E0B]' : 'text-[#E5534B]'}`} />
+              <div className="p-2.5 rounded-xl border transition-colors bg-white/5 border-white/10 group-hover:bg-white/10">
+                <Shield className="w-5 h-5 text-white/70" />
               </div>
             </div>
             
-            <div className="flex flex-col gap-3 mt-4 z-10 relative">
-              <div className="flex items-center gap-2">
-                 <div className={`text-[12px] font-bold ${disciplineScore === null ? 'text-[#6A6A6A]' : disciplineScore >= 80 ? 'text-[#1ED760]' : disciplineScore >= 50 ? 'text-[#F59E0B]' : 'text-[#E5534B]'}`}>
-                   {disciplineScore === null ? 'Setup rules to track' : disciplineScore >= 80 ? 'Excellent Focus' : disciplineScore >= 50 ? 'Warning Zone' : 'Limits Breached'}
-                 </div>
-                 <span className="text-[11px] text-[#A7A7A7] border-l border-white/10 pl-2">Today's Rules</span>
+            <div className="flex flex-col gap-4 z-10 relative mt-2">
+              {/* Daily */}
+              <div className="flex flex-col gap-2">
+                <div className="flex justify-between items-end">
+                  <span className="text-[11px] text-[#A7A7A7] uppercase tracking-wider font-bold">Today</span>
+                  <span className="type-h2 text-white tnum text-[16px] leading-none tracking-tight">
+                    {disciplineScore === null ? 'N/A' : `${Math.round(disciplineScore)}%`}
+                  </span>
+                </div>
+                <div className="w-full h-1.5 bg-black/40 rounded-full overflow-hidden border border-white/5">
+                  {disciplineScore !== null && (
+                    <motion.div 
+                       initial={{ width: 0 }}
+                       animate={{ width: `${disciplineScore}%` }}
+                       transition={{ duration: 1.5, ease: 'easeOut' }}
+                       className={`h-full rounded-full transition-colors duration-500 shadow-[0_0_10px_currentColor]
+                         ${disciplineScore >= 80 ? 'bg-[#1ED760]' : disciplineScore >= 50 ? 'bg-[#F59E0B]' : 'bg-[#E5534B]'}
+                       `}
+                    />
+                  )}
+                </div>
               </div>
-              
-              <div className="w-full h-1.5 bg-black/40 rounded-full overflow-hidden border border-white/5">
-                {disciplineScore !== null && (
-                  <motion.div 
-                     initial={{ width: 0 }}
-                     animate={{ width: `${disciplineScore}%` }}
-                     transition={{ duration: 1.5, ease: 'easeOut', delay: 0.2 }}
-                     className={`h-full rounded-full transition-colors duration-500 shadow-[0_0_10px_currentColor]
-                       ${disciplineScore >= 80 ? 'bg-[#1ED760]' : disciplineScore >= 50 ? 'bg-[#F59E0B]' : 'bg-[#E5534B]'}
-                     `}
-                  />
-                )}
+
+              {/* Weekly */}
+              <div className="flex flex-col gap-2">
+                <div className="flex justify-between items-end">
+                  <span className="text-[11px] text-[#A7A7A7] uppercase tracking-wider font-bold">7-Day Avg</span>
+                  <span className="type-h2 text-white tnum text-[16px] leading-none tracking-tight">
+                    {weeklyDisciplineScore === null ? 'N/A' : `${Math.round(weeklyDisciplineScore)}%`}
+                  </span>
+                </div>
+                <div className="w-full h-1.5 bg-black/40 rounded-full overflow-hidden border border-white/5">
+                  {weeklyDisciplineScore !== null && (
+                    <motion.div 
+                       initial={{ width: 0 }}
+                       animate={{ width: `${weeklyDisciplineScore}%` }}
+                       transition={{ duration: 1.5, ease: 'easeOut', delay: 0.1 }}
+                       className={`h-full rounded-full transition-colors duration-500 shadow-[0_0_10px_currentColor]
+                         ${weeklyDisciplineScore >= 80 ? 'bg-[#1ED760]' : weeklyDisciplineScore >= 50 ? 'bg-[#F59E0B]' : 'bg-[#E5534B]'}
+                       `}
+                    />
+                  )}
+                </div>
               </div>
             </div>
           </div>
