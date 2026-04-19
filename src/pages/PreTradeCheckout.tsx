@@ -3,7 +3,7 @@ import { motion } from 'motion/react';
 import { 
   ClipboardCheck, Clock, Crosshair, BarChart2, ShieldCheck, 
   Target, AlertTriangle, CheckCircle2, RotateCcw, Save, Search, 
-  Activity, TrendingUp, AlertCircle
+  Activity, TrendingUp, AlertCircle, History, ArrowRight
 } from 'lucide-react';
 import { TopBar } from '../lib/TopBar';
 import { cn } from '../lib/utils';
@@ -12,7 +12,11 @@ import { useNavigate } from 'react-router-dom';
 
 export function PreTradeCheckout() {
   const navigate = useNavigate();
-  const { addTrade } = useTrades();
+  const { addTrade, trades } = useTrades();
+
+  const scoredTrades = useMemo(() => {
+    return trades.filter(t => t.rating !== undefined && t.rating !== null).slice(0, 5);
+  }, [trades]);
 
   // --- Section 1: Overview ---
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
@@ -132,14 +136,14 @@ export function PreTradeCheckout() {
                 <p className="text-xs text-gray-500 font-medium">Evaluate before execution</p>
              </div>
           </div>
-          <div className="flex items-center gap-3">
-             <button onClick={handleReset} className="px-4 py-2 text-xs font-bold text-gray-400 hover:text-white bg-white/5 hover:bg-white/10 rounded-xl transition-all flex items-center gap-2">
-                <RotateCcw className="w-3.5 h-3.5" />
-                Reset
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+             <button onClick={handleReset} className="px-5 py-2.5 text-xs font-bold text-gray-400 hover:text-white bg-white/5 hover:bg-white/10 rounded-xl transition-all flex items-center justify-center gap-2">
+                <RotateCcw className="w-4 h-4" />
+                Reset Form
              </button>
-             <button onClick={handleSaveToJournal} disabled={totalScore < 7 || !isAllChecked} className="px-5 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:bg-gray-800 disabled:cursor-not-allowed rounded-xl transition-all shadow-[0_0_15px_rgba(59,130,246,0.3)] flex items-center gap-2">
-                <Save className="w-3.5 h-3.5" />
-                Journal Config
+             <button onClick={handleSaveToJournal} disabled={totalScore < 7 || !isAllChecked} className="px-6 py-2.5 text-xs font-bold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 disabled:opacity-50 disabled:from-gray-800 disabled:to-gray-800 disabled:cursor-not-allowed rounded-xl transition-all shadow-[0_0_20px_rgba(59,130,246,0.3)] flex items-center justify-center gap-2 border border-blue-500/30">
+                <Save className="w-4 h-4" />
+                Approve & Journal
              </button>
           </div>
         </div>
@@ -412,6 +416,37 @@ export function PreTradeCheckout() {
                    <AlertCircle className="w-4 h-4 text-[#E5534B] flex-shrink-0 mt-0.5" />
                    <p className="text-[10px] text-gray-300 font-bold uppercase tracking-widest leading-relaxed">If ANY of these are unchecked, you do not have permission to trade.</p>
                  </div>
+               )}
+            </div>
+
+            {/* Section 7: Recent Trade Scores */}
+            <div className="p-6 rounded-2xl bg-white/[0.02] border border-white/5 shadow-sm mt-6">
+               <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center justify-between mb-5">
+                  <div className="flex items-center gap-2">
+                    <History className="w-4 h-4" /> Past Scores
+                  </div>
+               </h3>
+               {scoredTrades.length === 0 ? (
+                  <p className="text-xs text-gray-500 text-center py-4">No scored trades yet.</p>
+               ) : (
+                  <div className="space-y-3">
+                     {scoredTrades.map((trade) => (
+                        <div key={trade.id} className="p-3 rounded-xl bg-black/40 border border-white/5 flex items-center justify-between group hover:border-white/10 transition-colors">
+                           <div>
+                              <div className="flex items-center gap-2">
+                                 <span className="text-sm font-bold text-white">{trade.symbol}</span>
+                                 <span className={cn("text-[10px] font-bold px-1.5 py-0.5 rounded", trade.action === 'BUY' ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400")}>{trade.action}</span>
+                              </div>
+                              <span className="text-[10px] text-gray-500">{new Date(trade.date).toLocaleDateString()}</span>
+                           </div>
+                           <div className="flex flex-col items-end">
+                              <span className={cn("text-lg font-black", trade.rating! >= 9 ? "text-[#1ED760]" : trade.rating! >= 7 ? "text-blue-400" : "text-[#E5534B]")}>
+                                 {trade.rating}/10
+                              </span>
+                           </div>
+                        </div>
+                     ))}
+                  </div>
                )}
             </div>
 
