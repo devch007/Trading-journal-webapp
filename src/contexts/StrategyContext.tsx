@@ -61,15 +61,26 @@ export function StrategyProvider({ children }: { children: React.ReactNode }) {
       .eq('userId', user.id)
       .order('createdAt', { ascending: false });
 
+    const stored = loadFromStorage();
+
     if (error) {
       console.error('Error fetching strategies from Supabase:', error);
-      // Fallback to local storage migration if table doesn't exist yet
-      if (error.code === '42P01') { 
-         const stored = loadFromStorage();
-         setStrategies(stored);
-      }
+      setStrategies(stored);
     } else {
-      setStrategies(dbStrategies as Strategy[]);
+      const dbStrats = (dbStrategies || []) as Strategy[];
+      const dbIds = new Set(dbStrats.map(s => s.id));
+      const dbNames = new Set(dbStrats.map(s => s.name));
+      
+      // Keep any local strategies that aren't completely duplicate of DB strategies
+      const localOnly = stored.filter(s => !dbIds.has(s.id) && !dbNames.has(s.name));
+      
+      const combined = [...dbStrats, ...localOnly];
+      setStrategies(combined);
+      
+      // Update local storage to match reality
+      if (dbStrats.length > 0 || localOnly.length > 0) {
+        saveToStorage(combined);
+      }
     }
     setLoading(false);
   }, [user]);
@@ -100,7 +111,11 @@ export function StrategyProvider({ children }: { children: React.ReactNode }) {
       setStrategies(updated);
       saveToStorage(updated);
     } else {
-      setStrategies(prev => [inserted as Strategy, ...prev]);
+      setStrategies(prev => {
+        const updated = [inserted as Strategy, ...prev];
+        saveToStorage(updated);
+        return updated;
+      });
     }
   }, [strategies, user]);
 
@@ -110,6 +125,7 @@ export function StrategyProvider({ children }: { children: React.ReactNode }) {
     // Optimistic local update
     const updated = strategies.map(s => s.id === id ? { ...s, ...data } : s);
     setStrategies(updated);
+    saveToStorage(updated);
 
     const { error } = await supabase
       .from('strategies')
@@ -118,8 +134,7 @@ export function StrategyProvider({ children }: { children: React.ReactNode }) {
       .eq('userId', user.id);
 
     if (error) {
-      console.error("Update failed, falling back to local...", error);
-      saveToStorage(updated);
+      console.error("Update failed, but local storage updated:", error);
     } else {
       refresh(); // Sync exactly with server
     }
@@ -131,6 +146,7 @@ export function StrategyProvider({ children }: { children: React.ReactNode }) {
     // Optimistic local update
     const updated = strategies.filter(s => s.id !== id);
     setStrategies(updated);
+    saveToStorage(updated);
 
     const { error } = await supabase
       .from('strategies')
@@ -139,8 +155,7 @@ export function StrategyProvider({ children }: { children: React.ReactNode }) {
       .eq('userId', user.id);
 
     if (error) {
-      console.error("Delete failed, falling back to local...", error);
-      saveToStorage(updated);
+      console.error("Delete failed, but local storage updated:", error);
     }
   }, [strategies, user]);
 
