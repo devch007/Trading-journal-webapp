@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import { 
   ClipboardCheck, Clock, Crosshair, BarChart2, ShieldCheck, 
   Target, AlertTriangle, CheckCircle2, RotateCcw, Save, Search, 
@@ -17,6 +17,8 @@ export function PreTradeCheckout() {
   const scoredTrades = useMemo(() => {
     return trades.filter(t => t.rating !== undefined && t.rating !== null).slice(0, 5);
   }, [trades]);
+
+  const [expandedTradeId, setExpandedTradeId] = useState<string | null>(null);
 
   // --- Section 1: Overview ---
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
@@ -431,19 +433,56 @@ export function PreTradeCheckout() {
                ) : (
                   <div className="space-y-3">
                      {scoredTrades.map((trade) => (
-                        <div key={trade.id} className="p-3 rounded-xl bg-black/40 border border-white/5 flex items-center justify-between group hover:border-white/10 transition-colors">
-                           <div>
-                              <div className="flex items-center gap-2">
-                                 <span className="text-sm font-bold text-white">{trade.symbol}</span>
-                                 <span className={cn("text-[10px] font-bold px-1.5 py-0.5 rounded", trade.action === 'BUY' ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400")}>{trade.action}</span>
+                        <div 
+                          key={trade.id} 
+                          onClick={() => setExpandedTradeId(expandedTradeId === trade.id ? null : trade.id)}
+                          className="p-3 rounded-xl bg-black/40 border border-white/5 flex flex-col group hover:border-white/10 transition-colors cursor-pointer"
+                        >
+                           <div className="flex items-center justify-between">
+                              <div>
+                                 <div className="flex items-center gap-2">
+                                    <span className="text-sm font-bold text-white">{trade.symbol}</span>
+                                    <span className={cn("text-[10px] font-bold px-1.5 py-0.5 rounded", trade.action === 'BUY' ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400")}>{trade.action}</span>
+                                 </div>
+                                 <span className="text-[10px] text-gray-500">{new Date(trade.date).toLocaleDateString()}</span>
                               </div>
-                              <span className="text-[10px] text-gray-500">{new Date(trade.date).toLocaleDateString()}</span>
+                              <div className="flex flex-col items-end">
+                                 <span className={cn("text-lg font-black", trade.rating! >= 9 ? "text-[#1ED760]" : trade.rating! >= 7 ? "text-blue-400" : "text-[#E5534B]")}>
+                                    {trade.rating}/10
+                                 </span>
+                              </div>
                            </div>
-                           <div className="flex flex-col items-end">
-                              <span className={cn("text-lg font-black", trade.rating! >= 9 ? "text-[#1ED760]" : trade.rating! >= 7 ? "text-blue-400" : "text-[#E5534B]")}>
-                                 {trade.rating}/10
-                              </span>
-                           </div>
+                           
+                           <AnimatePresence>
+                             {expandedTradeId === trade.id && (
+                               <motion.div
+                                 initial={{ height: 0, opacity: 0, marginTop: 0 }}
+                                 animate={{ height: 'auto', opacity: 1, marginTop: 12 }}
+                                 exit={{ height: 0, opacity: 0, marginTop: 0 }}
+                                 className="overflow-hidden border-t border-white/5 flex flex-col gap-2"
+                               >
+                                 <div className="pt-3 grid grid-cols-2 gap-4">
+                                   <div className="space-y-1">
+                                      <p className="text-[9px] text-gray-500 uppercase tracking-widest">Result</p>
+                                      <p className={cn("text-xs font-bold", trade.result === 'WIN' ? "text-[#1ED760]" : trade.result === 'LOSS' ? "text-[#E5534B]" : "text-gray-400")}>
+                                        {trade.result || 'Pending'}
+                                      </p>
+                                   </div>
+                                   <div className="space-y-1 text-right">
+                                      <p className="text-[9px] text-gray-500 uppercase tracking-widest">Session</p>
+                                      <p className="text-xs font-medium text-gray-300">{trade.session || 'N/A'}</p>
+                                   </div>
+                                 </div>
+                                 
+                                 {trade.notes && (
+                                   <div className="bg-white/5 rounded-lg p-2.5 mt-1 border border-white/5">
+                                      <p className="text-[9px] text-gray-400 uppercase tracking-widest mb-1.5">Trade Notes</p>
+                                      <p className="text-xs text-gray-300 whitespace-pre-line leading-relaxed">{trade.notes}</p>
+                                   </div>
+                                 )}
+                               </motion.div>
+                             )}
+                           </AnimatePresence>
                         </div>
                      ))}
                   </div>
