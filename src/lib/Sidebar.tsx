@@ -10,7 +10,8 @@ import {
   Sparkles,
   Layers,
   Crosshair,
-  Activity
+  Activity,
+  SunMoon
 } from "lucide-react";
 import { cn } from "./utils";
 import { FloatingDock } from "../components/ui/floating-dock";
@@ -69,6 +70,11 @@ export function Sidebar({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOp
       title: "Checkout",
       icon: <Activity className={cn("h-full w-full", isPathActive("/checkout") ? "text-blue-500" : "text-neutral-500 dark:text-neutral-300")} />,
       href: "/checkout" 
+    },
+    { 
+      title: "Rituals",
+      icon: <SunMoon className={cn("h-full w-full", isPathActive("/rituals") ? "text-blue-500" : "text-neutral-500 dark:text-neutral-300")} />,
+      href: "/rituals" 
     },
     { 
       title: "Journal",

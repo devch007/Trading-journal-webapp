@@ -12,6 +12,7 @@ import { Trades } from './pages/Trades';
 import { Journal } from './pages/Journal';
 import { AIEngine } from './pages/AIEngine';
 import { PreTradeCheckout } from './pages/PreTradeCheckout';
+import { DailyRituals } from './pages/DailyRituals';
 import { TopBar } from './lib/TopBar';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { AccountProvider } from './contexts/AccountContext';
@@ -87,6 +88,7 @@ export default function App() {
                   <Route path="trades" element={<Trades />} />
                   <Route path="ai-engine" element={<AIEngine />} />
                   <Route path="checkout" element={<PreTradeCheckout />} />
+                  <Route path="rituals" element={<DailyRituals />} />
                   <Route path="journal" element={<Journal />} />
                   <Route path="strategies" element={<Strategies />} />
                   <Route path="strategies/:id" element={<StrategyDetail />} />

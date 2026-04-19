@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { TopBar } from "../lib/TopBar";
 import { TradeModal } from "../components/TradeModal";
 import { ImportTradesModal } from "../components/ImportTradesModal";
-import { TrendingUp, TrendingDown, Target, Activity, ArrowUpRight, ArrowDownRight, Plus, Upload, Loader2, AlertCircle, Shield, X } from "lucide-react";
+import { TrendingUp, TrendingDown, Target, Activity, ArrowUpRight, ArrowDownRight, Plus, Upload, Loader2, AlertCircle, Shield, X, Sun } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useTrades } from "../hooks/useTrades";
 import { useAuth } from "../contexts/AuthContext";
@@ -11,6 +11,7 @@ import { useAccountContext } from "../contexts/AccountContext";
 import { MonthlyPnLCalendar } from "../components/MonthlyPnLCalendar";
 import { getTradeDate, normalizeImportedDateTime } from "../lib/timeUtils";
 import { useRuleViolations } from "../hooks/useRuleViolations";
+import { useRituals } from "../hooks/useRituals";
 import { motion, AnimatePresence } from "motion/react";
 
 // Initial static data
@@ -97,7 +98,9 @@ export function Dashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { trades: allTrades, loading, addTrade } = useTrades();
+  const { getTodayRitual } = useRituals();
   const { selectedAccountId, selectedAccount } = useAccountContext();
+  const todayRitual = getTodayRitual();
   const [isTradeModalOpen, setIsTradeModalOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [equityData, setEquityData] = useState(initialEquityData);
@@ -554,6 +557,31 @@ IMPORTANT:
       />
       
       <div className="px-4 md:px-8 flex flex-col gap-6 md:gap-8">
+      
+        {/* Daily Rituals Banner */}
+        <AnimatePresence>
+          {!todayRitual?.morning && (
+            <motion.div
+              initial={{ opacity: 0, y: -20, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              onClick={() => navigate('/rituals')}
+              className="glass-card p-4 rounded-xl border border-blue-500/30 bg-gradient-to-r from-blue-500/10 to-indigo-500/5 flex items-center justify-between cursor-pointer group shadow-[0_0_15px_rgba(59,130,246,0.15)] hover:shadow-[0_0_25px_rgba(59,130,246,0.3)] transition-all"
+            >
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-blue-500/20 rounded-xl text-blue-400 group-hover:bg-blue-500 group-hover:text-white transition-all shadow-[0_0_10px_rgba(59,130,246,0.2)]">
+                  <Sun className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="type-h2 text-white text-sm">Morning Prep Required</h3>
+                  <p className="type-body text-xs">Calibrate your mind before hitting the charts today.</p>
+                </div>
+              </div>
+              <ArrowUpRight className="w-5 h-5 text-gray-500 group-hover:text-white transition-colors" />
+            </motion.div>
+          )}
+        </AnimatePresence>
+        
         {/* Rule Violation Alerts */}
         <AnimatePresence>
           {activeViolations.length > 0 && (
