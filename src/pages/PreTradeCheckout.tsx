@@ -139,14 +139,14 @@ export function PreTradeCheckout() {
              </div>
           </div>
           <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-             <button onClick={handleReset} className="px-5 py-2.5 text-xs font-bold text-gray-400 hover:text-white bg-white/5 hover:bg-white/10 rounded-xl transition-all flex items-center justify-center gap-2">
+             <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={handleReset} className="px-5 py-2.5 text-xs font-bold text-gray-400 hover:text-white bg-white/5 hover:bg-white/10 rounded-xl transition-all flex items-center justify-center gap-2">
                 <RotateCcw className="w-4 h-4" />
                 Reset Form
-             </button>
-             <button onClick={handleSaveToJournal} disabled={totalScore < 7 || !isAllChecked} className="px-6 py-2.5 text-xs font-bold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 disabled:opacity-50 disabled:from-gray-800 disabled:to-gray-800 disabled:cursor-not-allowed rounded-xl transition-all shadow-[0_0_20px_rgba(59,130,246,0.3)] flex items-center justify-center gap-2 border border-blue-500/30">
+             </motion.button>
+             <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={handleSaveToJournal} disabled={totalScore < 7 || !isAllChecked} className="px-6 py-2.5 text-xs font-bold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 disabled:opacity-50 disabled:from-gray-800 disabled:to-gray-800 disabled:cursor-not-allowed rounded-xl transition-all shadow-[0_0_20px_rgba(59,130,246,0.3)] flex items-center justify-center gap-2 border border-blue-500/30">
                 <Save className="w-4 h-4" />
                 Approve & Journal
-             </button>
+             </motion.button>
           </div>
         </div>
 
@@ -205,15 +205,15 @@ export function PreTradeCheckout() {
                   <div className="space-y-3">
                      <label className="text-xs font-bold text-white">1. Bias (0-2 Pts)</label>
                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                        <button onClick={() => setBias(2)} className={cn("p-3 rounded-xl border text-xs text-left transition-all", bias === 2 ? "bg-[#1ED760]/10 border-[#1ED760] text-[#1ED760]" : "bg-black/40 border-white/10 text-gray-400 hover:border-white/30")}>
+                        <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={() => setBias(2)} className={cn("p-3 rounded-xl border text-xs text-left transition-all", bias === 2 ? "bg-[#1ED760]/10 border-[#1ED760] text-[#1ED760]" : "bg-black/40 border-white/10 text-gray-400 hover:border-white/30")}>
                            <span className="block font-bold mb-1">2 Pts</span> Clear HTF Trend (HH/HL)
-                        </button>
-                        <button onClick={() => setBias(1)} className={cn("p-3 rounded-xl border text-xs text-left transition-all", bias === 1 ? "bg-yellow-500/10 border-yellow-500 text-yellow-500" : "bg-black/40 border-white/10 text-gray-400 hover:border-white/30")}>
+                        </motion.button>
+                        <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={() => setBias(1)} className={cn("p-3 rounded-xl border text-xs text-left transition-all", bias === 1 ? "bg-yellow-500/10 border-yellow-500 text-yellow-500" : "bg-black/40 border-white/10 text-gray-400 hover:border-white/30")}>
                            <span className="block font-bold mb-1">1 Pt</span> Weak / Ranging Bias
-                        </button>
-                        <button onClick={() => setBias(0)} className={cn("p-3 rounded-xl border text-xs text-left transition-all", bias === 0 ? "bg-[#E5534B]/10 border-[#E5534B] text-[#E5534B]" : "bg-black/40 border-white/10 text-gray-400 hover:border-white/30")}>
+                        </motion.button>
+                        <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={() => setBias(0)} className={cn("p-3 rounded-xl border text-xs text-left transition-all", bias === 0 ? "bg-[#E5534B]/10 border-[#E5534B] text-[#E5534B]" : "bg-black/40 border-white/10 text-gray-400 hover:border-white/30")}>
                            <span className="block font-bold mb-1">0 Pts</span> Counter-Trend / No Bias
-                        </button>
+                        </motion.button>
                      </div>
                   </div>
 
@@ -224,18 +224,18 @@ export function PreTradeCheckout() {
                         <span className="text-gray-500 font-normal">1 pt each</span>
                      </label>
                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                        <label className={cn("p-3 rounded-xl border flex items-center justify-between gap-3 cursor-pointer transition-all", cnfZone ? "bg-blue-500/10 border-blue-500" : "bg-black/40 border-white/10")}>
+                        <motion.label whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className={cn("p-3 rounded-xl border flex items-center justify-between gap-3 cursor-pointer transition-all", cnfZone ? "bg-blue-500/10 border-blue-500" : "bg-black/40 border-white/10")}>
                            <span className={cn("text-xs font-bold", cnfZone ? "text-blue-400" : "text-gray-400")}>Key Zone (S/D)</span>
                            <input type="checkbox" checked={cnfZone} onChange={e => setCnfZone(e.target.checked)} className="w-4 h-4 rounded border-white/20 text-blue-500 bg-transparent focus:ring-0 focus:ring-offset-0" />
-                        </label>
-                        <label className={cn("p-3 rounded-xl border flex items-center justify-between gap-3 cursor-pointer transition-all", cnfLiq ? "bg-blue-500/10 border-blue-500" : "bg-black/40 border-white/10")}>
+                        </motion.label>
+                        <motion.label whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className={cn("p-3 rounded-xl border flex items-center justify-between gap-3 cursor-pointer transition-all", cnfLiq ? "bg-blue-500/10 border-blue-500" : "bg-black/40 border-white/10")}>
                            <span className={cn("text-xs font-bold", cnfLiq ? "text-blue-400" : "text-gray-400")}>Liquidity Sweep</span>
                            <input type="checkbox" checked={cnfLiq} onChange={e => setCnfLiq(e.target.checked)} className="w-4 h-4 rounded border-white/20 text-blue-500 bg-transparent focus:ring-0 focus:ring-offset-0" />
-                        </label>
-                        <label className={cn("p-3 rounded-xl border flex items-center justify-between gap-3 cursor-pointer transition-all", cnfTime ? "bg-blue-500/10 border-blue-500" : "bg-black/40 border-white/10")}>
+                        </motion.label>
+                        <motion.label whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className={cn("p-3 rounded-xl border flex items-center justify-between gap-3 cursor-pointer transition-all", cnfTime ? "bg-blue-500/10 border-blue-500" : "bg-black/40 border-white/10")}>
                            <span className={cn("text-xs font-bold", cnfTime ? "text-blue-400" : "text-gray-400")}>Session Timing</span>
                            <input type="checkbox" checked={cnfTime} onChange={e => setCnfTime(e.target.checked)} className="w-4 h-4 rounded border-white/20 text-blue-500 bg-transparent focus:ring-0 focus:ring-offset-0" />
-                        </label>
+                        </motion.label>
                      </div>
                   </div>
 
@@ -243,15 +243,15 @@ export function PreTradeCheckout() {
                   <div className="space-y-3">
                      <label className="text-xs font-bold text-white">3. FVG Quality (0-2 Pts)</label>
                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                        <button onClick={() => setFvgVal(2)} className={cn("p-3 rounded-xl border text-xs text-left transition-all", fvgVal === 2 ? "bg-[#1ED760]/10 border-[#1ED760] text-[#1ED760]" : "bg-black/40 border-white/10 text-gray-400 hover:border-white/30")}>
+                        <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={() => setFvgVal(2)} className={cn("p-3 rounded-xl border text-xs text-left transition-all", fvgVal === 2 ? "bg-[#1ED760]/10 border-[#1ED760] text-[#1ED760]" : "bg-black/40 border-white/10 text-gray-400 hover:border-white/30")}>
                            <span className="block font-bold mb-1">2 Pts</span> Strong impulse + clean gap
-                        </button>
-                        <button onClick={() => setFvgVal(1)} className={cn("p-3 rounded-xl border text-xs text-left transition-all", fvgVal === 1 ? "bg-yellow-500/10 border-yellow-500 text-yellow-500" : "bg-black/40 border-white/10 text-gray-400 hover:border-white/30")}>
+                        </motion.button>
+                        <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={() => setFvgVal(1)} className={cn("p-3 rounded-xl border text-xs text-left transition-all", fvgVal === 1 ? "bg-yellow-500/10 border-yellow-500 text-yellow-500" : "bg-black/40 border-white/10 text-gray-400 hover:border-white/30")}>
                            <span className="block font-bold mb-1">1 Pt</span> Average
-                        </button>
-                        <button onClick={() => setFvgVal(0)} className={cn("p-3 rounded-xl border text-xs text-left transition-all", fvgVal === 0 ? "bg-[#E5534B]/10 border-[#E5534B] text-[#E5534B]" : "bg-black/40 border-white/10 text-gray-400 hover:border-white/30")}>
+                        </motion.button>
+                        <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={() => setFvgVal(0)} className={cn("p-3 rounded-xl border text-xs text-left transition-all", fvgVal === 0 ? "bg-[#E5534B]/10 border-[#E5534B] text-[#E5534B]" : "bg-black/40 border-white/10 text-gray-400 hover:border-white/30")}>
                            <span className="block font-bold mb-1">0 Pts</span> Weak / Messy
-                        </button>
+                        </motion.button>
                      </div>
                   </div>
 
@@ -259,12 +259,12 @@ export function PreTradeCheckout() {
                   <div className="space-y-3">
                      <label className="text-xs font-bold text-white">4. Structure (0-1 Pts)</label>
                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <button onClick={() => setStructVal(1)} className={cn("p-3 rounded-xl border text-xs text-left transition-all", structVal === 1 ? "bg-[#1ED760]/10 border-[#1ED760] text-[#1ED760]" : "bg-black/40 border-white/10 text-gray-400 hover:border-white/30")}>
+                        <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={() => setStructVal(1)} className={cn("p-3 rounded-xl border text-xs text-left transition-all", structVal === 1 ? "bg-[#1ED760]/10 border-[#1ED760] text-[#1ED760]" : "bg-black/40 border-white/10 text-gray-400 hover:border-white/30")}>
                            <span className="block font-bold mb-1">1 Pt</span> Clear continuation/shift
-                        </button>
-                        <button onClick={() => setStructVal(0)} className={cn("p-3 rounded-xl border text-xs text-left transition-all", structVal === 0 ? "bg-[#E5534B]/10 border-[#E5534B] text-[#E5534B]" : "bg-black/40 border-white/10 text-gray-400 hover:border-white/30")}>
+                        </motion.button>
+                        <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={() => setStructVal(0)} className={cn("p-3 rounded-xl border text-xs text-left transition-all", structVal === 0 ? "bg-[#E5534B]/10 border-[#E5534B] text-[#E5534B]" : "bg-black/40 border-white/10 text-gray-400 hover:border-white/30")}>
                            <span className="block font-bold mb-1">0 Pts</span> Messy / Unclear
-                        </button>
+                        </motion.button>
                      </div>
                   </div>
 
@@ -272,15 +272,15 @@ export function PreTradeCheckout() {
                   <div className="space-y-3">
                      <label className="text-xs font-bold text-white">5. Confirmation (0-2 Pts)</label>
                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                        <button onClick={() => setConfVal(2)} className={cn("p-3 rounded-xl border text-xs text-left transition-all", confVal === 2 ? "bg-[#1ED760]/10 border-[#1ED760] text-[#1ED760]" : "bg-black/40 border-white/10 text-gray-400 hover:border-white/30")}>
+                        <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={() => setConfVal(2)} className={cn("p-3 rounded-xl border text-xs text-left transition-all", confVal === 2 ? "bg-[#1ED760]/10 border-[#1ED760] text-[#1ED760]" : "bg-black/40 border-white/10 text-gray-400 hover:border-white/30")}>
                            <span className="block font-bold mb-1">2 Pts</span> Strong engulf/rejection
-                        </button>
-                        <button onClick={() => setConfVal(1)} className={cn("p-3 rounded-xl border text-xs text-left transition-all", confVal === 1 ? "bg-yellow-500/10 border-yellow-500 text-yellow-500" : "bg-black/40 border-white/10 text-gray-400 hover:border-white/30")}>
+                        </motion.button>
+                        <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={() => setConfVal(1)} className={cn("p-3 rounded-xl border text-xs text-left transition-all", confVal === 1 ? "bg-yellow-500/10 border-yellow-500 text-yellow-500" : "bg-black/40 border-white/10 text-gray-400 hover:border-white/30")}>
                            <span className="block font-bold mb-1">1 Pt</span> Weak reaction
-                        </button>
-                        <button onClick={() => setConfVal(0)} className={cn("p-3 rounded-xl border text-xs text-left transition-all", confVal === 0 ? "bg-[#E5534B]/10 border-[#E5534B] text-[#E5534B]" : "bg-black/40 border-white/10 text-gray-400 hover:border-white/30")}>
+                        </motion.button>
+                        <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={() => setConfVal(0)} className={cn("p-3 rounded-xl border text-xs text-left transition-all", confVal === 0 ? "bg-[#E5534B]/10 border-[#E5534B] text-[#E5534B]" : "bg-black/40 border-white/10 text-gray-400 hover:border-white/30")}>
                            <span className="block font-bold mb-1">0 Pts</span> No confirmation
-                        </button>
+                        </motion.button>
                      </div>
                   </div>
 
