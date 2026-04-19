@@ -181,10 +181,7 @@ export function Strategies() {
   const { trades: allTrades, updateTrades } = useTrades();
   const { selectedAccountId } = useAccountContext();
 
-  const trades = useMemo(() => {
-    if (!selectedAccountId) return allTrades;
-    return allTrades.filter(t => t.accountId === selectedAccountId);
-  }, [allTrades, selectedAccountId]);
+  const trades = useMemo(() => allTrades, [allTrades]);
 
   const [showForm, setShowForm] = useState(false);
   const [editTarget, setEditTarget] = useState<Strategy | undefined>(undefined);

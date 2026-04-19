@@ -20,12 +20,9 @@ export function StrategyDetail() {
   const navigate = useNavigate();
   const { strategies, updateStrategy } = useStrategies();
   const { trades: allTrades, updateTrades } = useTrades();
-  const { selectedAccountId } = useAccountContext();
+  const { accounts } = useAccountContext();
   
-  const trades = useMemo(() => {
-    if (!selectedAccountId) return allTrades;
-    return allTrades.filter(t => t.accountId === selectedAccountId);
-  }, [allTrades, selectedAccountId]);
+  const trades = useMemo(() => allTrades, [allTrades]);
 
   const [timeRange, setTimeRange] = useState<'1W' | '1M' | 'ALL'>('ALL');
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -360,6 +357,7 @@ export function StrategyDetail() {
                  <thead>
                    <tr className="border-b border-white/5 text-[10px] font-bold text-gray-500 uppercase tracking-widest bg-white/[0.02]">
                      <th className="px-6 py-4">Symbol</th>
+                     <th className="px-6 py-4">Account</th>
                      <th className="px-6 py-4">Direction</th>
                      <th className="px-6 py-4">Status</th>
                      <th className="px-6 py-4">Execution</th>
@@ -369,7 +367,7 @@ export function StrategyDetail() {
                  <tbody className="divide-y divide-white/[0.02]">
                    {strategyTrades.length === 0 ? (
                      <tr>
-                       <td colSpan={5} className="px-6 py-12 text-center text-sm font-bold text-gray-600">No trades recorded</td>
+                       <td colSpan={6} className="px-6 py-12 text-center text-sm font-bold text-gray-600">No trades recorded</td>
                      </tr>
                    ) : (
                      [...strategyTrades].reverse().map(trade => (
@@ -383,6 +381,11 @@ export function StrategyDetail() {
                              <span className="text-sm font-bold text-white group-hover:text-blue-400 transition-colors">{trade.symbol}</span>
                              <span className="text-[10px] text-gray-500 uppercase tracking-tighter">{trade.date}</span>
                            </div>
+                         </td>
+                         <td className="px-6 py-4">
+                           <span className="text-xs font-bold text-gray-400">
+                             {accounts.find(a => a.id === trade.accountId)?.name || 'Unknown'}
+                           </span>
                          </td>
                          <td className="px-6 py-4">
                            <span className={cn(
