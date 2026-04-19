@@ -66,9 +66,9 @@ export function Sidebar({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOp
       href: "/ai-engine" 
     },
     { 
-      title: "Charting",
-      icon: <Activity className={cn("h-full w-full", isPathActive("/charting-ai") ? "text-blue-500" : "text-neutral-500 dark:text-neutral-300")} />,
-      href: "/charting-ai" 
+      title: "Checkout",
+      icon: <Activity className={cn("h-full w-full", isPathActive("/checkout") ? "text-blue-500" : "text-neutral-500 dark:text-neutral-300")} />,
+      href: "/checkout" 
     },
     { 
       title: "Journal",
