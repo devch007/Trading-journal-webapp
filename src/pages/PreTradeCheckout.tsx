@@ -86,7 +86,7 @@ export function PreTradeCheckout() {
   const handleSaveToJournal = () => {
     if (!pair) return;
     
-    const notes = \`Pre-Trade Score: \${totalScore}/10 (\${rating})\\nMistakes: \${mistake}\`;
+    const notes = `Pre-Trade Score: ${totalScore}/10 (${rating})\nMistakes: ${mistake}`;
     
     addTrade({
       date,
