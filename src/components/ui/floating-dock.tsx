@@ -45,11 +45,18 @@ const FloatingDockMobile = ({
   const [open, setOpen] = useState(false);
   return (
     <div className={cn("relative block md:hidden", className)}>
+      {/* Backdrop for mobile menu */}
+      {open && (
+        <div 
+          className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm" 
+          onClick={() => setOpen(false)}
+        />
+      )}
       <AnimatePresence>
         {open && (
           <motion.div
             layoutId="nav"
-            className="absolute inset-x-0 bottom-full mb-2 flex flex-col gap-2"
+            className="absolute left-1/2 -translate-x-1/2 bottom-full mb-4 flex flex-col gap-1.5 bg-[#0a0a12]/95 backdrop-blur-xl border border-white/10 p-3 rounded-2xl w-48 max-h-[70vh] overflow-y-auto no-scrollbar z-50 shadow-2xl"
           >
             {items.map((item, idx) => (
               <motion.div
@@ -70,10 +77,11 @@ const FloatingDockMobile = ({
               >
                 <Link
                   to={item.href}
-                  key={item.title}
-                  className="flex h-10 w-10 items-center justify-center rounded-full bg-[#1a1a2e]"
+                  onClick={() => setOpen(false)}
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/10 text-gray-400 hover:text-white transition-all active:scale-[0.98]"
                 >
-                  <div className="h-4 w-4">{item.icon}</div>
+                  <div className="h-4 w-4 flex-shrink-0 flex items-center justify-center">{item.icon}</div>
+                  <span className="text-sm font-bold tracking-tight">{item.title}</span>
                 </Link>
               </motion.div>
             ))}
@@ -82,9 +90,9 @@ const FloatingDockMobile = ({
       </AnimatePresence>
       <button
         onClick={() => setOpen(!open)}
-        className="flex h-10 w-10 items-center justify-center rounded-full bg-[#1a1a2e] shadow-lg"
+        className="relative z-50 flex h-12 w-12 items-center justify-center rounded-full bg-blue-600 shadow-[0_0_20px_rgba(37,99,235,0.4)] hover:bg-blue-500 transition-colors active:scale-95"
       >
-        <Menu className="h-5 w-5 text-neutral-300" />
+        <Menu className="h-5 w-5 text-white" />
       </button>
     </div>
   );
