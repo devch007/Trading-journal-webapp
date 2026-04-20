@@ -413,8 +413,8 @@ export function Dashboard() {
         session: "Else",
         confidence: t.confidence || "Medium",
         duration: "",
-        tag: "",
-        tags: [],
+        tag: t.close_reason && t.close_reason !== 'Unknown' ? t.close_reason : "",
+        tags: t.close_reason && t.close_reason !== 'Unknown' ? [t.close_reason] : [],
         strategy: t.strategy || "",
       });
     }
@@ -465,23 +465,29 @@ export function Dashboard() {
               content: [
                 {
                   type: "text",
-                  text: `You are a trading data extraction assistant. Extract all trades from this MT5/trading platform screenshot.
+                  text: `You are a professional trading data extraction assistant. You can read screenshots from ANY trading platform — MT5, MT4, cTrader, mobile broker apps (e.g. Exness, IC Markets, XM, FTMO, etc.), TradingView, or any other platform.
 
-Return ONLY a valid JSON object with a 'trades' array. Each element must have these fields:
-- symbol (string, e.g. "EURUSD.x")
-- type ("BUY" or "SELL" only)
-- volume (number)
-- entry_price (string, exact value from first Price column, e.g. "1.15294")
-- exit_price (string, exact value from second Price column, e.g. "1.15360")
-- profit (number, positive or negative)
-- commission (number, default 0 if not shown)
-- date_time (string — CRITICAL: extract the exact timestamp shown for each trade row in MT5 dot-format: "YYYY.MM.DD HH:MM:SS". The year is ALWAYS 2026 — if it is not visible or is ambiguous, write 2026. Example: "2026.04.03 14:35:22". Never return null for this field.)
-- confidence ("High", "Medium", or "Low" — how clearly you can read the row)
+Carefully analyze the image and extract EVERY closed/completed trade visible.
 
-IMPORTANT:
-- MT5 has two Price columns per row: the FIRST is entry_price, the SECOND (further right) is exit_price.
-- Every date_time MUST include the year 2026 in the format shown above.
-- Do NOT include markdown, code fences, or explanations — return raw JSON only.`
+Return ONLY a valid JSON object with a "trades" array. Each element must have these fields:
+- symbol (string — the instrument/pair name, e.g. "XAUUSD", "EURUSD". Strip any broker suffix like ".C", ".x", ".m", ".pro" etc. Keep only the clean symbol.)
+- type ("BUY" or "SELL" — look for BUY/SELL labels, or green/red color indicators. Green tags = BUY, Red/pink tags = SELL.)
+- volume (number — lot size, e.g. 0.20, 1.00)
+- entry_price (string — the FIRST price shown for the trade, e.g. "4797.95". This is where the trade was opened.)
+- exit_price (string — the SECOND price shown, e.g. "4797.81". This is where the trade was closed. Look for an arrow "→" between entry and exit.)
+- profit (number — the P&L value, positive or negative. Look for values like "+$2.80" or "-$23.80". Remove the $ sign and return just the number with correct sign.)
+- commission (number — default 0 if not visible)
+- close_reason (string — "Market", "Stop loss", "Take profit", or "Unknown". Look for close-reason labels like "Market", "Stop loss", "TP" near the profit value.)
+- date_time (string — CRITICAL: If an individual timestamp is visible for each trade row, extract it in format "YYYY.MM.DD HH:MM:SS" with year 2026. If NO per-trade timestamp is visible (common on mobile apps showing "Closed Positions"), use TODAY's date: "${new Date().toISOString().slice(0, 10).replace(/-/g, '.')} 12:00:00". Never return null or empty string for this field.)
+- confidence ("High", "Medium", or "Low" — how clearly you could read the row data)
+
+CRITICAL RULES:
+1. The screenshot may be from a MOBILE app — trades are shown as cards/rows with symbol, lot size, entry → exit prices, and P&L.
+2. If you see an arrow symbol (→) between two prices, the LEFT price is entry_price and the RIGHT price is exit_price.
+3. Green/positive P&L amounts (e.g. "+$54.60") mean the trade was profitable. Red/negative amounts (e.g. "-$32.60") mean a loss.
+4. ALL date_time values MUST have year 2026. If no date is visible at all, use "${new Date().toISOString().slice(0, 10).replace(/-/g, '.')} 12:00:00".
+5. Do NOT include markdown, code fences, or any explanations — return raw JSON ONLY.
+6. Extract EVERY single trade row visible, do not skip any.`
                 },
                 {
                   type: "image_url",
@@ -662,7 +668,7 @@ IMPORTANT:
                 </div>
               <div className="flex flex-col items-start">
                   <span className="type-h2 text-[14px] text-white">{isExtracting ? 'Analyzing screenshot...' : 'Import Trades'}</span>
-                  <span className="type-body text-[12px]">{isExtracting ? 'Please wait' : 'Extract from MT5 screenshot'}</span>
+                  <span className="type-body text-[12px]">{isExtracting ? 'Please wait' : 'Extract from any platform screenshot'}</span>
                 </div>
               </button>
               {extractionError && (

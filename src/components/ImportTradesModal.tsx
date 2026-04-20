@@ -15,6 +15,7 @@ export interface ExtractedTrade {
   confidence?: 'High' | 'Medium' | 'Low';
   strategy?: string;
   date_time?: string; // e.g. "2026.04.03 14:30" extracted from screenshot
+  close_reason?: string; // e.g. "Market", "Stop loss", "Take profit"
 }
 
 interface ImportTradesModalProps {
@@ -46,6 +47,7 @@ export function ImportTradesModal({ isOpen, onClose, onSave, initialData }: Impo
             confidence: t.confidence || 'High',
             strategy: t.strategy || '',
             date_time: t.date_time || '',
+            close_reason: t.close_reason || 'Unknown',
           }))
         );
       } else {
@@ -69,6 +71,7 @@ export function ImportTradesModal({ isOpen, onClose, onSave, initialData }: Impo
         commission: 0,
         strategy: '',
         date_time: '',
+        close_reason: 'Unknown',
       }
     ]);
   };
@@ -153,6 +156,7 @@ export function ImportTradesModal({ isOpen, onClose, onSave, initialData }: Impo
       commission: parseFloat(t.commission as string) || 0,
       strategy: t.strategy || '',
       date_time: t.date_time || '',
+      close_reason: t.close_reason || 'Unknown',
     }));
     onSave(cleanedTrades);
     onClose();
@@ -181,7 +185,7 @@ export function ImportTradesModal({ isOpen, onClose, onSave, initialData }: Impo
         {/* Table Content */}
         <div className="flex-1 overflow-auto p-6">
           <div className="min-w-[1100px]">
-            <div className="grid grid-cols-[auto_1.2fr_1.5fr_0.8fr_0.8fr_1fr_1fr_0.8fr_0.8fr_1fr_0.8fr_auto] gap-3 mb-4 px-4 type-label text-[10px]">
+            <div className="grid grid-cols-[auto_1.2fr_1.5fr_0.8fr_0.8fr_1fr_1fr_0.8fr_0.8fr_0.8fr_1fr_0.8fr_auto] gap-3 mb-4 px-4 type-label text-[10px]">
               <div className="w-5 text-center">
                 <button 
                   onClick={() => {
@@ -208,6 +212,7 @@ export function ImportTradesModal({ isOpen, onClose, onSave, initialData }: Impo
               <div>Exit Price</div>
               <div>Profit</div>
               <div>Session</div>
+              <div>Close</div>
               <div>Strategy</div>
               <div>Comm.</div>
               <div className="w-10 text-center">Act</div>
@@ -220,7 +225,7 @@ export function ImportTradesModal({ isOpen, onClose, onSave, initialData }: Impo
                 return (
                   <div 
                     key={trade.id} 
-                    className={`grid grid-cols-[auto_1.2fr_1.5fr_0.8fr_0.8fr_1fr_1fr_0.8fr_0.8fr_1fr_0.8fr_auto] gap-3 items-center p-3 rounded-xl border bg-[#12121A] transition-colors ${isInvalid ? 'border-[#E5534B]/50' : 'border-white/5 hover:border-white/20'}`}
+                    className={`grid grid-cols-[auto_1.2fr_1.5fr_0.8fr_0.8fr_1fr_1fr_0.8fr_0.8fr_0.8fr_1fr_0.8fr_auto] gap-3 items-center p-3 rounded-xl border bg-[#12121A] transition-colors ${isInvalid ? 'border-[#E5534B]/50' : 'border-white/5 hover:border-white/20'}`}
                   >
                     {/* Checkbox */}
                     <div className="flex justify-center">
@@ -345,6 +350,24 @@ export function ImportTradesModal({ isOpen, onClose, onSave, initialData }: Impo
                         <option value="London">London</option>
                         <option value="NY">NY</option>
                         <option value="Else">Else</option>
+                      </select>
+                    </div>
+
+                    {/* Close Reason */}
+                    <div>
+                      <select 
+                        value={trade.close_reason || 'Unknown'}
+                        onChange={(e) => handleChange(trade.id, 'close_reason', e.target.value)}
+                        className={`w-full bg-black/50 border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary transition-colors appearance-none ${
+                          trade.close_reason === 'Stop loss' ? 'text-[#E5534B]' : 
+                          trade.close_reason === 'Take profit' ? 'text-[#1ED760]' : 
+                          trade.close_reason === 'Market' ? 'text-blue-400' : 'text-white'
+                        }`}
+                      >
+                        <option value="Market">Market</option>
+                        <option value="Stop loss">Stop loss</option>
+                        <option value="Take profit">Take profit</option>
+                        <option value="Unknown">Unknown</option>
                       </select>
                     </div>
 

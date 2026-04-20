@@ -153,8 +153,8 @@ const QUICK_ACTIONS: SearchResult[] = [
   },
   {
     id: "import",
-    title: "Import from MT5",
-    subtitle: "Upload a screenshot and extract trades via AI",
+    title: "Import Trades",
+    subtitle: "Upload a screenshot from any platform & extract via AI",
     icon: Upload,
     path: "/dashboard",
     category: "QUICK ACTIONS",

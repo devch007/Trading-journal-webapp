@@ -99,20 +99,24 @@ export function getTradeDate(dateStr: string): Date {
 /**
  * Normalises a raw date_time string extracted from a screenshot into a clean
  * ISO-8601 string with year forced to 2026.
- * Input may be MT5 format ("2026.04.03 14:30"), null, or undefined.
+ * Input may be MT5 format ("2026.04.03 14:30"), a date without explicit year,
+ * null, or undefined.
  * Returns an ISO string like "2026-04-03T14:30:00" or null when nothing can be parsed.
  */
 export function normalizeImportedDateTime(dateTimeStr: string | null | undefined): string | null {
-  if (!dateTimeStr) return null;
+  if (!dateTimeStr || dateTimeStr.trim().length === 0) return null;
 
   const d = getTradeDate(dateTimeStr);
   // getTradeDate returns `new Date()` as fallback — detect that by checking
   // if the result differs significantly from what we'd expect.
-  // A robust check: re-parse and compare raw strings.
-  const isReallyParsed = !isNaN(d.getTime()) && dateTimeStr.trim().length > 0
-    && (dateTimeStr.match(/\d{4}/) !== null); // must contain a 4-digit year
+  if (isNaN(d.getTime())) return null;
 
-  if (isReallyParsed) {
+  // If the string contains a 4-digit year or looks like a full date, trust it
+  const has4DigitYear = /\d{4}/.test(dateTimeStr);
+  // Also accept MM.DD or DD/MM patterns that getTradeDate may have handled
+  const hasDateInfo = /\d{2}[./-]\d{2}/.test(dateTimeStr);
+
+  if (has4DigitYear || hasDateInfo) {
     // force year to 2026
     d.setFullYear(2026);
     return d.toISOString();
