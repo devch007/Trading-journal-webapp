@@ -15,6 +15,7 @@ import { PreTradeCheckout } from './pages/PreTradeCheckout';
 import { DailyRituals } from './pages/DailyRituals';
 import { TopBar } from './lib/TopBar';
 import { Profile } from './pages/Profile';
+import { Settings } from './pages/Settings';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { AccountProvider } from './contexts/AccountContext';
 import { Login } from './pages/Login';
@@ -94,7 +95,7 @@ export default function App() {
                   <Route path="strategies" element={<Strategies />} />
                   <Route path="strategies/:id" element={<StrategyDetail />} />
                   <Route path="market" element={<PlaceholderPage title="Market" subtitle="Live market data and analysis" />} />
-                  <Route path="settings" element={<PlaceholderPage title="Settings" subtitle="Application preferences" />} />
+                  <Route path="settings" element={<Settings />} />
                   <Route path="profile" element={<Profile />} />
                 </Route>
               </Routes>
