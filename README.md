@@ -1,20 +1,55 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# TradeX
 
-# Run and deploy your AI Studio app
+A trading journal that actually helps you improve.
 
-This contains everything you need to run your app locally.
+Most journals just store trades. TradeX is built to show you **what you're doing wrong** and help you fix it.
 
-View your app in AI Studio: https://ai.studio/apps/ec96f58b-36af-4b06-8dc9-082d778965d0
+---
 
-## Run Locally
+## Why I built this
 
-**Prerequisites:**  Node.js
+I realized most traders don’t fail because of strategy —  
+they fail because of **execution, discipline, and lack of feedback**.
 
+There was no clean, fast tool that focused on that.
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+So I built TradeX.
+
+---
+
+## What it does
+
+- Log trades with structured data  
+- Track performance (PnL, win rate, RR)  
+- Identify patterns in wins and losses  
+- Keep you accountable to your own rules  
+
+Simple idea:  
+> If you can measure it properly, you can improve it.
+
+---
+
+## Core Features
+
+- 📊 Trade journaling (clean + fast input)
+- 📈 Performance analytics
+- 🧠 Psychology tracking (discipline, mistakes)
+- ⚡ Minimal UI (no clutter, just focus)
+
+---
+
+## Tech Stack
+
+- TypeScript  
+- React  
+- Node.js  
+- MongoDB  
+- Tailwind  
+
+---
+
+## Running locally
+
+```bash
+npm install
+npm run dev
