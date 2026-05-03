@@ -14,6 +14,7 @@ import { AIEngine } from './pages/AIEngine';
 import { PreTradeCheckout } from './pages/PreTradeCheckout';
 import { DailyRituals } from './pages/DailyRituals';
 import { TopBar } from './lib/TopBar';
+import { Profile } from './pages/Profile';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { AccountProvider } from './contexts/AccountContext';
 import { Login } from './pages/Login';
@@ -94,7 +95,7 @@ export default function App() {
                   <Route path="strategies/:id" element={<StrategyDetail />} />
                   <Route path="market" element={<PlaceholderPage title="Market" subtitle="Live market data and analysis" />} />
                   <Route path="settings" element={<PlaceholderPage title="Settings" subtitle="Application preferences" />} />
-                  <Route path="profile" element={<PlaceholderPage title="Profile" subtitle="User profile and security" />} />
+                  <Route path="profile" element={<Profile />} />
                 </Route>
               </Routes>
             </BrowserRouter>
