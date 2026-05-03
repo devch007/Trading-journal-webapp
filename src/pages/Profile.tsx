@@ -3,6 +3,7 @@ import { TopBar } from '../lib/TopBar';
 import { motion, AnimatePresence } from 'motion/react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTrades } from '../hooks/useTrades';
+import { useAccountContext } from '../contexts/AccountContext';
 import { AreaChart, Area, ResponsiveContainer, YAxis } from 'recharts';
 import { 
   User, Mail, Phone, Globe, DollarSign, Edit2, Shield, Lock, 
@@ -99,7 +100,31 @@ function SettingRow({ icon: Icon, label, description, toggle, checked, onToggle,
 
 export function Profile() {
   const { userProfile, user } = useAuth();
-  const { trades } = useTrades();
+  const { trades: allTrades } = useTrades();
+  const { selectedAccount, selectedAccountId } = useAccountContext();
+
+  const trades = useMemo(() => {
+    if (!selectedAccountId) return allTrades;
+    return allTrades.filter(t => t.accountId === selectedAccountId);
+  }, [allTrades, selectedAccountId]);
+
+  // Try to load persisted profile details from local storage as fallback
+  const [profileData, setProfileData] = useState(() => {
+    const saved = localStorage.getItem('user_profile_data');
+    return saved ? JSON.parse(saved) : {
+      fullName: 'Trader',
+      phone: '+1 (555) 000-0000',
+      location: 'New York, USA (EST)',
+      currency: 'USD ($)',
+      riskPerTrade: '1.0%'
+    };
+  });
+
+  const updateProfileData = (key: string, value: string) => {
+    const updated = { ...profileData, [key]: value };
+    setProfileData(updated);
+    localStorage.setItem('user_profile_data', JSON.stringify(updated));
+  };
 
   // Mock settings state
   const [settings, setSettings] = useState({
@@ -136,6 +161,38 @@ export function Profile() {
       bestTrade,
       worstTrade,
       avgRR
+    };
+  }, [trades]);
+
+  // Consistency Score Calculation
+  const consistencyScore = useMemo(() => {
+    if (!trades.length) return 0;
+    const days = new Set(trades.map(t => getTradeDate(t.date).toDateString()));
+    let positiveDays = 0;
+    days.forEach(d => {
+      const dayPnl = trades.filter(t => getTradeDate(t.date).toDateString() === d).reduce((s, t) => s + (t.pnl || 0), 0);
+      if (dayPnl > 0) positiveDays++;
+    });
+    return Math.round((positiveDays / days.size) * 100);
+  }, [trades]);
+
+  // Derive top strategies and markets
+  const { primaryMarkets, strategyTags } = useMemo(() => {
+    const markets = new Set<string>();
+    const strats = new Set<string>();
+    trades.forEach(t => {
+      if (t.symbol) {
+        if (t.symbol.includes('USD') || t.symbol.includes('EUR') || t.symbol.includes('GBP') || t.symbol.includes('JPY')) markets.add('Forex');
+        else if (t.symbol.includes('US30') || t.symbol.includes('NAS') || t.symbol.includes('SPX')) markets.add('Indices');
+        else if (t.symbol.includes('XAU') || t.symbol.includes('XAG') || t.symbol.includes('OIL')) markets.add('Commodities');
+        else markets.add('Crypto/Other');
+      }
+      if (t.strategy) strats.add(t.strategy);
+      if (t.tags) t.tags.forEach(tag => strats.add(tag));
+    });
+    return {
+      primaryMarkets: Array.from(markets).slice(0, 3),
+      strategyTags: Array.from(strats).slice(0, 5)
     };
   }, [trades]);
 
@@ -180,11 +237,11 @@ export function Profile() {
             
             <div className="flex flex-col gap-2">
               <div className="flex items-center gap-3">
-                <h1 className="text-2xl md:text-3xl font-bold text-white tracking-tight">Alex Carter</h1>
+                <h1 className="text-2xl md:text-3xl font-bold text-white tracking-tight">{profileData.fullName}</h1>
                 <span className="px-2 py-0.5 rounded bg-primary/20 text-primary text-xs font-bold uppercase tracking-wider border border-primary/30">Pro</span>
               </div>
               <div className="flex items-center gap-2 text-sm text-[#A7A7A7]">
-                <span>@alexcarter_fx</span>
+                <span>@{profileData.fullName.toLowerCase().replace(/\s+/g, '_')}</span>
                 <span>•</span>
                 <span className="flex items-center gap-1"><ShieldCheck className="w-3.5 h-3.5 text-[#1ED760]" /> Verified</span>
               </div>
@@ -227,7 +284,7 @@ export function Profile() {
             
             {/* 2. PERSONAL INFO CARD */}
             <SectionCard title="Personal Information" icon={User}>
-              <EditableField label="Full Name" value="Alex Carter" icon={User} />
+              <EditableField label="Full Name" value={profileData.fullName} icon={User} onChange={(val: string) => updateProfileData('fullName', val)} />
               <div className="flex flex-col gap-1.5 group">
                 <span className="type-micro text-[#A7A7A7]">Email Address</span>
                 <div className="flex items-center justify-between p-3 rounded-xl bg-white/[0.02] border border-white/5">
@@ -238,9 +295,9 @@ export function Profile() {
                   <span className="px-2 py-0.5 rounded bg-[#1ED760]/10 text-[#1ED760] text-[10px] font-bold uppercase">Verified</span>
                 </div>
               </div>
-              <EditableField label="Phone Number" value="+1 (555) 019-2834" icon={Phone} />
-              <EditableField label="Location / Timezone" value="New York, USA (EST)" icon={Globe} />
-              <EditableField label="Preferred Currency" value="USD ($)" icon={DollarSign} />
+              <EditableField label="Phone Number" value={profileData.phone} icon={Phone} onChange={(val: string) => updateProfileData('phone', val)} />
+              <EditableField label="Location / Timezone" value={profileData.location} icon={Globe} onChange={(val: string) => updateProfileData('location', val)} />
+              <EditableField label="Preferred Currency" value={profileData.currency} icon={DollarSign} onChange={(val: string) => updateProfileData('currency', val)} />
             </SectionCard>
 
             {/* 6. SECURITY SETTINGS */}
@@ -357,9 +414,11 @@ export function Profile() {
                   <div className="flex flex-col gap-2">
                     <span className="type-label">Primary Markets</span>
                     <div className="flex flex-wrap gap-2">
-                      {['Forex', 'Indices', 'Commodities'].map(m => (
+                      {primaryMarkets.length > 0 ? primaryMarkets.map(m => (
                         <span key={m} className="px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs font-medium text-white">{m}</span>
-                      ))}
+                      )) : (
+                        <span className="text-xs text-[#A7A7A7]">No trades yet</span>
+                      )}
                     </div>
                   </div>
                   <div className="flex flex-col gap-2">
@@ -370,15 +429,17 @@ export function Profile() {
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-4 mt-2">
-                    <EditableField label="Risk Per Trade" value="1.0%" icon={AlertCircle} />
-                    <EditableField label="Base Account Size" value="$100,000" icon={DollarSign} />
+                    <EditableField label="Risk Per Trade" value={profileData.riskPerTrade} icon={AlertCircle} onChange={(val: string) => updateProfileData('riskPerTrade', val)} />
+                    <EditableField label="Base Account Size" value={selectedAccount ? `$${selectedAccount.initialCapital.toLocaleString()}` : '$10,000'} icon={DollarSign} />
                   </div>
                   <div className="flex flex-col gap-2 mt-2">
                     <span className="type-label">Strategy Tags</span>
                     <div className="flex flex-wrap gap-2">
-                      {['SMC', 'Liquidity Sweeps', 'Swing'].map(s => (
+                      {strategyTags.length > 0 ? strategyTags.map(s => (
                         <span key={s} className="px-2 py-1 rounded bg-[#8a4cfc]/10 border border-[#8a4cfc]/20 text-[11px] font-medium text-[#8a4cfc]">{s}</span>
-                      ))}
+                      )) : (
+                        <span className="text-xs text-[#A7A7A7]">No tags logged yet</span>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -390,7 +451,7 @@ export function Profile() {
                   <div className="flex items-center justify-between p-4 rounded-xl bg-white/[0.02] border border-white/5">
                     <div className="flex flex-col gap-1">
                       <span className="type-label">Consistency Score</span>
-                      <span className="text-2xl font-bold text-[#1ED760] tnum">86%</span>
+                      <span className="text-2xl font-bold text-[#1ED760] tnum">{consistencyScore}%</span>
                     </div>
                     <div className="w-12 h-12 rounded-full border-4 border-[#1ED760]/20 border-t-[#1ED760] flex items-center justify-center transform rotate-45">
                       <div className="w-8 h-8 rounded-full bg-[#1ED760]/10 transform -rotate-45 flex items-center justify-center">
@@ -401,20 +462,22 @@ export function Profile() {
                   
                   <div className="flex flex-col gap-3">
                     <span className="type-label">Active Rules</span>
-                    <div className="flex items-center justify-between p-3 rounded-lg bg-white/[0.01] border border-white/5 hover:bg-white/[0.03] transition-colors">
-                      <div className="flex items-center gap-3">
-                        <div className="w-2 h-2 rounded-full bg-[#1ED760]" />
-                        <span className="text-sm text-white">Max Daily Loss Limit</span>
-                      </div>
-                      <span className="text-xs font-bold text-[#A7A7A7]">-$500</span>
-                    </div>
-                    <div className="flex items-center justify-between p-3 rounded-lg bg-white/[0.01] border border-white/5 hover:bg-white/[0.03] transition-colors">
-                      <div className="flex items-center gap-3">
-                        <div className="w-2 h-2 rounded-full bg-[#1ED760]" />
-                        <span className="text-sm text-white">Max Trades Per Day</span>
-                      </div>
-                      <span className="text-xs font-bold text-[#A7A7A7]">3 Trades</span>
-                    </div>
+                    {selectedAccount?.rules?.filter(r => r.enabled).length ? (
+                      selectedAccount.rules.filter(r => r.enabled).slice(0, 3).map(rule => (
+                        <div key={rule.id} className="flex items-center justify-between p-3 rounded-lg bg-white/[0.01] border border-white/5 hover:bg-white/[0.03] transition-colors">
+                          <div className="flex items-center gap-3">
+                            <div className="w-2 h-2 rounded-full bg-[#1ED760]" />
+                            <span className="text-sm text-white">{rule.name}</span>
+                          </div>
+                          <span className="text-xs font-bold text-[#A7A7A7]">
+                            {rule.type === 'max_loss_per_trade' || rule.type === 'daily_loss_limit' ? '-' : ''}
+                            {rule.unit === '$' ? '$' : ''}{rule.value}{rule.unit === '%' ? '%' : ''} {rule.unit === 'trades' ? 'Trades' : ''}
+                          </span>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-sm text-[#A7A7A7] italic">No active trading rules configured on this account.</div>
+                    )}
                   </div>
                 </div>
               </SectionCard>
