@@ -130,9 +130,9 @@ export function MonthlyPnLCalendar({ trades }: MonthlyPnLCalendarProps) {
 
   return (
     <div className="glass-card p-6 rounded-2xl flex flex-col gap-5 relative overflow-hidden">
-      {/* Background glows */}
-      <div className="absolute -top-16 -right-16 w-64 h-64 rounded-full blur-[90px] opacity-[0.06] pointer-events-none bg-[#1ED760]" />
-      <div className="absolute -bottom-16 -left-16 w-64 h-64 rounded-full blur-[90px] opacity-[0.06] pointer-events-none bg-[#E5534B]" />
+      {/* Background glows (optimized using radial gradients instead of heavy blur filters) */}
+      <div className="absolute -top-32 -right-32 w-96 h-96 rounded-full opacity-[0.15] pointer-events-none" style={{ background: 'radial-gradient(circle, #1ED760 0%, transparent 60%)' }} />
+      <div className="absolute -bottom-32 -left-32 w-96 h-96 rounded-full opacity-[0.15] pointer-events-none" style={{ background: 'radial-gradient(circle, #E5534B 0%, transparent 60%)' }} />
 
       {/* ── Header ── */}
       <div className="flex justify-between items-start z-10">
