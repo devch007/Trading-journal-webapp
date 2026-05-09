@@ -315,7 +315,7 @@ export function Trades() {
             initial={{ y: 100, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 100, opacity: 0 }}
-            className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[60] flex items-center gap-4 bg-[#1a1a24] border border-primary/30 px-6 py-4 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.5)] backdrop-blur-xl"
+            className="fixed bottom-28 left-1/2 -translate-x-1/2 z-[110] flex items-center gap-4 bg-[#1a1a24] border border-primary/30 px-6 py-4 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.5)] backdrop-blur-xl"
           >
             <div className="flex items-center gap-3 pr-4 border-r border-white/10">
               <span className="text-primary font-bold text-sm">{selectedTradeIds.length}</span>
