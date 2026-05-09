@@ -3,15 +3,13 @@ import {
   LayoutGrid, 
   CandlestickChart, 
   Notebook, 
-  TrendingUp, 
   Settings2, 
   CircleUser,
   Wallet,
   Sparkles,
   Layers,
   Crosshair,
-  Activity,
-  SunMoon
+  Activity
 } from "lucide-react";
 import { cn } from "./utils";
 import { FloatingDock } from "../components/ui/floating-dock";
@@ -72,11 +70,6 @@ export function Sidebar({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOp
       href: "/checkout" 
     },
     { 
-      title: "Rituals",
-      icon: <SunMoon className={cn("h-full w-full", isPathActive("/rituals") ? "text-blue-500" : "text-neutral-500 dark:text-neutral-300")} />,
-      href: "/rituals" 
-    },
-    { 
       title: "Journal",
       icon: <Notebook className={cn("h-full w-full", isPathActive("/journal") ? "text-blue-500" : "text-neutral-500 dark:text-neutral-300")} />,
       href: "/journal" 
@@ -85,11 +78,6 @@ export function Sidebar({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOp
       title: "Strategies",
       icon: <Layers className={cn("h-full w-full", isPathActive("/strategies") ? "text-blue-500" : "text-neutral-500 dark:text-neutral-300")} />,
       href: "/strategies" 
-    },
-    { 
-      title: "Market",
-      icon: <TrendingUp className={cn("h-full w-full", isPathActive("/market") ? "text-blue-500" : "text-neutral-500 dark:text-neutral-300")} />,
-      href: "/market" 
     },
     { 
       title: "Settings",

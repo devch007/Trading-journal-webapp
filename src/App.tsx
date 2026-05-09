@@ -12,7 +12,6 @@ import { Trades } from './pages/Trades';
 import { Journal } from './pages/Journal';
 import { AIEngine } from './pages/AIEngine';
 import { PreTradeCheckout } from './pages/PreTradeCheckout';
-import { DailyRituals } from './pages/DailyRituals';
 import { TopBar } from './lib/TopBar';
 import { Profile } from './pages/Profile';
 import { Settings } from './pages/Settings';
@@ -59,19 +58,6 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-function PlaceholderPage({ title, subtitle }: { title: string, subtitle: string }) {
-  return (
-    <div className="flex flex-col min-h-full pb-10">
-      <TopBar title={title} subtitle={subtitle} showSearch={true} />
-      <div className="px-8 flex-1 flex flex-col">
-        <div className="glass-card p-8 rounded-2xl flex-1 flex items-center justify-center min-h-[400px]">
-          <p className="text-on-surface-variant type-label text-lg">{title} module coming soon.</p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 export default function App() {
   return (
     <ErrorBoundary>
@@ -90,11 +76,9 @@ export default function App() {
                   <Route path="trades" element={<Trades />} />
                   <Route path="ai-engine" element={<AIEngine />} />
                   <Route path="checkout" element={<PreTradeCheckout />} />
-                  <Route path="rituals" element={<DailyRituals />} />
                   <Route path="journal" element={<Journal />} />
                   <Route path="strategies" element={<Strategies />} />
                   <Route path="strategies/:id" element={<StrategyDetail />} />
-                  <Route path="market" element={<PlaceholderPage title="Market" subtitle="Live market data and analysis" />} />
                   <Route path="settings" element={<Settings />} />
                   <Route path="profile" element={<Profile />} />
                 </Route>

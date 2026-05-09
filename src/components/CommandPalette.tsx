@@ -116,14 +116,6 @@ const PAGE_ITEMS: SearchResult[] = [
     category: "PAGES",
   },
   {
-    id: "market",
-    title: "Market",
-    subtitle: "Live market data, session heatmaps, news",
-    icon: Globe,
-    path: "/market",
-    category: "PAGES",
-  },
-  {
     id: "settings",
     title: "Settings",
     subtitle: "App preferences, notifications, display",
