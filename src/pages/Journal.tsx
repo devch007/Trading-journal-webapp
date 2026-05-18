@@ -42,6 +42,7 @@ export function Journal() {
   const [isProofLoading, setIsProofLoading] = useState(false);
   
   const dbSyncRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingUpdatesRef = useRef<Partial<Trade>>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   const { selectedAccountId } = useAccountContext();
@@ -120,12 +121,20 @@ export function Journal() {
       });
     }
 
-    // 1. Optimistically apply to local patch immediately
+    // 1. Accumulate updates in a ref for the debounced DB write
+    pendingUpdatesRef.current = { ...pendingUpdatesRef.current, ...updates };
+
+    // 2. Optimistically apply to local patch immediately
     setLocalPatch(prev => ({ ...prev, ...updates }));
-    // 2. Debounce the actual DB write so rapid clicks batch together
+    
+    // 3. Debounce the actual DB write so rapid clicks batch together
     if (dbSyncRef.current) clearTimeout(dbSyncRef.current);
     dbSyncRef.current = setTimeout(() => {
-      updateTrades([selectedId], updates);
+      const payload = { ...pendingUpdatesRef.current };
+      pendingUpdatesRef.current = {}; // Clear after capturing
+      if (Object.keys(payload).length > 0) {
+        updateTrades([selectedId], payload);
+      }
     }, 600);
   };
 

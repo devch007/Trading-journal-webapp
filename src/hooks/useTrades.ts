@@ -50,6 +50,13 @@ export function useTrades() {
     let columnsToSelect = '*';
     if (schemaProbe && schemaProbe.length > 0) {
       const realCols = Object.keys(schemaProbe[0]);
+      // Ensure specific journaling fields are included even if they are null in the first row
+      const requiredFields = ['rating', 'notes', 'emotions', 'tags', 'checklist', 'tradeType', 'sentiment', 'strategy'];
+      requiredFields.forEach(field => {
+        if (!realCols.includes(field)) {
+          realCols.push(field);
+        }
+      });
       columnsToSelect = realCols.filter(col => col !== 'proof').join(', ');
     }
 
