@@ -176,12 +176,18 @@ export function useTrades() {
         .update(data)
         .in('id', tradeIds);
       
-      if (error) throw error;
+      if (error) {
+        alert(`Database Update Error: ${error.message}`);
+        throw error;
+      }
 
       // Instantly trigger a re-fetch to update UI without relying on websocket
       fetchTrades();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating trades:', error);
+      if (!error.message?.includes('Database Update Error')) {
+        alert(`Failed to save: ${error.message || 'Unknown error'}`);
+      }
       throw error;
     }
   }, [user, fetchTrades]);
