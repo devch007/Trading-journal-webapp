@@ -327,76 +327,94 @@ export function Goals() {
   const currentGoals = useMemo(() => {
     const T = targets;
     if (activeTab === 'Day') {
+      const equity = selectedAccount?.currentEquity || selectedAccount?.initialCapital || 100000;
+      const dayTrades = stats.dayTrades;
+      const grossLossAbs = Math.abs(stats.day.loss); // absolute gross loss in $
+
+      // Find the daily_loss_limit account rule (if any)
+      const dailyLossRule = accountRules.find(r => r.type === 'daily_loss_limit');
+
+      // Resolve day-loss card: use account rule value if available, else fallback to goal target
+      let dayLossTarget: number;
+      let dayLossCurrent: number;
+      let dayLossType: 'pnl' | 'percentage' = 'pnl';
+
+      if (dailyLossRule) {
+        if (dailyLossRule.unit === '%') {
+          dayLossType = 'percentage';
+          dayLossCurrent = equity > 0 ? (grossLossAbs / equity) * 100 : 0;
+          dayLossTarget = -dailyLossRule.value; // stored negative for reverse cards
+        } else {
+          dayLossType = 'pnl';
+          dayLossCurrent = stats.day.loss; // negative gross loss
+          dayLossTarget = -dailyLossRule.value; // negative limit
+        }
+      } else {
+        dayLossCurrent = stats.day.loss;
+        dayLossTarget = T['day-loss'];
+        dayLossType = 'pnl';
+      }
+
       const baseGoals = [
-        { id: 'day-pnl',     label: 'Daily P&L Target',    current: stats.day.pnl,      target: T['day-pnl'],     type: 'pnl' as const,        isHero: true  },
-        { id: 'day-loss',    label: 'Max Daily Loss Limit', current: stats.day.loss,     target: T['day-loss'],    type: 'pnl' as const,        reverse: true },
-        { id: 'day-trades',  label: 'Trades Today',        current: stats.day.trades,   target: T['day-trades']                                              },
-        { id: 'day-winrate', label: 'Win Rate Today',      current: stats.day.winrate,  target: T['day-winrate'], type: 'percentage' as const               },
-        { id: 'day-journal', label: 'Journal Completion',  current: stats.day.journal,  target: stats.day.totalJournalable || T['day-journal']               },
+        { id: 'day-pnl',     label: 'Daily P&L Target',    current: stats.day.pnl,   target: T['day-pnl'],     type: 'pnl' as const,        isHero: true  },
+        { id: 'day-loss',    label: 'Max Daily Loss Limit', current: dayLossCurrent,  target: dayLossTarget,    type: dayLossType as 'pnl' | 'percentage', reverse: true },
+        { id: 'day-trades',  label: 'Trades Today',        current: stats.day.trades, target: T['day-trades']                                              },
+        { id: 'day-winrate', label: 'Win Rate Today',      current: stats.day.winrate, target: T['day-winrate'], type: 'percentage' as const               },
+        { id: 'day-journal', label: 'Journal Completion',  current: stats.day.journal, target: stats.day.totalJournalable || T['day-journal']               },
       ];
 
-      // Add account trading rules as goal cards
-      const ruleGoals = accountRules.map(rule => {
-        const dayTrades = stats.dayTrades;
-        const todayPnl = dayTrades.reduce((s: number, t: any) => s + (Number(t.pnl) || 0), 0);
-        const equity = selectedAccount?.currentEquity || selectedAccount?.initialCapital || 100000;
+      // Add account trading rules as goal cards — skip daily_loss_limit (already shown above)
+      const ruleGoals = accountRules
+        .filter(rule => rule.type !== 'daily_loss_limit')
+        .map(rule => {
+          const todayPnl = dayTrades.reduce((s: number, t: any) => s + (Number(t.pnl) || 0), 0);
 
-        let current = 0;
-        let type: 'count' | 'pnl' | 'percentage' = 'count';
-        let reverse = false;
-        let unit: string | undefined;
+          let current = 0;
+          let type: 'count' | 'pnl' | 'percentage' = 'count';
+          let reverse = false;
+          let unit: string | undefined;
 
-        switch (rule.type) {
-          case 'max_trades_per_day':
-            current = dayTrades.length;
-            reverse = true;
-            unit = ' trades';
-            break;
-          case 'max_loss_per_trade': {
-            const worst = dayTrades.reduce((w: number, t: any) => Math.min(w, t.pnl || 0), 0);
-            current = Math.abs(worst);
-            type = 'pnl';
-            reverse = true;
-            break;
-          }
-          case 'daily_loss_limit':
-            if (rule.unit === '%') {
-              current = equity > 0 ? (Math.abs(Math.min(0, todayPnl)) / equity) * 100 : 0;
-              type = 'percentage';
-            } else {
-              current = Math.abs(Math.min(0, todayPnl));
-              type = 'pnl';
-            }
-            reverse = true;
-            break;
-          case 'custom':
-            if (rule.unit === 'trades') {
+          switch (rule.type) {
+            case 'max_trades_per_day':
               current = dayTrades.length;
               reverse = true;
               unit = ' trades';
-            } else if (rule.unit === '$') {
-              current = Math.abs(Math.min(0, todayPnl));
+              break;
+            case 'max_loss_per_trade': {
+              const worst = dayTrades.reduce((w: number, t: any) => Math.min(w, t.pnl || 0), 0);
+              current = Math.abs(worst);
               type = 'pnl';
               reverse = true;
-            } else {
-              current = equity > 0 ? (Math.abs(Math.min(0, todayPnl)) / equity) * 100 : 0;
-              type = 'percentage';
-              reverse = true;
+              break;
             }
-            break;
-        }
+            case 'custom':
+              if (rule.unit === 'trades') {
+                current = dayTrades.length;
+                reverse = true;
+                unit = ' trades';
+              } else if (rule.unit === '$') {
+                current = Math.abs(Math.min(0, todayPnl));
+                type = 'pnl';
+                reverse = true;
+              } else {
+                current = equity > 0 ? (Math.abs(Math.min(0, todayPnl)) / equity) * 100 : 0;
+                type = 'percentage';
+                reverse = true;
+              }
+              break;
+          }
 
-        return {
-          id: `rule-${rule.id}`,
-          label: `⛡ ${rule.name}`,
-          current,
-          target: reverse ? -rule.value : rule.value,
-          type,
-          reverse,
-          unit,
-          isRule: true,
-        };
-      });
+          return {
+            id: `rule-${rule.id}`,
+            label: `⛡ ${rule.name}`,
+            current,
+            target: reverse ? -rule.value : rule.value,
+            type,
+            reverse,
+            unit,
+            isRule: true,
+          };
+        });
 
       return [...baseGoals, ...ruleGoals];
     }
@@ -414,7 +432,7 @@ export function Goals() {
       { id: 'month-loss',    label: 'Max Monthly Drawdown',   current: stats.month.loss,    target: T['month-loss'],    type: 'pnl' as const,        reverse: true },
       { id: 'month-trades',  label: 'Total Trades Target',    current: stats.month.trades,  target: T['month-trades']                                             },
     ];
-  }, [activeTab, stats, targets]);
+  }, [activeTab, stats, targets, accountRules, selectedAccount]);
 
   // ── Goal statuses for summary bar ───────────────────────────────────────
   const goalStatuses = useMemo((): GoalStatus[] => currentGoals.map(g => {
