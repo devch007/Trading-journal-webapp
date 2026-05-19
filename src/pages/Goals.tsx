@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Target, Shield } from 'lucide-react';
+import { Target, Shield, ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { TopBar } from '../lib/TopBar';
 import { GoalCard } from '../components/GoalCard';
@@ -27,8 +27,32 @@ const DEFAULT_TARGETS: Record<string, number> = {
 
 // ─── Today at a Glance ───────────────────────────────────────────────────────
 
-function TodayAtAGlance({ dayTrades }: { dayTrades: any[] }) {
+function TodayAtAGlance({ dayTrades, selectedDay, onDayChange }: { dayTrades: any[], selectedDay: Date, onDayChange: (d: Date) => void }) {
   const ALL_HOURS = Array.from({ length: 14 }, (_, i) => i + 7); // 7AM–8PM
+  const today = startOfDay(new Date());
+  const isToday = selectedDay.toDateString() === today.toDateString();
+
+  const goBack = () => {
+    const prev = new Date(selectedDay);
+    prev.setDate(prev.getDate() - 1);
+    onDayChange(prev);
+  };
+
+  const goForward = () => {
+    if (!isToday) {
+      const next = new Date(selectedDay);
+      next.setDate(next.getDate() + 1);
+      onDayChange(next);
+    }
+  };
+
+  const formatDisplayDate = (d: Date) => {
+    if (d.toDateString() === today.toDateString()) return "Today's Trading Activity";
+    const yesterday = new Date(today);
+    yesterday.setDate(today.getDate() - 1);
+    if (d.toDateString() === yesterday.toDateString()) return "Yesterday's Trading Activity";
+    return d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+  };
 
   const timeline = useMemo(() => ALL_HOURS.map(h => {
     const h_trades = dayTrades.filter(t => getTradeDate(t.date).getHours() === h);
@@ -55,9 +79,55 @@ function TodayAtAGlance({ dayTrades }: { dayTrades: any[] }) {
 
   return (
     <div className="flex flex-col gap-4 mb-4">
-      <div className="flex items-center gap-2">
-        <Target className="w-5 h-5 text-primary" />
-        <h3 className="type-h1 text-white text-lg">Today's Trading Activity</h3>
+      {/* Day Navigation Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Target className="w-5 h-5 text-primary" />
+          <AnimatePresence mode="wait">
+            <motion.h3
+              key={selectedDay.toDateString()}
+              initial={{ opacity: 0, y: -6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 6 }}
+              transition={{ duration: 0.2 }}
+              className="type-h1 text-white text-lg"
+            >
+              {formatDisplayDate(selectedDay)}
+            </motion.h3>
+          </AnimatePresence>
+        </div>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={goBack}
+            className="p-2 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-primary/30 transition-all group"
+            title="Previous day"
+          >
+            <ChevronLeft className="w-4 h-4 text-[#A7A7A7] group-hover:text-white transition-colors" />
+          </button>
+
+          {!isToday && (
+            <button
+              onClick={() => onDayChange(today)}
+              className="px-3 py-2 rounded-xl bg-primary/10 border border-primary/20 hover:bg-primary/20 transition-all text-primary type-micro text-[11px] font-bold tracking-wider"
+              title="Back to today"
+            >
+              TODAY
+            </button>
+          )}
+
+          <button
+            onClick={goForward}
+            disabled={isToday}
+            className={`p-2 rounded-xl border transition-all group ${
+              isToday
+                ? 'bg-white/[0.02] border-white/5 opacity-30 cursor-not-allowed'
+                : 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-primary/30'
+            }`}
+            title="Next day"
+          >
+            <ChevronRight className="w-4 h-4 text-[#A7A7A7] group-hover:text-white transition-colors" />
+          </button>
+        </div>
       </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -148,6 +218,7 @@ function TodayAtAGlance({ dayTrades }: { dayTrades: any[] }) {
 export function Goals() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<Timeframe>('Day');
+  const [selectedDay, setSelectedDay] = useState<Date>(startOfDay(new Date()));
   const { trades: allTrades, loading } = useTrades();
   const { user } = useAuth();
   const { selectedAccountId, selectedAccount } = useAccountContext();
@@ -200,11 +271,14 @@ export function Goals() {
   // ── Stats (unchanged logic) ─────────────────────────────────────────────
   const stats = useMemo(() => {
     const now = new Date();
-    const dayStart = startOfDay(now);
+    // Use selectedDay for day-level stats so navigation works
+    const dayStart = startOfDay(selectedDay);
+    const dayEnd = new Date(dayStart); dayEnd.setHours(23, 59, 59, 999);
     const weekStart = startOfWeek(now, { weekStartsOn: 1 });
     const monthStart = startOfMonth(now);
+    const dayT = trades.filter(t => { const d = getTradeDate(t.date); return d >= dayStart && d <= dayEnd; });
     const by = (start: Date) => trades.filter(t => getTradeDate(t.date) >= start);
-    const dayT = by(dayStart), weekT = by(weekStart), monthT = by(monthStart);
+    const weekT = by(weekStart), monthT = by(monthStart);
 
     const pnl = (tl: any[]) => tl.reduce((s, t) => s + (Number(t.pnl) || 0), 0);
     const wr = (tl: any[]) => !tl.length ? 0 : (tl.filter(t => t.isPositive).length / tl.length) * 100;
@@ -237,7 +311,7 @@ export function Goals() {
       month: { pnl: pnl(monthT), winrate: wr(monthT), pf: pf(monthT), loss: Math.min(0, pnl(monthT)), trades: monthT.length },
       dayTrades: dayT,
     };
-  }, [trades]);
+  }, [trades, selectedDay]);
 
   // ── 7-day sparkline data ────────────────────────────────────────────────
   const last7DaysPnL = useMemo(() => Array.from({ length: 7 }, (_, i) => {
@@ -543,14 +617,18 @@ export function Goals() {
           <GoalsSummary goals={goalStatuses} overallPercent={overallPercent} />
         </div>
 
-        {/* Today at a Glance - MOVED UP - Only visible on "Day" tab */}
+        {/* Today at a Glance - Only visible on "Day" tab */}
         {activeTab === 'Day' && (
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3 }}
           >
-            <TodayAtAGlance dayTrades={stats.dayTrades} />
+            <TodayAtAGlance
+              dayTrades={stats.dayTrades}
+              selectedDay={selectedDay}
+              onDayChange={setSelectedDay}
+            />
           </motion.div>
         )}
 
