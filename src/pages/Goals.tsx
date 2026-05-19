@@ -305,8 +305,9 @@ export function Goals() {
       const l = Math.abs(tl.filter(t => t.pnl < 0).reduce((s, t) => s + t.pnl, 0));
       return l === 0 ? w : w / l;
     };
+    const grossLoss = (tl: any[]) => tl.filter(t => (t.pnl || 0) < 0).reduce((s, t) => s + (Number(t.pnl) || 0), 0);
     return {
-      day: { pnl: pnl(dayT), loss: Math.min(0, pnl(dayT)), trades: dayT.length, winrate: wr(dayT), journal: journaled(dayT), totalJournalable: dayT.length },
+      day: { pnl: pnl(dayT), loss: grossLoss(dayT), trades: dayT.length, winrate: wr(dayT), journal: journaled(dayT), totalJournalable: dayT.length },
       week: { pnl: pnl(weekT), loss: Math.min(0, pnl(weekT)), best: best(weekT), consistency: consistency(weekT), streak: streak() },
       month: { pnl: pnl(monthT), winrate: wr(monthT), pf: pf(monthT), loss: Math.min(0, pnl(monthT)), trades: monthT.length },
       dayTrades: dayT,
