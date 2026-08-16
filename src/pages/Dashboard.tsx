@@ -42,7 +42,10 @@ import {
   YAxis, 
   CartesianGrid, 
   Tooltip, 
-  ResponsiveContainer
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell
 } from 'recharts';
 import { useTrades } from "../hooks/useTrades";
 import { useAuth } from "../contexts/AuthContext";
@@ -206,6 +209,60 @@ export function Dashboard() {
       topPairs: sortedPairs.slice(0, 3)
     };
   }, [trades, selectedAccount]);
+
+  // Buy vs Sell Order Bias Differentiation
+  const orderBiasStats = useMemo(() => {
+    const buyTrades = trades.filter(t => t.action?.toUpperCase() === 'BUY');
+    const sellTrades = trades.filter(t => t.action?.toUpperCase() === 'SELL');
+    
+    const buyCount = buyTrades.length;
+    const sellCount = sellTrades.length;
+    const totalCount = buyCount + sellCount;
+
+    const buyPnl = buyTrades.reduce((sum, t) => sum + (Number(t.pnl) || 0), 0);
+    const sellPnl = sellTrades.reduce((sum, t) => sum + (Number(t.pnl) || 0), 0);
+
+    const buyWins = buyTrades.filter(t => t.isPositive || Number(t.pnl) > 0).length;
+    const sellWins = sellTrades.filter(t => t.isPositive || Number(t.pnl) > 0).length;
+
+    const buyWinRate = buyCount > 0 ? (buyWins / buyCount) * 100 : 0;
+    const sellWinRate = sellCount > 0 ? (sellWins / sellCount) * 100 : 0;
+
+    const buyPercent = totalCount > 0 ? ((buyCount / totalCount) * 100) : 50;
+    const sellPercent = totalCount > 0 ? ((sellCount / totalCount) * 100) : 50;
+
+    const chartData = totalCount > 0 ? [
+      { name: 'BUY', value: buyCount, color: '#10b981' },
+      { name: 'SELL', value: sellCount, color: '#f43f5e' }
+    ] : [
+      { name: 'None', value: 1, color: isDark ? '#262626' : '#e5e7eb' }
+    ];
+
+    let biasLabel = 'Neutral';
+    let biasColor = 'bg-gray-100 dark:bg-neutral-800 text-gray-700 dark:text-gray-300';
+    if (buyCount > sellCount) {
+      biasLabel = `${buyPercent.toFixed(0)}% Long Bias`;
+      biasColor = 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/40';
+    } else if (sellCount > buyCount) {
+      biasLabel = `${sellPercent.toFixed(0)}% Short Bias`;
+      biasColor = 'bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800/40';
+    }
+
+    return {
+      buyCount,
+      sellCount,
+      totalCount,
+      buyPercent: totalCount > 0 ? buyPercent.toFixed(1) : '0',
+      sellPercent: totalCount > 0 ? sellPercent.toFixed(1) : '0',
+      buyPnl,
+      sellPnl,
+      buyWinRate: buyWinRate.toFixed(0),
+      sellWinRate: sellWinRate.toFixed(0),
+      chartData,
+      biasLabel,
+      biasColor
+    };
+  }, [trades, isDark]);
 
   // Activity Chart Data Calculation (Strictly for selected account trades)
   const activityChartData = useMemo(() => {
@@ -979,83 +1036,104 @@ export function Dashboard() {
               </div>
             </div>
 
-            {/* Card 3: Trading Playbook & Risk Guard */}
+            {/* Card 3: Buy vs Sell Order Bias Circle Card */}
             <div className="bg-white dark:bg-[#16181f] rounded-3xl p-6 border border-gray-200/80 dark:border-neutral-800/80 shadow-2xs space-y-4">
               <div className="flex items-center justify-between">
-                {/* Card heading -> 600 weight */}
-                <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-                  Trading Playbook & Risk Guard
-                </h3>
-                <button onClick={() => navigate('/checkout')} className="text-gray-400 hover:text-gray-600">
-                  <MoreHorizontal className="w-4 h-4" />
-                </button>
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+                    Order Direction & Bias
+                  </h3>
+                  <p className="text-[11px] text-gray-400">Buy vs Sell Execution Ratio</p>
+                </div>
+                <span className={`px-2.5 py-1 rounded-full text-[11px] font-bold ${orderBiasStats.biasColor}`}>
+                  {orderBiasStats.biasLabel}
+                </span>
               </div>
 
-              <div className="space-y-2.5">
-                
-                {/* 1% Risk Rule */}
-                <div 
-                  onClick={() => navigate('/checkout')}
-                  className="flex items-center justify-between p-3 rounded-2xl bg-[#f8f9fb] dark:bg-neutral-800/40 hover:bg-gray-100 dark:hover:bg-neutral-800 transition-all cursor-pointer group"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-2xl bg-amber-500 flex items-center justify-center text-white font-bold text-sm shadow-2xs">
-                      <Shield className="w-4 h-4" />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-xs font-semibold text-gray-900 dark:text-white group-hover:text-amber-600 transition-colors">
-                        1% Risk Rule
-                      </p>
-                      <p className="text-[11px] font-normal text-gray-400 truncate max-w-[170px]">
-                        Max 1% capital risk per trade
-                      </p>
-                    </div>
-                  </div>
-                  <ArrowRight className="w-4 h-4 text-gray-400 group-hover:translate-x-1 transition-transform" />
+              {/* Donut Circle Chart */}
+              <div className="relative flex items-center justify-center py-1">
+                <div className="w-[140px] h-[140px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={orderBiasStats.chartData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={46}
+                        outerRadius={64}
+                        paddingAngle={orderBiasStats.totalCount > 1 ? 4 : 0}
+                        dataKey="value"
+                        stroke={isDark ? "#16181f" : "#ffffff"}
+                        strokeWidth={3}
+                      >
+                        {orderBiasStats.chartData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                    </PieChart>
+                  </ResponsiveContainer>
                 </div>
 
-                {/* 1:2 R:R Ratio */}
+                {/* Center Badge inside Circle */}
+                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center">
+                  <span className="text-xl font-black tabular-nums text-gray-900 dark:text-white tracking-tight">
+                    {orderBiasStats.totalCount}
+                  </span>
+                  <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">
+                    Orders
+                  </span>
+                </div>
+              </div>
+
+              {/* Buy vs Sell Metrics Cards */}
+              <div className="grid grid-cols-2 gap-3 pt-1">
+                {/* BUY Card */}
                 <div 
-                  onClick={() => navigate('/checkout')}
-                  className="flex items-center justify-between p-3 rounded-2xl bg-[#f8f9fb] dark:bg-neutral-800/40 hover:bg-gray-100 dark:hover:bg-neutral-800 transition-all cursor-pointer group"
+                  onClick={() => navigate('/trades')}
+                  className="p-3 rounded-2xl bg-[#f8f9fb] dark:bg-neutral-800/40 border border-gray-100 dark:border-neutral-800/80 hover:border-emerald-300 dark:hover:border-emerald-800/60 transition-all cursor-pointer group"
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-2xl bg-orange-500 flex items-center justify-center text-white font-bold text-sm shadow-2xs">
-                      <Target className="w-4 h-4" />
+                  <div className="flex items-center justify-between mb-1">
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                      <span className="text-xs font-bold text-gray-900 dark:text-white">BUY</span>
                     </div>
-                    <div className="min-w-0">
-                      <p className="text-xs font-semibold text-gray-900 dark:text-white group-hover:text-orange-600 transition-colors">
-                        Minimum 1:2 R:R
-                      </p>
-                      <p className="text-[11px] font-normal text-gray-400 truncate max-w-[170px]">
-                        Target at least 2x stop loss
-                      </p>
-                    </div>
+                    <span className="text-[11px] font-bold tabular-nums text-emerald-600 dark:text-emerald-400">
+                      {orderBiasStats.buyPercent}%
+                    </span>
                   </div>
-                  <ArrowRight className="w-4 h-4 text-gray-400 group-hover:translate-x-1 transition-transform" />
+                  <div className="space-y-0.5">
+                    <p className={`text-xs font-bold tabular-nums ${orderBiasStats.buyPnl >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-500'}`}>
+                      {orderBiasStats.buyPnl >= 0 ? `+$${orderBiasStats.buyPnl.toFixed(2)}` : `-$${Math.abs(orderBiasStats.buyPnl).toFixed(2)}`}
+                    </p>
+                    <p className="text-[10px] text-gray-400 font-medium">
+                      {orderBiasStats.buyCount} trades • {orderBiasStats.buyWinRate}% win
+                    </p>
+                  </div>
                 </div>
 
-                {/* Pre-Trade Checklist */}
+                {/* SELL Card */}
                 <div 
-                  onClick={() => navigate('/checkout')}
-                  className="flex items-center justify-between p-3 rounded-2xl bg-[#f8f9fb] dark:bg-neutral-800/40 hover:bg-gray-100 dark:hover:bg-neutral-800 transition-all cursor-pointer group"
+                  onClick={() => navigate('/trades')}
+                  className="p-3 rounded-2xl bg-[#f8f9fb] dark:bg-neutral-800/40 border border-gray-100 dark:border-neutral-800/80 hover:border-rose-300 dark:hover:border-rose-800/60 transition-all cursor-pointer group"
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-2xl bg-neutral-900 dark:bg-neutral-700 flex items-center justify-center text-white font-bold text-sm shadow-2xs">
-                      <BrainCircuit className="w-4 h-4" />
+                  <div className="flex items-center justify-between mb-1">
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-rose-500"></span>
+                      <span className="text-xs font-bold text-gray-900 dark:text-white">SELL</span>
                     </div>
-                    <div className="min-w-0">
-                      <p className="text-xs font-semibold text-gray-900 dark:text-white group-hover:text-indigo-600 transition-colors">
-                        Pre-Trade Checklist
-                      </p>
-                      <p className="text-[11px] font-normal text-gray-400 truncate max-w-[170px]">
-                        Verify mindset & setup criteria
-                      </p>
-                    </div>
+                    <span className="text-[11px] font-bold tabular-nums text-rose-600 dark:text-rose-400">
+                      {orderBiasStats.sellPercent}%
+                    </span>
                   </div>
-                  <ArrowRight className="w-4 h-4 text-gray-400 group-hover:translate-x-1 transition-transform" />
+                  <div className="space-y-0.5">
+                    <p className={`text-xs font-bold tabular-nums ${orderBiasStats.sellPnl >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-500'}`}>
+                      {orderBiasStats.sellPnl >= 0 ? `+$${orderBiasStats.sellPnl.toFixed(2)}` : `-$${Math.abs(orderBiasStats.sellPnl).toFixed(2)}`}
+                    </p>
+                    <p className="text-[10px] text-gray-400 font-medium">
+                      {orderBiasStats.sellCount} trades • {orderBiasStats.sellWinRate}% win
+                    </p>
+                  </div>
                 </div>
-
               </div>
             </div>
 
