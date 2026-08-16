@@ -4,12 +4,13 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { useAccountContext } from "../contexts/AccountContext";
 import { useStrategies } from "../contexts/StrategyContext";
+import { cn } from "../lib/utils";
 
 interface TradeModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (trade: any) => void;
-  trade?: any; // Optional trade for editing
+  trade?: any;
 }
 
 export function TradeModal({ isOpen, onClose, onSubmit, trade }: TradeModalProps) {
@@ -53,72 +54,44 @@ export function TradeModal({ isOpen, onClose, onSubmit, trade }: TradeModalProps
     return d;
   };
 
-  const formatDateFromPicker = (d: Date | null) => {
-    if (!d) return "";
-    if (isNaN(d.getTime())) return "";
-    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + 
-      ', ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-  };
-
   useEffect(() => {
-    if (isOpen) {
-      if (trade) {
-        // Edit mode — load trade data
-        setAccountId(trade.accountId || "");
-        setSelectedDate(trade.date ? parseDateForPicker(trade.date) : new Date());
-        setSymbol(trade.symbol || "EURUSD");
-        setAction(trade.action || "BUY");
-        setSize(trade.size?.replace(" Lot", "") || "1.00");
-        setEntry(trade.entry || "");
-        setExit(trade.exit || "");
-        setPnl(trade.pnl?.toString() || "0");
-        setCommission(trade.commission?.toString() || "");
-        setSession(trade.session || "Else");
-        setConfidence(trade.confidence || "High");
-        setDuration(trade.duration || "");
-        setTags(trade.tags || (trade.tag ? [trade.tag] : ["BREAKOUT"]));
-        setStrategy(trade.strategy || "");
-      } else {
-        // New trade mode — reset fields
-        if (selectedAccountId) {
-          setAccountId(selectedAccountId);
-        } else if (accounts.length > 0 && !accountId) {
-          setAccountId(accounts[0].id);
-        }
-        setSelectedDate(new Date());
-        setSymbol("EURUSD");
-        setAction("BUY");
-        setSize("1.00");
-        setEntry("");
-        setExit("");
-        setPnl("");
-        setCommission("");
-        setSession("Else");
-        setConfidence("High");
-        setDuration("");
-        setTags(["BREAKOUT"]);
-        setStrategy("");
-      }
+    if (trade) {
+      setAccountId(trade.accountId || selectedAccountId || (accounts[0]?.id || ""));
+      setSelectedDate(parseDateForPicker(trade.date));
+      setSymbol(trade.symbol);
+      setAction(trade.action);
+      setSize(trade.size.replace(" Lot", "").replace(" Lots", ""));
+      setEntry(trade.entry !== undefined ? trade.entry.toString() : "");
+      setExit(trade.exit !== undefined ? trade.exit.toString() : "");
+      setPnl(trade.pnl !== undefined ? trade.pnl.toString() : "");
+      setCommission(trade.commission !== undefined ? trade.commission.toString() : "");
+      setSession(trade.session || "Else");
+      setConfidence(trade.confidence || "High");
+      setDuration(trade.duration || "");
+      setTags(trade.tags || (trade.tag ? [trade.tag] : []));
+      setStrategy(trade.strategy || "");
+    } else {
+      setAccountId(selectedAccountId || (accounts[0]?.id || ""));
+      setSelectedDate(new Date());
+      setSymbol("EURUSD");
+      setAction("BUY");
+      setSize("1.00");
+      setEntry("");
+      setExit("");
+      setPnl("");
+      setCommission("");
+      setSession("Else");
+      setConfidence("High");
+      setDuration("");
+      setTags(["BREAKOUT"]);
+      setStrategy("");
     }
-  }, [isOpen, trade, selectedAccountId, accounts]);
-
-  useEffect(() => {
-    // Auto-calculate commission based on Account settings for new trades
-    if (trade) return;
-    const vol = parseFloat(size);
-    if (!isNaN(vol)) {
-      const isMetal = symbol.toUpperCase().includes('XAU') || symbol.toUpperCase().includes('XAG') || symbol.toUpperCase().includes('GOLD') || symbol.toUpperCase().includes('SILVER');
-      const account = accounts.find(a => a.id === accountId);
-      const rate = isMetal ? (account?.commissionMetals ?? 5) : (account?.commissionForex ?? 5);
-      const calculatedComm = (vol * rate).toFixed(2);
-      setCommission(calculatedComm);
-    }
-  }, [size, symbol, accountId, accounts, trade]);
+  }, [trade, isOpen, selectedAccountId, accounts]);
 
   if (!isOpen) return null;
 
   const handleAddTag = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && tagInput.trim()) {
+    if (e.key === "Enter" && tagInput.trim()) {
       e.preventDefault();
       const newTag = tagInput.trim().toUpperCase();
       if (!tags.includes(newTag)) {
@@ -135,52 +108,70 @@ export function TradeModal({ isOpen, onClose, onSubmit, trade }: TradeModalProps
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    const pnlNum = parseFloat(pnl) || 0;
-    const commNum = parseFloat(commission) || 0;
-    const finalPnl = pnlNum - Math.abs(commNum);
-    const sizeFormatted = `${parseFloat(size).toFixed(2)} Lot`;
+    let formattedDate = "Today, 12:00:00";
+    if (selectedDate) {
+      const pad = (n: number) => n.toString().padStart(2, '0');
+      const timeStr = `${pad(selectedDate.getHours())}:${pad(selectedDate.getMinutes())}:${pad(selectedDate.getSeconds())}`;
+      
+      const today = new Date();
+      const isToday = selectedDate.getDate() === today.getDate() && 
+                      selectedDate.getMonth() === today.getMonth() && 
+                      selectedDate.getFullYear() === today.getFullYear();
+                      
+      const yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
+      const isYesterday = selectedDate.getDate() === yesterday.getDate() && 
+                          selectedDate.getMonth() === yesterday.getMonth() && 
+                          selectedDate.getFullYear() === yesterday.getFullYear();
+
+      if (isToday) {
+        formattedDate = `Today, ${timeStr}`;
+      } else if (isYesterday) {
+        formattedDate = `Yesterday, ${timeStr}`;
+      } else {
+        const month = selectedDate.toLocaleString('default', { month: 'short' });
+        formattedDate = `${month} ${selectedDate.getDate()}, ${selectedDate.getFullYear()}`;
+      }
+    }
+
+    const finalPnl = pnl ? parseFloat(pnl) : 0;
     const isPositive = finalPnl >= 0;
 
     if (trade) {
-      // EDIT: only send the fields we want to update - not the entire trade object
-      const formattedDate = selectedDate ? formatDateFromPicker(selectedDate) : trade.date;
-      const updates: Record<string, any> = {
-        id: trade.id, // needed to identify which trade
-        accountId: accountId || trade.accountId,
+      const updatedTrade = {
+        ...trade,
+        accountId: accountId || undefined,
         date: formattedDate,
         symbol,
         action,
-        size: sizeFormatted,
-        entry: entry || trade.entry || "",
-        exit: exit || trade.exit || "",
-        pnl: finalPnl,
+        size: `${parseFloat(size || "1").toFixed(2)} Lot`,
+        entry: entry || undefined,
+        exit: exit || undefined,
         result: `${isPositive ? '+' : '-'}$${Math.abs(finalPnl).toFixed(2)}`,
         isPositive,
+        pnl: finalPnl,
+        commission: commission ? parseFloat(commission) : undefined,
         session,
         confidence,
-        duration: duration || trade.duration || "",
+        duration: duration || undefined,
         tags,
-        tag: tags[0] || trade.tag || "",
-        strategy,
+        tag: tags[0] || undefined,
+        strategy: strategy || undefined,
       };
-      onSubmit(updates);
+      onSubmit(updatedTrade);
     } else {
-      // NEW trade
-      const now = new Date();
-      const dateStr = selectedDate ? formatDateFromPicker(selectedDate) : (now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + 
-        ', ' + now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
-
       const newTrade = {
         accountId: accountId || undefined,
-        date: dateStr,
+        date: formattedDate,
         symbol,
         action,
-        size: sizeFormatted,
+        size: `${parseFloat(size || "1").toFixed(2)} Lot`,
         entry: entry || "0.0000",
         exit: exit || "0.0000",
         result: `${isPositive ? '+' : '-'}$${Math.abs(finalPnl).toFixed(2)}`,
         isPositive,
         pnl: finalPnl,
+        commission: commission ? parseFloat(commission) : undefined,
         session,
         confidence,
         duration: duration || "",
@@ -194,33 +185,40 @@ export function TradeModal({ isOpen, onClose, onSubmit, trade }: TradeModalProps
     onClose();
   };
 
+  const inputClass = "w-full bg-gray-50 dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-2xl px-3.5 py-2.5 text-xs text-gray-900 dark:text-white placeholder:text-gray-400 font-semibold focus:outline-none focus:ring-1 focus:ring-black/10 dark:focus:ring-white/20 transition-all shadow-2xs";
+  const labelClass = "text-xs font-semibold text-gray-900 dark:text-white block mb-1";
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="glass-card w-full max-w-md rounded-2xl border border-white/10 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
-        <div className="flex justify-between items-center p-6 border-b border-white/5">
-          <h2 className="type-h1">{trade ? 'Edit Trade' : 'New Trade'}</h2>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/40 dark:bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
+      <div className="bg-white dark:bg-[#16181f] w-full max-w-lg rounded-3xl border border-gray-200/90 dark:border-neutral-800 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 max-h-[90vh] flex flex-col">
+        {/* Header */}
+        <div className="flex justify-between items-center px-6 py-5 border-b border-gray-100 dark:border-neutral-800 shrink-0">
+          <div>
+            <h2 className="text-base font-bold text-gray-900 dark:text-white">{trade ? 'Edit Trade' : 'Log New Trade'}</h2>
+            <p className="text-xs text-gray-400">Record execution details, metrics, and strategy</p>
+          </div>
           <button 
             onClick={onClose}
-            className="p-2 rounded-full hover:bg-white/10 text-on-surface-variant hover:text-white transition-colors"
+            className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-neutral-800 text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors cursor-pointer"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
         
-        <form onSubmit={handleSubmit} className="p-6 flex flex-col gap-5">
+        <form onSubmit={handleSubmit} className="p-6 flex flex-col gap-4 overflow-y-auto no-scrollbar flex-1">
           {/* Account Selection */}
           {accounts.length > 0 && (
-            <div className="flex flex-col gap-2">
-              <label className="text-xs type-label text-on-surface-variant uppercase tracking-wider">Account</label>
+            <div>
+              <label className={labelClass}>Trading Account</label>
               <select 
                 value={accountId}
                 onChange={(e) => setAccountId(e.target.value)}
-                className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-primary/50 transition-colors appearance-none"
+                className={inputClass}
                 required
               >
                 {accounts.map(acc => (
-                  <option key={acc.id} value={acc.id} className="bg-[#1a1a24]">
-                    {acc.firm} - {acc.name}
+                  <option key={acc.id} value={acc.id}>
+                    {acc.firm} — {acc.name}
                   </option>
                 ))}
               </select>
@@ -228,9 +226,9 @@ export function TradeModal({ isOpen, onClose, onSubmit, trade }: TradeModalProps
           )}
 
           {/* Date */}
-          <div className="flex flex-col gap-2 relative z-50">
-            <label className="text-xs type-label text-on-surface-variant uppercase tracking-wider">Date & Time</label>
-            <div className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus-within:border-primary/50 transition-colors w-full">
+          <div>
+            <label className={labelClass}>Date & Time</label>
+            <div className="w-full">
               <DatePicker
                 selected={selectedDate}
                 onChange={(d) => setSelectedDate(d)}
@@ -239,203 +237,207 @@ export function TradeModal({ isOpen, onClose, onSubmit, trade }: TradeModalProps
                 timeIntervals={15}
                 timeCaption="Time"
                 dateFormat="MMMM d, yyyy h:mm aa"
-                className="bg-transparent border-none text-white tnum focus:outline-none w-full"
-                calendarClassName="bg-[#191923] border-white/10 shadow-2xl"
-                dayClassName={() => "text-white hover:bg-primary/50"}
-                timeClassName={() => "text-white bg-[#191923]"}
-                popperClassName="z-[100]"
+                className={inputClass}
                 wrapperClassName="w-full"
               />
             </div>
           </div>
 
           {/* Symbol & Action */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="flex flex-col gap-2">
-              <label className="text-xs type-label text-on-surface-variant uppercase tracking-wider">Symbol</label>
+          <div className="grid grid-cols-2 gap-3.5">
+            <div>
+              <label className={labelClass}>Symbol</label>
               <select 
                 value={symbol}
                 onChange={(e) => setSymbol(e.target.value)}
-                className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-primary/50 transition-colors appearance-none"
+                className={inputClass}
               >
-                <option value="EURUSD" className="bg-[#1a1a24]">EURUSD</option>
-                <option value="XAUUSD" className="bg-[#1a1a24]">XAUUSD</option>
-                <option value="GBPUSD" className="bg-[#1a1a24]">GBPUSD</option>
-                <option value="USDJPY" className="bg-[#1a1a24]">USDJPY</option>
-                <option value="USDCAD" className="bg-[#1a1a24]">USDCAD</option>
-                <option value="GBPJPY" className="bg-[#1a1a24]">GBPJPY</option>
-                <option value="EURJPY" className="bg-[#1a1a24]">EURJPY</option>
-                <option value="AUDUSD" className="bg-[#1a1a24]">AUDUSD</option>
-                <option value="NZDUSD" className="bg-[#1a1a24]">NZDUSD</option>
-                <option value="USDCHF" className="bg-[#1a1a24]">USDCHF</option>
+                <option value="EURUSD">EURUSD</option>
+                <option value="XAUUSD">XAUUSD</option>
+                <option value="GBPUSD">GBPUSD</option>
+                <option value="USDJPY">USDJPY</option>
+                <option value="USDCAD">USDCAD</option>
+                <option value="GBPJPY">GBPJPY</option>
+                <option value="EURJPY">EURJPY</option>
+                <option value="AUDUSD">AUDUSD</option>
+                <option value="NZDUSD">NZDUSD</option>
+                <option value="USDCHF">USDCHF</option>
+                <option value="US30">US30</option>
+                <option value="NAS100">NAS100</option>
               </select>
             </div>
-            <div className="flex flex-col gap-2">
-              <label className="text-xs type-label text-on-surface-variant uppercase tracking-wider">Action</label>
-              <div className="flex bg-white/5 border border-white/10 rounded-xl p-1">
+            <div>
+              <label className={labelClass}>Order Direction</label>
+              <div className="flex bg-gray-100 dark:bg-neutral-800 p-1 rounded-2xl gap-1">
                 <button
                   type="button"
                   onClick={() => setAction("BUY")}
-                  className={`flex-1 py-2 rounded-lg text-sm font-bold transition-colors ${action === "BUY" ? "bg-[#1ED760]/20 text-[#1ED760]" : "text-on-surface-variant hover:text-white"}`}
+                  className={cn(
+                    "flex-1 py-2 rounded-xl text-xs font-bold transition-all",
+                    action === "BUY" ? "bg-emerald-600 text-white shadow-xs" : "text-gray-500 hover:text-gray-900 dark:hover:text-white"
+                  )}
                 >
-                  BUY
+                  BUY (LONG)
                 </button>
                 <button
                   type="button"
                   onClick={() => setAction("SELL")}
-                  className={`flex-1 py-2 rounded-lg text-sm font-bold transition-colors ${action === "SELL" ? "bg-[#E5534B]/20 text-[#E5534B]" : "text-on-surface-variant hover:text-white"}`}
+                  className={cn(
+                    "flex-1 py-2 rounded-xl text-xs font-bold transition-all",
+                    action === "SELL" ? "bg-rose-600 text-white shadow-xs" : "text-gray-500 hover:text-gray-900 dark:hover:text-white"
+                  )}
                 >
-                  SELL
+                  SELL (SHORT)
                 </button>
               </div>
             </div>
           </div>
 
           {/* Entry & Exit */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="flex flex-col gap-2">
-              <label className="text-xs type-label text-on-surface-variant uppercase tracking-wider">Entry Price</label>
+          <div className="grid grid-cols-2 gap-3.5">
+            <div>
+              <label className={labelClass}>Entry Price</label>
               <input 
                 type="number" 
                 step="0.00001"
                 value={entry}
                 onChange={(e) => setEntry(e.target.value)}
-                className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white tnum focus:outline-none focus:border-primary/50 transition-colors"
+                className={inputClass}
                 placeholder="e.g. 1.08500"
               />
             </div>
-            <div className="flex flex-col gap-2">
-              <label className="text-xs type-label text-on-surface-variant uppercase tracking-wider">Exit Price</label>
+            <div>
+              <label className={labelClass}>Exit Price</label>
               <input 
                 type="number" 
                 step="0.00001"
                 value={exit}
                 onChange={(e) => setExit(e.target.value)}
-                className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white tnum focus:outline-none focus:border-primary/50 transition-colors"
+                className={inputClass}
                 placeholder="e.g. 1.09000"
               />
             </div>
           </div>
 
           {/* Size & P&L & Commission */}
-          <div className="grid grid-cols-3 gap-4">
-            <div className="flex flex-col gap-2">
-              <label className="text-xs type-label text-on-surface-variant uppercase tracking-wider">Size (Lots)</label>
+          <div className="grid grid-cols-3 gap-3">
+            <div>
+              <label className={labelClass}>Size (Lots)</label>
               <input 
                 type="number" 
                 step="0.01"
                 min="0.01"
                 value={size}
                 onChange={(e) => setSize(e.target.value)}
-                className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white tnum focus:outline-none focus:border-primary/50 transition-colors"
+                className={inputClass}
                 placeholder="1.00"
                 required
               />
             </div>
-            <div className="flex flex-col gap-2">
-              <label className="text-xs type-label text-on-surface-variant uppercase tracking-wider">P&L ($)</label>
+            <div>
+              <label className={labelClass}>P&L ($)</label>
               <input 
                 type="number" 
                 step="0.01"
                 value={pnl}
                 onChange={(e) => setPnl(e.target.value)}
-                className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white tnum focus:outline-none focus:border-primary/50 transition-colors"
-                placeholder="e.g. 150.00"
+                className={inputClass}
+                placeholder="150.00"
                 required
               />
             </div>
-            <div className="flex flex-col gap-2">
-              <label className="text-xs type-label text-on-surface-variant uppercase tracking-wider">Comms ($)</label>
+            <div>
+              <label className={labelClass}>Comms ($)</label>
               <input 
                 type="number" 
                 step="0.01"
                 value={commission}
                 onChange={(e) => setCommission(e.target.value)}
-                className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white tnum focus:outline-none focus:border-primary/50 transition-colors"
-                placeholder="e.g. -5.00"
+                className={inputClass}
+                placeholder="-5.00"
               />
             </div>
           </div>
 
           {/* Session, Confidence, Duration */}
-          <div className="grid grid-cols-3 gap-4">
-            <div className="flex flex-col gap-2">
-              <label className="text-xs type-label text-on-surface-variant uppercase tracking-wider">Session</label>
+          <div className="grid grid-cols-3 gap-3">
+            <div>
+              <label className={labelClass}>Session</label>
               <select 
                 value={session}
                 onChange={(e) => setSession(e.target.value as any)}
-                className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-primary/50 transition-colors appearance-none"
+                className={inputClass}
               >
-                <option value="Asian" className="bg-[#1a1a24]">Asian</option>
-                <option value="London" className="bg-[#1a1a24]">London</option>
-                <option value="NY" className="bg-[#1a1a24]">NY</option>
-                <option value="Else" className="bg-[#1a1a24]">Else</option>
+                <option value="London">London</option>
+                <option value="NY">NY</option>
+                <option value="Asian">Asian</option>
+                <option value="Else">Other</option>
               </select>
             </div>
-            <div className="flex flex-col gap-2">
-              <label className="text-xs type-label text-on-surface-variant uppercase tracking-wider">Confidence</label>
+            <div>
+              <label className={labelClass}>Confidence</label>
               <select 
                 value={confidence}
                 onChange={(e) => setConfidence(e.target.value as any)}
-                className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-primary/50 transition-colors appearance-none"
+                className={inputClass}
               >
-                <option value="High" className="bg-[#1a1a24]">High</option>
-                <option value="Medium" className="bg-[#1a1a24]">Medium</option>
-                <option value="Low" className="bg-[#1a1a24]">Low</option>
+                <option value="High">High</option>
+                <option value="Medium">Medium</option>
+                <option value="Low">Low</option>
               </select>
             </div>
-            <div className="flex flex-col gap-2">
-              <label className="text-xs type-label text-on-surface-variant uppercase tracking-wider">Duration</label>
+            <div>
+              <label className={labelClass}>Duration</label>
               <input 
                 type="text" 
                 value={duration}
                 onChange={(e) => setDuration(e.target.value)}
-                className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white tnum focus:outline-none focus:border-primary/50 transition-colors"
-                placeholder="e.g. 1h 30m"
+                className={inputClass}
+                placeholder="1h 30m"
               />
             </div>
           </div>
 
           {/* Strategy Selection */}
-          <div className="flex flex-col gap-2">
-            <label className="text-xs type-label text-on-surface-variant uppercase tracking-wider">Strategy</label>
+          <div>
+            <label className={labelClass}>Strategy Playbook</label>
             <select 
               value={strategy}
               onChange={(e) => setStrategy(e.target.value)}
-              className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-primary/50 transition-colors appearance-none"
+              className={inputClass}
             >
-              <option value="" className="bg-[#1a1a24]">-- Select Strategy --</option>
+              <option value="">-- Select Strategy --</option>
               {strategies.map(s => (
-                <option key={s.id} value={s.name} className="bg-[#1a1a24]">{s.name}</option>
+                <option key={s.id} value={s.name}>{s.name}</option>
               ))}
             </select>
           </div>
 
-          <div className="flex flex-col gap-2">
-            <label className="text-xs type-label text-on-surface-variant uppercase tracking-wider">Add Tag (Press Enter)</label>
+          <div>
+            <label className={labelClass}>Add Setup Tags (Press Enter)</label>
             <input 
               type="text" 
               value={tagInput}
               onChange={(e) => setTagInput(e.target.value)}
               onKeyDown={handleAddTag}
-              className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-primary/50 transition-colors uppercase"
-              placeholder="E.G. BREAKOUT"
+              className={inputClass}
+              placeholder="e.g. BREAKOUT, FVG, TREND"
             />
           </div>
 
           {/* Tags Display */}
           {tags.length > 0 && (
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-1.5">
               {tags.map(t => (
                 <span 
                   key={t} 
-                  className="flex items-center gap-1 px-2 py-1 bg-primary/10 border border-primary/20 rounded-lg text-[10px] font-bold text-primary group"
+                  className="flex items-center gap-1 px-2.5 py-1 bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400 rounded-xl text-xs font-semibold"
                 >
                   {t}
                   <button 
                     type="button"
                     onClick={() => removeTag(t)}
-                    className="hover:text-[#E5534B] transition-colors"
+                    className="hover:text-rose-600 transition-colors cursor-pointer"
                   >
                     <X className="w-3 h-3" />
                   </button>
@@ -447,7 +449,10 @@ export function TradeModal({ isOpen, onClose, onSubmit, trade }: TradeModalProps
           {/* Submit Button */}
           <button 
             type="submit"
-            className={`mt-4 w-full py-4 rounded-xl font-bold text-white transition-all hover:opacity-90 active:scale-[0.98] ${action === 'BUY' ? 'bg-[#1ED760] hover:bg-[#1ED760] shadow-[0_0_20px_rgba(16,185,129,0.3)]' : 'bg-[#E5534B] hover:bg-[#E5534B] shadow-[0_0_20px_rgba(244,63,94,0.3)]'}`}
+            className={cn(
+              "mt-2 w-full py-3.5 rounded-2xl font-bold text-xs text-white shadow-xs transition-all cursor-pointer",
+              action === 'BUY' ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-rose-600 hover:bg-rose-700'
+            )}
           >
             {trade ? 'Save Changes' : `Execute ${action} ${symbol}`}
           </button>
