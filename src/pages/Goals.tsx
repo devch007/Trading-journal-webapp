@@ -439,17 +439,20 @@ export function Goals() {
     const pct = g.reverse
       ? Math.max(0, 100 - (g.target !== 0 ? (Math.abs(g.current) / Math.abs(g.target)) * 100 : 0))
       : Math.min(Math.max(g.target !== 0 ? (g.current / g.target) * 100 : 0, 0), 100);
+    let s: GoalStatus['status'] = 'not-started';
     if (g.reverse) {
-      if (Math.abs(g.current) === 0) return { id: g.id, status: 'safe' };
-      if (pct <= 0) return { id: g.id, status: 'danger' };
-      if (pct <= 30) return { id: g.id, status: 'in-progress' };
-      return { id: g.id, status: 'on-track' };
+      if (Math.abs(g.current) === 0) s = 'safe';
+      else if (pct <= 0) s = 'danger';
+      else if (pct <= 30) s = 'in-progress';
+      else s = 'on-track';
+    } else {
+      if (pct >= 100) s = 'achieved';
+      else if (pct >= 80) s = 'almost';
+      else if (pct >= 50) s = 'on-track';
+      else if (pct > 0) s = 'in-progress';
+      else s = 'not-started';
     }
-    if (pct >= 100) return { id: g.id, status: 'achieved' };
-    if (pct >= 80)  return { id: g.id, status: 'almost' };
-    if (pct >= 50)  return { id: g.id, status: 'on-track' };
-    if (pct > 0)    return { id: g.id, status: 'in-progress' };
-    return { id: g.id, status: 'not-started' };
+    return { id: g.id, status: s };
   }), [currentGoals]);
 
   const overallPercent = useMemo(() => {

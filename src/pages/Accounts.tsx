@@ -78,7 +78,7 @@ export function Accounts() {
         isPositive,
         totalPnl,
         currentDrawdown: currentDrawdown.toFixed(1),
-        dateClosed: account.dateClosed || (account.status !== 'ACTIVE' ? new Date(account.createdAt?.toMillis() || Date.now()).toLocaleDateString() : undefined)
+        dateClosed: account.dateClosed || (account.status !== 'ACTIVE' ? new Date(account.createdAt || Date.now()).toLocaleDateString() : undefined)
       };
     });
   }, [accounts, trades]);

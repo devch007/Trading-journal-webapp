@@ -98,14 +98,15 @@ export function PreTradeCheckout() {
       date,
       symbol: pair,
       action: 'BUY',
+      size: lotSize || '1.0',
       strategy: tradeType,
-      entry: entry ? parseFloat(entry) : 0,
-      exit: tp ? parseFloat(tp) : 0,
+      entry: entry || '0',
+      exit: tp || '0',
       pnl: 0,
       isPositive: true,
       notes,
       rating: totalScore,
-      session,
+      session: session as any,
       result: result.toUpperCase() || 'PENDING'
     });
 

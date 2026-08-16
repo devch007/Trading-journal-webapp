@@ -12,6 +12,7 @@ import {
   AlertCircle, Cloud, LogOut, Zap, Clock, Key, CreditCard as CardIcon
 } from 'lucide-react';
 import { getTradeDate } from '../lib/timeUtils';
+import { cn } from '../lib/utils';
 
 // --- Reusable UI Components ---
 
