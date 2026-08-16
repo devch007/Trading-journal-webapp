@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=Geist+Mono:wght@100..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300..800;1,300..800&family=Geist:wght@100..900&family=Geist+Mono:wght@100..900&family=Inter:wght@300..800&display=swap');
 @import "tailwindcss";
 
 @custom-variant dark (&:where(.dark, .dark *));
@@ -63,12 +63,12 @@
   --color-muted-dim: #6A6A6A;
   --color-body-text: #B3B3B3;
 
-  /* ── Font stack: Geist Sans → system-ui ── */
-  --font-sans: "Geist", "Geist Sans", system-ui, -apple-system, sans-serif;
-  --font-headline: "Geist", "Geist Sans", sans-serif;
-  --font-body: "Geist", "Geist Sans", sans-serif;
-  --font-label: "Geist", "Geist Sans", sans-serif;
-  --font-data: "Geist Mono", "DM Mono", monospace;
+  /* ── Font stack: Plus Jakarta Sans → Geist → sans-serif ── */
+  --font-sans: "Plus Jakarta Sans", "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-headline: "Plus Jakarta Sans", "Geist", sans-serif;
+  --font-body: "Plus Jakarta Sans", "Geist", sans-serif;
+  --font-label: "Plus Jakarta Sans", "Geist", sans-serif;
+  --font-data: "Geist Mono", monospace;
   --font-mono: "Geist Mono", monospace;
 }
 
@@ -89,18 +89,24 @@
 @layer base {
   html {
     scroll-behavior: smooth;
-    font-family: "Geist", "Geist Sans", system-ui, sans-serif;
+    font-family: "Plus Jakarta Sans", "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    letter-spacing: -0.011em;
   }
   * {
-    font-family: "Geist", "Geist Sans", system-ui, -apple-system, sans-serif;
-    /* Hardware-accelerated rendering for all elements */
+    font-family: "Plus Jakarta Sans", "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    font-optical-sizing: auto;
     box-sizing: border-box;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    letter-spacing: -0.022em;
   }
   .tnum, .tabular-nums, [data-tabular], .type-metric, .type-display {
     font-variant-numeric: tabular-nums;
-    font-feature-settings: "tnum" 1;
+    font-feature-settings: "tnum" 1, "cv02" 1, "cv03" 1, "cv04" 1, "cv11" 1;
+    letter-spacing: -0.015em;
   }
   /* Smooth transitions on all interactive elements */
   a, button, input, select, textarea, [role="button"] {
