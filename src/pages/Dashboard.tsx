@@ -101,6 +101,7 @@ export function Dashboard() {
   const [isTradeModalOpen, setIsTradeModalOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [timeframe, setTimeframe] = useState<'1D' | '1W' | '1M' | 'ALL'>('1W');
+  const [activityView, setActivityView] = useState<'Month' | 'Week'>('Week');
   const [dismissedViolations, setDismissedViolations] = useState<Set<string>>(new Set());
 
   // Rule violations
@@ -189,6 +190,84 @@ export function Dashboard() {
       topPairs: sortedPairs.slice(0, 3)
     };
   }, [trades, selectedAccount]);
+
+  // Activity Chart Data Calculation
+  const activityChartData = useMemo(() => {
+    const parseTradeDate = (dStr: string) => {
+      if (!dStr) return new Date();
+      if (dStr.startsWith('Today')) return new Date();
+      if (dStr.startsWith('Yesterday')) {
+        const d = new Date();
+        d.setDate(d.getDate() - 1);
+        return d;
+      }
+      return new Date(dStr);
+    };
+
+    if (activityView === 'Month') {
+      const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+      const counts = new Array(12).fill(0);
+      
+      if (trades.length > 0) {
+        trades.forEach(t => {
+          const d = parseTradeDate(t.date);
+          if (!isNaN(d.getTime())) {
+            counts[d.getMonth()] += 1;
+          }
+        });
+      } else {
+        // Fallback for empty state to look nice
+        counts[0] = 110; counts[1] = 145; counts[2] = 145; counts[3] = 240;
+        counts[4] = 280; counts[5] = 205; counts[6] = 240; counts[7] = 110;
+        counts[8] = 280; counts[9] = 340; counts[10] = 370; counts[11] = 410;
+      }
+      
+      const maxVal = Math.max(...counts, 10);
+      return months.map((m, idx) => ({
+        m, 
+        v: counts[idx], 
+        h: Math.max((counts[idx] / maxVal) * 100, 5)
+      }));
+    } else {
+      // Week View
+      const days = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
+      const counts = new Array(7).fill(0);
+      
+      if (trades.length > 0) {
+        const now = new Date();
+        const startOfWeek = new Date(now);
+        // Set to Monday
+        const day = startOfWeek.getDay();
+        const diff = startOfWeek.getDate() - day + (day === 0 ? -6 : 1);
+        startOfWeek.setDate(diff);
+        startOfWeek.setHours(0,0,0,0);
+        
+        trades.forEach(t => {
+          const d = parseTradeDate(t.date);
+          if (!isNaN(d.getTime()) && d >= startOfWeek) {
+            let dayIdx = d.getDay() - 1;
+            if (dayIdx === -1) dayIdx = 6; // Sunday
+            counts[dayIdx] += 1;
+          }
+        });
+      } else {
+         // Fallback for empty state
+         counts[0] = 12; counts[1] = 25; counts[2] = 18; counts[3] = 30;
+         counts[4] = 15; counts[5] = 5; counts[6] = 0;
+      }
+      
+      const maxVal = Math.max(...counts, 5);
+      return days.map((m, idx) => ({
+        m, 
+        v: counts[idx], 
+        h: Math.max((counts[idx] / maxVal) * 100, 5)
+      }));
+    }
+  }, [trades, activityView]);
+
+  const activityMaxVal = useMemo(() => {
+    return Math.max(...activityChartData.map(d => d.v), activityView === 'Month' ? 400 : 50);
+  }, [activityChartData, activityView]);
 
   // Equity Curve calculation
   const equityChartData = useMemo(() => {
@@ -820,8 +899,11 @@ export function Dashboard() {
                   Activity
                 </h3>
                 <div className="relative">
-                  <button className="flex items-center gap-1.5 text-xs font-semibold text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white bg-gray-50 dark:bg-neutral-800 px-3 py-1.5 rounded-xl border border-gray-200/80 dark:border-neutral-700 transition-colors">
-                    <span>Month</span>
+                  <button 
+                    onClick={() => setActivityView(prev => prev === 'Month' ? 'Week' : 'Month')}
+                    className="flex items-center gap-1.5 text-xs font-semibold text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white bg-gray-50 dark:bg-neutral-800 px-3 py-1.5 rounded-xl border border-gray-200/80 dark:border-neutral-700 transition-colors cursor-pointer"
+                  >
+                    <span>{activityView}</span>
                     <ChevronDown className="w-3.5 h-3.5 text-gray-400" />
                   </button>
                 </div>
@@ -835,40 +917,30 @@ export function Dashboard() {
                 <div className="flex items-end gap-2.5 h-48 w-full">
                   {/* Y-Axis Labels */}
                   <div className="flex flex-col justify-between h-40 text-[10px] font-medium text-gray-400 dark:text-gray-500 pb-5 select-none shrink-0 pr-1">
-                    <span>400</span>
-                    <span>300</span>
-                    <span>200</span>
-                    <span>100</span>
+                    <span>{activityMaxVal}</span>
+                    <span>{Math.round(activityMaxVal * 0.75)}</span>
+                    <span>{Math.round(activityMaxVal * 0.5)}</span>
+                    <span>{Math.round(activityMaxVal * 0.25)}</span>
                     <span>0</span>
                   </div>
 
-                  {/* 12-Month Capsule Pillars */}
-                  <div className="grid grid-cols-12 gap-1.5 sm:gap-2 flex-1 h-full items-end pb-1">
-                    {[
-                      { m: 'JAN', v: 110, h: 28 },
-                      { m: 'FEB', v: 145, h: 36 },
-                      { m: 'MAR', v: 145, h: 36 },
-                      { m: 'APR', v: 240, h: 60 },
-                      { m: 'MAY', v: 280, h: 70 },
-                      { m: 'JUN', v: 205, h: 51 },
-                      { m: 'JUL', v: 240, h: 60 },
-                      { m: 'AUG', v: 110, h: 28 },
-                      { m: 'SEP', v: 280, h: 70 },
-                      { m: 'OCT', v: 340, h: 85 },
-                      { m: 'NOV', v: 370, h: 92 },
-                      { m: 'DEC', v: 410, h: 100 },
-                    ].map((col) => (
-                      <div key={col.m} className="flex flex-col items-center gap-2 h-full justify-end group cursor-pointer">
+                  {/* Dynamic Capsule Pillars */}
+                  <div className={`grid ${activityView === 'Month' ? 'grid-cols-12' : 'grid-cols-7'} gap-1.5 sm:gap-2 flex-1 h-full items-end pb-1`}>
+                    {activityChartData.map((col) => (
+                      <div key={col.m} className="flex flex-col items-center gap-2 h-full justify-end group cursor-pointer relative">
+                        {/* Tooltip */}
+                        <div className="absolute -top-8 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-[10px] font-bold px-2 py-1 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10 shadow-lg">
+                          {col.m}: {col.v} trades logged
+                        </div>
                         {/* Capsule Track */}
-                        <div className="w-2.5 sm:w-3 bg-blue-50/70 dark:bg-blue-950/20 rounded-full h-40 flex flex-col justify-end p-0 overflow-hidden relative group-hover:bg-blue-100/70 dark:group-hover:bg-blue-950/40 transition-colors">
+                        <div className="w-full max-w-[24px] bg-blue-50/70 dark:bg-blue-950/20 rounded-full h-40 flex flex-col justify-end p-0 overflow-hidden relative group-hover:bg-blue-100/70 dark:group-hover:bg-blue-950/40 transition-colors">
                           {/* Filled Blue Capsule */}
                           <div 
                             style={{ height: `${col.h}%` }}
                             className="w-full bg-[#3b82f6] rounded-full transition-all duration-500 shadow-xs group-hover:bg-blue-600"
-                            title={`${col.m}: ${col.v} trades logged`}
                           />
                         </div>
-                        {/* Month Label */}
+                        {/* Label */}
                         <span className="text-[9px] sm:text-[10px] font-semibold text-gray-400 dark:text-gray-500 group-hover:text-gray-900 dark:group-hover:text-white transition-colors">
                           {col.m}
                         </span>
