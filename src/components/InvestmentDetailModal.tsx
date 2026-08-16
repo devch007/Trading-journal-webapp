@@ -42,6 +42,24 @@ export function InvestmentDetailModal({ holding, isOpen, onClose, onUpdate }: In
   const [isEditingThesis, setIsEditingThesis] = useState(false);
   const [thesisText, setThesisText] = useState(holding?.thesis || '');
 
+  // Close on Escape key - must be declared before any conditional return
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isOpen) {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
+  // Sync thesis text when holding changes
+  React.useEffect(() => {
+    if (holding?.thesis) {
+      setThesisText(holding.thesis);
+    }
+  }, [holding]);
+
   if (!isOpen || !holding) return null;
 
   const investedAmount = holding.quantity * holding.avgBuyPrice;
@@ -71,17 +89,6 @@ export function InvestmentDetailModal({ holding, isOpen, onClose, onUpdate }: In
     onUpdate(holding.id, { thesis: thesisText });
     setIsEditingThesis(false);
   };
-
-  // Close on Escape key
-  React.useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen) {
-        onClose();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
 
   return (
     <AnimatePresence>
