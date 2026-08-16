@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=DM+Sans:wght@400;500;600;700;800;900&family=DM+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=Geist+Mono:wght@100..900&display=swap');
 @import "tailwindcss";
 
 @custom-variant dark (&:where(.dark, .dark *));
@@ -56,46 +56,51 @@
   --color-on-error-container: #ffb2b9;
   --color-inverse-surface: #fcf8ff;
 
-  /* ── Spotify-inspired P&L colors ── */
+  /* ── P&L colors ── */
   --color-pnl-positive: #1ED760;
   --color-pnl-negative: #E5534B;
   --color-muted: #A7A7A7;
   --color-muted-dim: #6A6A6A;
   --color-body-text: #B3B3B3;
 
-  /* ── Font stack: Circular Std → Inter → DM Sans → sans-serif ── */
-  --font-sans: "Circular Std", "Inter", "DM Sans", sans-serif;
-  --font-headline: "Circular Std", "Inter", "DM Sans", sans-serif;
-  --font-body: "Circular Std", "Inter", "DM Sans", sans-serif;
-  --font-label: "Circular Std", "Inter", "DM Sans", sans-serif;
-  --font-data: "DM Mono", monospace;
-  --font-mono: "DM Mono", monospace;
+  /* ── Font stack: Geist Sans → system-ui ── */
+  --font-sans: "Geist", "Geist Sans", system-ui, -apple-system, sans-serif;
+  --font-headline: "Geist", "Geist Sans", sans-serif;
+  --font-body: "Geist", "Geist Sans", sans-serif;
+  --font-label: "Geist", "Geist Sans", sans-serif;
+  --font-data: "Geist Mono", "DM Mono", monospace;
+  --font-mono: "Geist Mono", monospace;
 }
 
 .light {
-  --color-background: #fcf8ff;
-  --color-on-surface: #13121c;
-  --color-surface-container-high: #efecf9;
-  --color-on-surface-variant: #484751;
-  --color-surface-container: #efecf9;
+  --color-background: #f4f5f8;
+  --color-on-surface: #111827;
+  --color-surface-container-high: #ffffff;
+  --color-on-surface-variant: #6b7280;
+  --color-surface-container: #ffffff;
   --color-surface-container-lowest: #ffffff;
-  --color-surface-container-highest: #e0dce9;
-  --color-surface-variant: #e0dce9;
-  --color-on-background: #13121c;
-  --color-outline: #76747f;
-  --color-outline-variant: #c8c5d3;
+  --color-surface-container-highest: #f3f4f6;
+  --color-surface-variant: #f3f4f6;
+  --color-on-background: #111827;
+  --color-outline: #9ca3af;
+  --color-outline-variant: #e5e7eb;
 }
 
 @layer base {
   html {
     scroll-behavior: smooth;
+    font-family: "Geist", "Geist Sans", system-ui, sans-serif;
   }
   * {
-    font-family: "Circular Std", "Inter", "DM Sans", sans-serif;
+    font-family: "Geist", "Geist Sans", system-ui, -apple-system, sans-serif;
     /* Hardware-accelerated rendering for all elements */
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     box-sizing: border-box;
+  }
+  .tnum, .tabular-nums, [data-tabular], .type-metric, .type-display {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
   }
   /* Smooth transitions on all interactive elements */
   a, button, input, select, textarea, [role="button"] {
@@ -105,12 +110,10 @@
   }
   body {
     @apply bg-background text-on-surface selection:bg-primary/30 selection:text-primary min-h-screen overflow-x-hidden;
-    font-family: "Circular Std", "Inter", "DM Sans", sans-serif;
+    font-family: "Geist", "Geist Sans", system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    /* Smooth color transitions across theme changes */
     transition: background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1), color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    /* Prevent content jumping from scrollbar appearing */
     scrollbar-gutter: stable;
   }
   /* Smooth page-level scrolling containers */

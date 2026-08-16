@@ -50,7 +50,7 @@ import { getTradeDate, normalizeImportedDateTime } from "../lib/timeUtils";
 import { useRuleViolations } from "../hooks/useRuleViolations";
 import { motion, AnimatePresence } from "motion/react";
 
-// Custom Tooltip reproducing the floating popover from the screenshot
+// Custom Tooltip with Geist typography and tabular numbers
 const MiraiChartTooltip = ({ active, payload }: any) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload;
@@ -58,19 +58,19 @@ const MiraiChartTooltip = ({ active, payload }: any) => {
     const isPos = pnl >= 0;
 
     return (
-      <div className="bg-white dark:bg-[#181920] border border-gray-200/90 dark:border-neutral-700/80 p-3.5 rounded-2xl shadow-xl flex flex-col gap-2 min-w-[190px]">
-        <p className="text-[11px] font-semibold text-gray-400 dark:text-gray-400">
+      <div className="bg-white dark:bg-[#181920] border border-gray-200/90 dark:border-neutral-700/80 p-3.5 rounded-2xl shadow-xl flex flex-col gap-2 min-w-[190px] font-normal">
+        <p className="text-[11px] font-medium text-gray-400 dark:text-gray-400">
           {data.dateLabel || data.date || 'Execution Point'}
         </p>
         <div className="space-y-1.5 pt-1">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-[#1e293b] dark:bg-gray-300"></span>
-              <span className="text-xs font-bold text-gray-900 dark:text-white">
+              <span className="text-xs font-bold tabular-nums text-gray-900 dark:text-white">
                 ${Number(data.val1).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </span>
             </div>
-            <span className="text-[11px] font-bold text-gray-500 bg-gray-100 dark:bg-neutral-800 px-1.5 py-0.5 rounded">
+            <span className="text-[11px] font-medium text-gray-500 bg-gray-100 dark:bg-neutral-800 px-1.5 py-0.5 rounded">
               Equity
             </span>
           </div>
@@ -78,11 +78,11 @@ const MiraiChartTooltip = ({ active, payload }: any) => {
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-[#0d9488]"></span>
-              <span className="text-xs font-bold text-gray-900 dark:text-white">
+              <span className="text-xs font-bold tabular-nums text-gray-900 dark:text-white">
                 ${Number(data.val2).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </span>
             </div>
-            <span className={`text-[11px] font-bold px-1.5 py-0.5 rounded ${isPos ? 'text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40' : 'text-rose-500 bg-rose-50 dark:bg-rose-950/40'}`}>
+            <span className={`text-[11px] font-bold tabular-nums px-1.5 py-0.5 rounded ${isPos ? 'text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40' : 'text-rose-500 bg-rose-50 dark:bg-rose-950/40'}`}>
               {isPos ? '+' : ''}${Number(pnl).toFixed(2)}
             </span>
           </div>
@@ -190,7 +190,7 @@ export function Dashboard() {
     };
   }, [trades, selectedAccount]);
 
-  // Equity Curve calculation matching the clean multi-line curve from the screenshot
+  // Equity Curve calculation
   const equityChartData = useMemo(() => {
     if (!trades.length) {
       return [
@@ -216,7 +216,7 @@ export function Dashboard() {
     return sorted.map((t, index) => {
       const pnl = Number(t.pnl) || 0;
       running += pnl;
-      baseline += initialBalance * 0.002; // Small baseline growth line
+      baseline += initialBalance * 0.002;
       const d = getTradeDate(t.date);
 
       return {
@@ -427,7 +427,7 @@ export function Dashboard() {
   }, [trades]);
 
   return (
-    <div className="flex flex-col min-h-full">
+    <div className="flex flex-col min-h-full font-normal">
       <TopBar />
 
       <TradeModal 
@@ -470,7 +470,7 @@ export function Dashboard() {
                 >
                   <div className="flex items-center gap-2.5">
                     <Shield className="w-4 h-4 text-amber-500" />
-                    <span><strong>Risk Warning:</strong> {violation.ruleName} — {violation.detail}</span>
+                    <span><strong className="font-semibold">Risk Warning:</strong> {violation.ruleName} — {violation.detail}</span>
                   </div>
                   <button onClick={() => dismissViolation(violation.ruleId)} className="p-1 hover:bg-amber-100 dark:hover:bg-amber-900/40 rounded-lg">
                     <X className="w-3.5 h-3.5" />
@@ -494,20 +494,21 @@ export function Dashboard() {
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="space-y-1.5">
                   <div className="flex items-center gap-2">
-                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#111827] dark:bg-white text-white dark:text-gray-900 text-[11px] font-bold">
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#111827] dark:bg-white text-white dark:text-gray-900 text-[11px] font-medium">
                       ★ 3 Top Assets
                     </span>
                     <span className="text-xs text-gray-400 dark:text-gray-400 font-medium">
                       Performance & Win-Rate Leaders
                     </span>
                   </div>
-                  <h2 className="text-xl md:text-2xl font-extrabold text-gray-900 dark:text-white tracking-tight font-headline">
+                  {/* Dashboard heading -> 600 weight */}
+                  <h2 className="text-xl md:text-2xl font-semibold text-gray-900 dark:text-white tracking-tight font-headline">
                     The Top 3 stars of your trading
                   </h2>
                 </div>
 
-                {/* Filter Tags matching screenshot */}
-                <div className="flex items-center gap-2 text-xs font-semibold text-gray-500 dark:text-gray-400">
+                {/* Filter Tags */}
+                <div className="flex items-center gap-2 text-xs font-medium text-gray-500 dark:text-gray-400">
                   <button className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-white dark:bg-[#16181f] border border-gray-200/80 dark:border-neutral-800 shadow-2xs hover:bg-gray-50 dark:hover:bg-neutral-800 transition-colors">
                     <span>All Sessions</span>
                     <ChevronDown className="w-3.5 h-3.5 text-gray-400" />
@@ -525,7 +526,7 @@ export function Dashboard() {
 
               {/* 3 Top Star Cards Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                {stats.topPairs.map((pair, idx) => (
+                {stats.topPairs.map((pair) => (
                   <div 
                     key={pair.symbol}
                     className="bg-white dark:bg-[#16181f] rounded-3xl p-5 border border-gray-200/80 dark:border-neutral-800/80 shadow-2xs hover:shadow-md transition-all duration-300 flex flex-col justify-between gap-4 group cursor-pointer"
@@ -536,7 +537,8 @@ export function Dashboard() {
                         <div className={`w-8 h-8 rounded-full ${pair.iconColor} flex items-center justify-center text-white font-bold text-xs shadow-xs`}>
                           {pair.icon}
                         </div>
-                        <span className="text-xs font-bold text-gray-900 dark:text-white truncate max-w-[110px]">
+                        {/* Card Heading -> 600 weight */}
+                        <span className="text-xs font-semibold text-gray-900 dark:text-white truncate max-w-[110px]">
                           {pair.symbol}
                         </span>
                       </div>
@@ -546,11 +548,12 @@ export function Dashboard() {
                     </div>
 
                     <div className="space-y-1">
-                      <h3 className="text-xl font-extrabold text-gray-900 dark:text-white tracking-tight">
+                      {/* P&L numbers -> 700 + tabular numerals */}
+                      <h3 className="text-xl font-bold tabular-nums text-gray-900 dark:text-white tracking-tight">
                         {pair.pnl >= 0 ? `+$${pair.pnl.toLocaleString(undefined, { minimumFractionDigits: 2 })}` : `-$${Math.abs(pair.pnl).toLocaleString(undefined, { minimumFractionDigits: 2 })}`}
                       </h3>
-                      <div className="flex items-center gap-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
-                        <span className="bg-emerald-50 dark:bg-emerald-950/40 px-1.5 py-0.5 rounded-md font-bold">
+                      <div className="flex items-center gap-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
+                        <span className="bg-emerald-50 dark:bg-emerald-950/40 px-1.5 py-0.5 rounded-md font-medium tabular-nums">
                           {pair.gainTag}
                         </span>
                       </div>
@@ -564,10 +567,11 @@ export function Dashboard() {
             <div className="bg-white dark:bg-[#16181f] rounded-3xl p-6 md:p-7 border border-gray-200/80 dark:border-neutral-800/80 shadow-2xs">
               <div className="flex items-center justify-between mb-6">
                 <div>
-                  <h3 className="text-base font-bold text-gray-900 dark:text-white">
+                  {/* Card heading -> 600 weight */}
+                  <h3 className="text-base font-semibold text-gray-900 dark:text-white">
                     Portfolio Growth Over Time
                   </h3>
-                  <p className="text-xs text-gray-400 mt-0.5">Realized Cumulative Equity vs Initial Capital Benchmark</p>
+                  <p className="text-xs font-normal text-gray-400 mt-0.5">Realized Cumulative Equity vs Initial Capital Benchmark</p>
                 </div>
 
                 <div className="flex items-center gap-1">
@@ -575,7 +579,7 @@ export function Dashboard() {
                     <button
                       key={t}
                       onClick={() => setTimeframe(t)}
-                      className={`px-3 py-1 text-xs font-semibold rounded-xl transition-all ${
+                      className={`px-3 py-1 text-xs font-medium rounded-xl transition-all ${
                         timeframe === t 
                           ? 'bg-[#111827] dark:bg-white text-white dark:text-gray-900 shadow-xs' 
                           : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-neutral-800'
@@ -592,7 +596,7 @@ export function Dashboard() {
                 
                 {/* Visual marker label */}
                 <div className="absolute top-[26%] left-[56%] -translate-x-1/2 -translate-y-full z-20 pointer-events-none hidden sm:flex flex-col items-center">
-                  <span className="px-2 py-0.5 bg-[#1e293b] text-white text-[10px] font-bold rounded-md shadow-md">
+                  <span className="px-2 py-0.5 bg-[#1e293b] text-white text-[10px] font-bold tabular-nums rounded-md shadow-md">
                     ${Number(stats.balance).toLocaleString()}
                   </span>
                   <div className="w-2 h-2 bg-amber-500 rounded-full ring-2 ring-white my-0.5"></div>
@@ -629,6 +633,7 @@ export function Dashboard() {
                       axisLine={false} 
                       tickFormatter={(val) => `$${val >= 1000 ? `${(val / 1000).toFixed(0)}k` : val}`}
                       domain={['dataMin - 1000', 'dataMax + 1000']}
+                      className="tabular-nums"
                     />
                     
                     <Tooltip content={<MiraiChartTooltip />} />
@@ -659,14 +664,15 @@ export function Dashboard() {
             <div className="bg-white dark:bg-[#16181f] rounded-3xl p-6 md:p-7 border border-gray-200/80 dark:border-neutral-800/80 shadow-2xs">
               <div className="flex items-center justify-between mb-5">
                 <div>
-                  <h3 className="text-base font-bold text-gray-900 dark:text-white">
+                  {/* Card heading -> 600 weight */}
+                  <h3 className="text-base font-semibold text-gray-900 dark:text-white">
                     Recent Executions
                   </h3>
-                  <p className="text-xs text-gray-400 mt-0.5">Latest journal entries and platform syncs</p>
+                  <p className="text-xs font-normal text-gray-400 mt-0.5">Latest journal entries and platform syncs</p>
                 </div>
                 <button 
                   onClick={() => navigate('/trades')}
-                  className="flex items-center gap-1 text-xs font-semibold text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors"
+                  className="flex items-center gap-1 text-xs font-medium text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors"
                 >
                   <span>See All</span>
                   <ArrowUpRight className="w-3.5 h-3.5" />
@@ -676,11 +682,11 @@ export function Dashboard() {
               <div className="overflow-x-auto">
                 <table className="w-full text-left">
                   <thead>
-                    <tr className="text-[11px] font-bold text-gray-400 dark:text-gray-500 border-b border-gray-100 dark:border-neutral-800/80">
-                      <th className="pb-3 font-semibold">Description ⇅</th>
-                      <th className="pb-3 font-semibold">Date ⇅</th>
-                      <th className="pb-3 font-semibold">Result P&L ⇅</th>
-                      <th className="pb-3 font-semibold text-right">Status ⇅</th>
+                    <tr className="text-[11px] font-medium text-gray-400 dark:text-gray-500 border-b border-gray-100 dark:border-neutral-800/80">
+                      <th className="pb-3 font-medium">Description ⇅</th>
+                      <th className="pb-3 font-medium">Date ⇅</th>
+                      <th className="pb-3 font-medium">Result P&L ⇅</th>
+                      <th className="pb-3 font-medium text-right">Status ⇅</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-50 dark:divide-neutral-800/40 text-xs">
@@ -688,22 +694,23 @@ export function Dashboard() {
                       <tr key={tx.id} className="hover:bg-gray-50/50 dark:hover:bg-neutral-800/30 transition-colors group">
                         <td className="py-3.5">
                           <div className="flex items-center gap-3">
-                            <span className={`w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-extrabold ${tx.iconColor}`}>
+                            <span className={`w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold ${tx.iconColor}`}>
                               {tx.iconText}
                             </span>
-                            <span className="font-bold text-gray-900 dark:text-white">
+                            <span className="font-medium text-gray-900 dark:text-white">
                               {tx.description}
                             </span>
                           </div>
                         </td>
-                        <td className="py-3.5 text-gray-400 dark:text-gray-500 font-medium">
+                        <td className="py-3.5 text-gray-400 dark:text-gray-500 font-normal">
                           {tx.date}
                         </td>
-                        <td className={`py-3.5 font-bold ${tx.amount.startsWith('+') ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-500'}`}>
+                        {/* P&L numbers -> 700 + tabular-nums */}
+                        <td className={`py-3.5 font-bold tabular-nums ${tx.amount.startsWith('+') ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-500'}`}>
                           {tx.amount}
                         </td>
                         <td className="py-3.5 text-right">
-                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold ${tx.statusColor}`}>
+                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium ${tx.statusColor}`}>
                             <span className={`w-1.5 h-1.5 rounded-full ${tx.statusDot}`}></span>
                             <span>{tx.status}</span>
                           </span>
@@ -727,7 +734,8 @@ export function Dashboard() {
                   <div className="p-2 rounded-xl bg-gray-50 dark:bg-neutral-800 text-gray-900 dark:text-white">
                     <Wallet className="w-4 h-4" />
                   </div>
-                  <span className="text-sm font-bold text-gray-900 dark:text-white">
+                  {/* Card heading -> 600 weight */}
+                  <span className="text-sm font-semibold text-gray-900 dark:text-white">
                     Trading Capital & Balance
                   </span>
                 </div>
@@ -739,13 +747,13 @@ export function Dashboard() {
                 </button>
               </div>
 
-              {/* Big Balance Amount & Currency */}
+              {/* Big Balance Amount -> 700 + tabular-nums */}
               <div className="space-y-1">
                 <div className="flex items-baseline justify-between">
-                  <h2 className="text-3xl font-black text-gray-900 dark:text-white tracking-tight font-headline">
+                  <h2 className="text-3xl font-bold tabular-nums text-gray-900 dark:text-white tracking-tight font-headline">
                     ${Number(stats.balance).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </h2>
-                  <span className="text-xs font-semibold text-gray-400 flex items-center gap-0.5">
+                  <span className="text-xs font-medium text-gray-400 flex items-center gap-0.5">
                     USD <ChevronDown className="w-3 h-3" />
                   </span>
                 </div>
@@ -754,19 +762,19 @@ export function Dashboard() {
                 <div className="grid grid-cols-3 gap-2 pt-3 border-t border-gray-100 dark:border-neutral-800/80 text-left">
                   <div>
                     <p className="text-[10px] text-gray-400 font-medium">Net Profit</p>
-                    <p className={`text-xs font-bold ${stats.totalProfit >= 0 ? 'text-emerald-600' : 'text-rose-500'}`}>
+                    <p className={`text-xs font-bold tabular-nums ${stats.totalProfit >= 0 ? 'text-emerald-600' : 'text-rose-500'}`}>
                       {stats.totalProfit >= 0 ? `+$${stats.totalProfit.toLocaleString()}` : `-$${Math.abs(stats.totalProfit).toLocaleString()}`}
                     </p>
                   </div>
                   <div>
                     <p className="text-[10px] text-gray-400 font-medium">Win Rate</p>
-                    <p className="text-xs font-bold text-gray-900 dark:text-white">
+                    <p className="text-xs font-bold tabular-nums text-gray-900 dark:text-white">
                       {stats.winRate.toFixed(1)}%
                     </p>
                   </div>
                   <div>
                     <p className="text-[10px] text-gray-400 font-medium">Profit Factor</p>
-                    <p className="text-xs font-bold text-gray-900 dark:text-white truncate">
+                    <p className="text-xs font-bold tabular-nums text-gray-900 dark:text-white truncate">
                       {stats.profitFactor.toFixed(2)}
                     </p>
                   </div>
@@ -777,7 +785,7 @@ export function Dashboard() {
               <div className="grid grid-cols-2 gap-3 pt-1">
                 <button
                   onClick={() => setIsTradeModalOpen(true)}
-                  className="w-full py-3 px-4 rounded-2xl bg-[#111827] dark:bg-white text-white dark:text-gray-900 text-xs font-bold flex items-center justify-center gap-2 hover:bg-black dark:hover:bg-gray-100 transition-all shadow-xs group"
+                  className="w-full py-3 px-4 rounded-2xl bg-[#111827] dark:bg-white text-white dark:text-gray-900 text-xs font-semibold flex items-center justify-center gap-2 hover:bg-black dark:hover:bg-gray-100 transition-all shadow-xs group"
                 >
                   <Plus className="w-4 h-4 group-hover:scale-110 transition-transform" />
                   <span>Log Trade</span>
@@ -786,7 +794,7 @@ export function Dashboard() {
                 <button
                   onClick={handleImportClick}
                   disabled={isExtracting}
-                  className="w-full py-3 px-4 rounded-2xl bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 text-gray-800 dark:text-gray-200 text-xs font-bold flex items-center justify-center gap-2 hover:bg-gray-50 dark:hover:bg-neutral-750 transition-all shadow-2xs group"
+                  className="w-full py-3 px-4 rounded-2xl bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 text-gray-800 dark:text-gray-200 text-xs font-semibold flex items-center justify-center gap-2 hover:bg-gray-50 dark:hover:bg-neutral-750 transition-all shadow-2xs group"
                 >
                   {isExtracting ? (
                     <Loader2 className="w-4 h-4 animate-spin text-gray-500" />
@@ -798,7 +806,7 @@ export function Dashboard() {
               </div>
 
               {extractionError && (
-                <div className="flex items-center gap-1.5 text-xs text-rose-600 bg-rose-50 dark:bg-rose-950/40 p-2.5 rounded-xl border border-rose-200 dark:border-rose-900/40">
+                <div className="flex items-center gap-1.5 text-xs text-rose-600 bg-rose-50 dark:bg-rose-950/40 p-2.5 rounded-xl border border-rose-200 dark:border-rose-900/40 font-normal">
                   <AlertCircle className="w-3.5 h-3.5 shrink-0" />
                   <span>{extractionError}</span>
                 </div>
@@ -812,7 +820,8 @@ export function Dashboard() {
                   <div className="p-2 rounded-xl bg-gray-50 dark:bg-neutral-800 text-gray-900 dark:text-white">
                     <Briefcase className="w-4 h-4" />
                   </div>
-                  <span className="text-sm font-bold text-gray-900 dark:text-white">
+                  {/* Card heading -> 600 weight */}
+                  <span className="text-sm font-semibold text-gray-900 dark:text-white">
                     Asset & Strategy Allocation
                   </span>
                 </div>
@@ -826,10 +835,10 @@ export function Dashboard() {
 
               {/* Sub-header: 3 Traded Pairs & edge badge */}
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-gray-900 dark:text-white">
+                <span className="text-xs font-semibold text-gray-900 dark:text-white">
                   3 Traded Pairs
                 </span>
-                <span className="text-[11px] font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-md">
+                <span className="text-[11px] font-medium tabular-nums text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-md">
                   +{stats.winRate.toFixed(1)}% Win Rate
                 </span>
               </div>
@@ -850,12 +859,12 @@ export function Dashboard() {
                         {p.icon}
                       </div>
                       <div>
-                        <p className="text-xs font-bold text-gray-900 dark:text-white">{p.symbol}</p>
-                        <p className="text-[11px] text-gray-400">${p.pnl.toLocaleString()}</p>
+                        <p className="text-xs font-semibold text-gray-900 dark:text-white">{p.symbol}</p>
+                        <p className="text-[11px] font-normal tabular-nums text-gray-400">${p.pnl.toLocaleString()}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
-                      <span className="text-[11px] font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 px-1.5 py-0.5 rounded">
+                      <span className="text-[11px] font-bold tabular-nums text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 px-1.5 py-0.5 rounded">
                         {p.winRate.toFixed(1)}%
                       </span>
                       <button onClick={() => navigate('/trades')} className="text-gray-400 hover:text-gray-600">
@@ -870,7 +879,8 @@ export function Dashboard() {
             {/* Card 3: Trading Playbook & Risk Guard */}
             <div className="bg-white dark:bg-[#16181f] rounded-3xl p-6 border border-gray-200/80 dark:border-neutral-800/80 shadow-2xs space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="text-sm font-bold text-gray-900 dark:text-white">
+                {/* Card heading -> 600 weight */}
+                <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
                   Trading Playbook & Risk Guard
                 </h3>
                 <button onClick={() => navigate('/checkout')} className="text-gray-400 hover:text-gray-600">
@@ -890,10 +900,10 @@ export function Dashboard() {
                       <Shield className="w-4 h-4" />
                     </div>
                     <div className="min-w-0">
-                      <p className="text-xs font-bold text-gray-900 dark:text-white group-hover:text-amber-600 transition-colors">
+                      <p className="text-xs font-semibold text-gray-900 dark:text-white group-hover:text-amber-600 transition-colors">
                         1% Risk Rule
                       </p>
-                      <p className="text-[11px] text-gray-400 truncate max-w-[170px]">
+                      <p className="text-[11px] font-normal text-gray-400 truncate max-w-[170px]">
                         Max 1% capital risk per trade
                       </p>
                     </div>
@@ -911,10 +921,10 @@ export function Dashboard() {
                       <Target className="w-4 h-4" />
                     </div>
                     <div className="min-w-0">
-                      <p className="text-xs font-bold text-gray-900 dark:text-white group-hover:text-orange-600 transition-colors">
+                      <p className="text-xs font-semibold text-gray-900 dark:text-white group-hover:text-orange-600 transition-colors">
                         Minimum 1:2 R:R
                       </p>
-                      <p className="text-[11px] text-gray-400 truncate max-w-[170px]">
+                      <p className="text-[11px] font-normal text-gray-400 truncate max-w-[170px]">
                         Target at least 2x stop loss
                       </p>
                     </div>
@@ -932,10 +942,10 @@ export function Dashboard() {
                       <BrainCircuit className="w-4 h-4" />
                     </div>
                     <div className="min-w-0">
-                      <p className="text-xs font-bold text-gray-900 dark:text-white group-hover:text-indigo-600 transition-colors">
+                      <p className="text-xs font-semibold text-gray-900 dark:text-white group-hover:text-indigo-600 transition-colors">
                         Pre-Trade Checklist
                       </p>
-                      <p className="text-[11px] text-gray-400 truncate max-w-[170px]">
+                      <p className="text-[11px] font-normal text-gray-400 truncate max-w-[170px]">
                         Verify mindset & setup criteria
                       </p>
                     </div>

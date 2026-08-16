@@ -98,7 +98,7 @@ export function Sidebar({ isMobileOpen, setIsMobileOpen }: SidebarProps) {
         {/* Brand Logo Header */}
         <div className="px-6 pt-7 pb-5 flex items-center justify-between">
           <Link to="/dashboard" className="flex items-center gap-2.5 group">
-            <span className="font-extrabold text-2xl tracking-tight text-[#111827] dark:text-white font-headline">
+            <span className="font-semibold text-2xl tracking-tight text-[#111827] dark:text-white font-headline">
               mirai
             </span>
           </Link>
@@ -113,7 +113,7 @@ export function Sidebar({ isMobileOpen, setIsMobileOpen }: SidebarProps) {
               placeholder="Search..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-9 pr-3 py-2 text-xs bg-white dark:bg-[#16181f] border border-[#e5e7eb] dark:border-neutral-800 rounded-xl text-gray-800 dark:text-gray-200 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-black/10 dark:focus:ring-white/20 transition-all shadow-xs"
+              className="w-full pl-9 pr-3 py-2 text-xs bg-white dark:bg-[#16181f] border border-[#e5e7eb] dark:border-neutral-800 rounded-xl text-gray-800 dark:text-gray-200 placeholder-gray-400 font-normal focus:outline-none focus:ring-1 focus:ring-black/10 dark:focus:ring-white/20 transition-all shadow-xs"
             />
           </div>
         </div>
@@ -130,7 +130,7 @@ export function Sidebar({ isMobileOpen, setIsMobileOpen }: SidebarProps) {
 
             return (
               <div key={idx} className="space-y-1">
-                <p className="px-3 text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1.5">
+                <p className="px-3 text-[11px] font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1.5">
                   {section.title}
                 </p>
                 <div className="space-y-1">
@@ -146,7 +146,7 @@ export function Sidebar({ isMobileOpen, setIsMobileOpen }: SidebarProps) {
                         className={cn(
                           "flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-[13px] font-medium transition-all duration-200 group relative",
                           active
-                            ? "bg-white dark:bg-[#1c1e26] text-gray-900 dark:text-white font-semibold shadow-xs border border-gray-200/70 dark:border-neutral-700/60"
+                            ? "bg-white dark:bg-[#1c1e26] text-gray-900 dark:text-white font-medium shadow-xs border border-gray-200/70 dark:border-neutral-700/60"
                             : "text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-black/[0.02] dark:hover:bg-white/[0.03]"
                         )}
                       >
