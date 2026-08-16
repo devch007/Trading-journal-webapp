@@ -83,6 +83,11 @@ export function Sidebar({ isMobileOpen, setIsMobileOpen }: SidebarProps) {
         { title: "Stratzy", icon: Layers, href: "/strategies", shortcut: "6" },
         { title: "Goals", icon: Target, href: "/goals", shortcut: "7" },
         { title: "Trade Analysis", icon: FileText, href: "/journal", shortcut: "5" },
+      ]
+    },
+    {
+      title: "Wealth & Portfolio",
+      items: [
         { title: "Investments", icon: PieChart, href: "/investments", shortcut: "8" },
       ]
     }

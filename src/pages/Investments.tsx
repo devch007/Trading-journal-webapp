@@ -37,6 +37,7 @@ import {
   ResponsiveContainer 
 } from 'recharts';
 import { SmartEmptyState } from '../components/ui/SmartEmptyState';
+import { motion } from 'motion/react';
 import { 
   getIndianApiKey, 
   setIndianApiKey, 
