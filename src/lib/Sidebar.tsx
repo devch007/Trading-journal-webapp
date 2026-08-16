@@ -67,20 +67,6 @@ export function Sidebar({ isMobileOpen, setIsMobileOpen }: SidebarProps) {
         { title: "Goals", icon: Target, href: "/goals" },
         { title: "Trade Analysis", icon: FileText, href: "/journal" },
       ]
-    },
-    {
-      title: "Management",
-      items: [
-        { title: "Billing and Subscriptions", icon: CreditCard, href: "/settings" },
-      ]
-    },
-    {
-      title: "Setting",
-      items: [
-        { title: "Customer Support", icon: Headphones, href: "/settings" },
-        { title: "Help Center", icon: HelpCircle, href: "/profile" },
-        { title: "System Settings", icon: Settings, href: "/settings" },
-      ]
     }
   ];
 
@@ -97,7 +83,7 @@ export function Sidebar({ isMobileOpen, setIsMobileOpen }: SidebarProps) {
         <div className="px-6 pt-7 pb-5 flex items-center justify-between">
           <Link to="/dashboard" className="flex items-center gap-2.5 group">
             <span className="font-semibold text-2xl tracking-tight text-[#111827] dark:text-white font-headline">
-              mirai
+              TradeX
             </span>
           </Link>
         </div>

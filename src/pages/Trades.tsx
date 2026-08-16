@@ -22,7 +22,7 @@ export function Trades() {
   const [filterAction, setFilterAction] = useState("ALL");
   const [filterTradeType, setFilterTradeType] = useState("ALL");
   const [filterStrategy, setFilterStrategy] = useState("ALL");
-  const [filterRange, setFilterRange] = useState("30D");
+  const [filterRange, setFilterRange] = useState("ALL");
 
   const uniqueSymbols = useMemo(() => {
     const symbols = new Set<string>();

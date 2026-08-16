@@ -81,7 +81,8 @@ export function TopBar({
 
         {/* Support Headphones Icon */}
         <button 
-          className="p-2 rounded-full text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-neutral-800 transition-colors"
+          onClick={() => {}}
+          className="p-2 rounded-full text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
           title="Customer Support"
         >
           <Headphones className="w-4 h-4" />
