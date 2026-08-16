@@ -104,16 +104,24 @@ export function Sidebar({ isMobileOpen, setIsMobileOpen }: SidebarProps) {
           </Link>
         </div>
 
-        {/* Search Bar in Sidebar */}
+        {/* Search Bar in Sidebar with Liquid Glass */}
         <div className="px-5 mb-3">
-          <div className="relative flex items-center">
-            <Search className="w-4 h-4 text-gray-400 absolute left-3 pointer-events-none" />
+          <div className="relative flex items-center group">
+            <Search className="w-4 h-4 text-gray-400 group-focus-within:text-blue-500 absolute left-3 pointer-events-none transition-colors" />
             <input 
               type="text" 
               placeholder="Search..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-9 pr-3 py-2 text-xs bg-white dark:bg-[#16181f] border border-[#e5e7eb] dark:border-neutral-800 rounded-xl text-gray-800 dark:text-gray-200 placeholder-gray-400 font-normal focus:outline-none focus:ring-1 focus:ring-black/10 dark:focus:ring-white/20 transition-all shadow-xs"
+              className="w-full pl-9 pr-3 py-2 text-xs 
+                bg-white/70 dark:bg-white/[0.04] 
+                backdrop-blur-xl
+                border border-white/90 dark:border-white/10 
+                rounded-xl text-gray-800 dark:text-gray-200 
+                placeholder-gray-400 font-normal 
+                focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/40
+                transition-all shadow-[0_2px_8px_rgba(0,0,0,0.03),inset_0_1px_1px_rgba(255,255,255,0.9)] 
+                dark:shadow-[0_2px_8px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.08)]"
             />
           </div>
         </div>

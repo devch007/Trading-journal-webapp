@@ -90,15 +90,25 @@ export function TopBar({
         </div>
       </div>
 
-      {/* Center: Search Bar matching reference image */}
+      {/* Center: Liquid Glass Search Bar */}
       <div className="hidden lg:flex items-center max-w-md w-full mx-8">
         <button
           onClick={() => setIsCommandPaletteOpen(true)}
-          className="w-full flex items-center gap-2.5 px-4 py-2 bg-[#f4f5f8] dark:bg-[#16181f] border border-[#e5e7eb] dark:border-neutral-800 rounded-full text-left text-xs text-gray-400 hover:border-gray-300 dark:hover:border-neutral-700 transition-all shadow-2xs group"
+          className="w-full flex items-center gap-2.5 px-4 py-2.5 
+            bg-white/60 dark:bg-white/[0.04] 
+            backdrop-blur-xl backdrop-saturate-150
+            border border-white/80 dark:border-white/10 
+            rounded-full text-left text-xs 
+            shadow-[0_2px_12px_rgba(0,0,0,0.04),inset_0_1px_1px_rgba(255,255,255,0.9)] 
+            dark:shadow-[0_2px_14px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.1)]
+            hover:bg-white/85 dark:hover:bg-white/[0.08] 
+            hover:border-white dark:hover:border-white/20
+            hover:shadow-[0_4px_20px_rgba(0,0,0,0.08),inset_0_1px_1px_rgba(255,255,255,1)]
+            transition-all group"
         >
-          <Search className="w-4 h-4 text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300" />
-          <span className="flex-1 font-normal text-gray-500 dark:text-gray-400">Search...</span>
-          <kbd className="hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-mono font-medium text-gray-400 bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-md">
+          <Search className="w-4 h-4 text-gray-400 group-hover:text-blue-500 transition-colors" />
+          <span className="flex-1 font-normal text-gray-500 dark:text-gray-400">Search pages, trades, symbols...</span>
+          <kbd className="hidden sm:inline-flex items-center gap-0.5 px-2 py-0.5 text-[10px] font-mono font-medium text-gray-500 dark:text-gray-400 bg-white/80 dark:bg-white/10 border border-white/80 dark:border-white/10 rounded-md shadow-2xs">
             ⌘K
           </kbd>
         </button>

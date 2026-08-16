@@ -17,14 +17,14 @@ import {
   Upload,
   ArrowRight,
   Zap,
-  BookMarked,
   BarChart3,
   Bot,
-  Globe,
   Trophy,
   LineChart,
   Clock,
-  Star
+  Star,
+  CheckCircle2,
+  X
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
@@ -60,31 +60,31 @@ const PAGE_ITEMS: SearchResult[] = [
     icon: LayoutGrid,
     path: "/dashboard",
     category: "PAGES",
-    badge: "Home",
-    badgeColor: "bg-blue-500/20 text-blue-300",
+    badge: "Overview",
+    badgeColor: "bg-blue-500/10 text-blue-600 dark:bg-blue-500/20 dark:text-blue-300 border border-blue-500/20",
   },
   {
     id: "goals",
-    title: "Goals",
+    title: "Goals & Targets",
     subtitle: "Daily, weekly & monthly performance targets",
     icon: Crosshair,
     path: "/goals",
     category: "PAGES",
-    badge: "New",
-    badgeColor: "bg-green-500/20 text-green-400",
+    badge: "Targets",
+    badgeColor: "bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-300 border border-emerald-500/20",
   },
   {
     id: "accounts",
-    title: "Accounts",
-    subtitle: "Manage your trading accounts & capital",
+    title: "Trading Accounts",
+    subtitle: "Manage your capital, broker accounts & rules",
     icon: Wallet,
     path: "/accounts",
     category: "PAGES",
   },
   {
     id: "trades",
-    title: "Trades",
-    subtitle: "All trade history, filters, P&L breakdown",
+    title: "Trade History",
+    subtitle: "All executed trades, filters & P&L breakdown",
     icon: CandlestickChart,
     path: "/trades",
     category: "PAGES",
@@ -96,21 +96,31 @@ const PAGE_ITEMS: SearchResult[] = [
     icon: Sparkles,
     path: "/ai-engine",
     category: "PAGES",
-    badge: "AI",
-    badgeColor: "bg-purple-500/20 text-purple-300",
+    badge: "AI Coach",
+    badgeColor: "bg-purple-500/10 text-purple-600 dark:bg-purple-500/20 dark:text-purple-300 border border-purple-500/20",
+  },
+  {
+    id: "checkout",
+    title: "Pre-Trade Checklist",
+    subtitle: "Check discipline rules and mindset before entry",
+    icon: Activity,
+    path: "/checkout",
+    category: "PAGES",
+    badge: "Discipline",
+    badgeColor: "bg-amber-500/10 text-amber-600 dark:bg-amber-500/20 dark:text-amber-300 border border-amber-500/20",
   },
   {
     id: "journal",
-    title: "Journal",
-    subtitle: "Write notes, tag emotions & rate your trades",
+    title: "Daily Journal",
+    subtitle: "Write notes, tag psychology & review trading days",
     icon: Notebook,
     path: "/journal",
     category: "PAGES",
   },
   {
     id: "strategies",
-    title: "Strategies",
-    subtitle: "Build, tag & track your trading strategies",
+    title: "Strategies & Edge",
+    subtitle: "Build, tag & measure your trading playbooks",
     icon: Layers,
     path: "/strategies",
     category: "PAGES",
@@ -118,15 +128,15 @@ const PAGE_ITEMS: SearchResult[] = [
   {
     id: "settings",
     title: "Settings",
-    subtitle: "App preferences, notifications, display",
+    subtitle: "App preferences, dark/light theme, display",
     icon: Settings2,
     path: "/settings",
     category: "PAGES",
   },
   {
     id: "profile",
-    title: "Profile",
-    subtitle: "Account details, security & API keys",
+    title: "User Profile",
+    subtitle: "Account details, security & settings",
     icon: CircleUser,
     path: "/profile",
     category: "PAGES",
@@ -137,26 +147,27 @@ const QUICK_ACTIONS: SearchResult[] = [
   {
     id: "new-trade",
     title: "Log New Trade",
-    subtitle: "Manually enter a new trade record",
+    subtitle: "Manually record a trade entry or execution",
     icon: Plus,
     path: "/dashboard",
     category: "QUICK ACTIONS",
-    badgeColor: "bg-blue-500/20 text-blue-300",
+    badge: "Action",
+    badgeColor: "bg-blue-500/10 text-blue-600 dark:bg-blue-500/20 dark:text-blue-300 border border-blue-500/20",
   },
   {
     id: "import",
-    title: "Import Trades",
-    subtitle: "Upload a screenshot from any platform & extract via AI",
+    title: "Import Trade Screenshot",
+    subtitle: "Scan screenshot from MT5/TradingView via AI OCR",
     icon: Upload,
     path: "/dashboard",
     category: "QUICK ACTIONS",
-    badge: "AI",
-    badgeColor: "bg-purple-500/20 text-purple-300",
+    badge: "OCR AI",
+    badgeColor: "bg-purple-500/10 text-purple-600 dark:bg-purple-500/20 dark:text-purple-300 border border-purple-500/20",
   },
   {
     id: "set-goals",
-    title: "Set Daily Goals",
-    subtitle: "Update today's P&L and trade count targets",
+    title: "Update Goals",
+    subtitle: "Configure daily max loss & profit targets",
     icon: Crosshair,
     path: "/goals",
     category: "QUICK ACTIONS",
@@ -164,15 +175,15 @@ const QUICK_ACTIONS: SearchResult[] = [
   {
     id: "view-equity",
     title: "View Equity Curve",
-    subtitle: "Check your running account equity over time",
+    subtitle: "Analyze cumulative growth vs benchmark",
     icon: LineChart,
     path: "/dashboard",
     category: "QUICK ACTIONS",
   },
   {
     id: "best-strategy",
-    title: "Best Strategy",
-    subtitle: "Jump to your top-performing strategy",
+    title: "View Top Strategy",
+    subtitle: "Jump to your highest win-rate setup",
     icon: Trophy,
     path: "/strategies",
     category: "QUICK ACTIONS",
@@ -180,67 +191,49 @@ const QUICK_ACTIONS: SearchResult[] = [
   {
     id: "ai-analysis",
     title: "Run AI Analysis",
-    subtitle: "Let the AI Engine score your recent trades",
+    subtitle: "Ask AI coach to inspect your recent trade logs",
     icon: Bot,
     path: "/ai-engine",
     category: "QUICK ACTIONS",
     badge: "AI",
-    badgeColor: "bg-purple-500/20 text-purple-300",
+    badgeColor: "bg-purple-500/10 text-purple-600 dark:bg-purple-500/20 dark:text-purple-300 border border-purple-500/20",
   },
 ];
 
 const ANALYTICS_ITEMS: SearchResult[] = [
   {
     id: "win-rate",
-    title: "Win Rate Breakdown",
+    title: "Win Rate Analysis",
     subtitle: "Per-symbol, per-session win/loss ratios",
     icon: BarChart3,
     path: "/trades",
     category: "ANALYTICS",
   },
   {
-    id: "pnl-calendar",
-    title: "Monthly P&L Calendar",
-    subtitle: "Day-by-day profit and loss heatmap",
-    icon: Activity,
-    path: "/dashboard",
-    category: "ANALYTICS",
-  },
-  {
     id: "profit-factor",
-    title: "Profit Factor",
-    subtitle: "Gross profit vs gross loss ratio",
+    title: "Profit Factor Score",
+    subtitle: "Gross profit vs gross loss expectancy",
     icon: TrendingUp,
     path: "/dashboard",
     category: "ANALYTICS",
   },
   {
     id: "best-sessions",
-    title: "Best Trading Sessions",
-    subtitle: "Asia, London, NY — where you perform best",
+    title: "Trading Session Stats",
+    subtitle: "London, New York, Asia session performance",
     icon: Clock,
     path: "/trades",
     category: "ANALYTICS",
   },
   {
-    id: "quality-meter",
-    title: "Trade Quality Score",
-    subtitle: "AI confidence & checklist rating on each trade",
-    icon: Star,
-    path: "/journal",
-    category: "ANALYTICS",
-  },
-  {
     id: "streak",
-    title: "Journaling Streak",
-    subtitle: "Consecutive days with journalled trades",
+    title: "Consistency Streak",
+    subtitle: "Consecutive disciplined trading days",
     icon: Zap,
     path: "/goals",
     category: "ANALYTICS",
   },
 ];
-
-// ─── Component ────────────────────────────────────────────────────────────────
 
 export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
   const [query, setQuery] = useState("");
@@ -250,13 +243,12 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
   const listRef = useRef<HTMLDivElement>(null);
   const { trades } = useTrades();
 
-  // ── Filtered result set ────────────────────────────────────────────────
+  // Filter results
   const filteredResults = React.useMemo(() => {
     const q = query.toLowerCase().trim();
     const results: SearchResult[] = [];
 
     if (!q) {
-      // Default: show all pages + quick actions
       results.push(...PAGE_ITEMS, ...QUICK_ACTIONS);
       return results;
     }
@@ -299,14 +291,14 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
         .map((t) => ({
           id: t.id,
           title: `${t.action} ${t.symbol}`,
-          subtitle: `${new Date(t.date).toLocaleDateString()} · ${t.pnl >= 0 ? "+" : ""}$${Math.abs(t.pnl).toFixed(2)} ${t.strategy ? `· ${t.strategy}` : ""}`,
+          subtitle: `${new Date(t.date).toLocaleDateString()} · ${Number(t.pnl) >= 0 ? "+" : ""}$${Math.abs(Number(t.pnl) || 0).toFixed(2)} ${t.strategy ? `· ${t.strategy}` : ""}`,
           icon: History,
           path: "/trades",
           category: "RECENT TRADES" as Category,
-          badge: t.isPositive ? "WIN" : "LOSS",
-          badgeColor: t.isPositive
-            ? "bg-[#1ED760]/15 text-[#1ED760]"
-            : "bg-[#f87171]/15 text-[#f87171]",
+          badge: t.isPositive || Number(t.pnl) >= 0 ? "WIN" : "LOSS",
+          badgeColor: t.isPositive || Number(t.pnl) >= 0
+            ? "bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-300 border border-emerald-500/20"
+            : "bg-rose-500/10 text-rose-600 dark:bg-rose-500/20 dark:text-rose-300 border border-rose-500/20",
         }));
       results.push(...matchedTrades);
     }
@@ -314,7 +306,6 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
     return results;
   }, [query, trades]);
 
-  // ── Category order for display ─────────────────────────────────────────
   const categoryOrder: Category[] = [
     "PAGES",
     "QUICK ACTIONS",
@@ -324,23 +315,21 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
   ];
 
   const categoryLabels: Record<Category, string> = {
-    "PAGES": "📍 Pages",
-    "QUICK ACTIONS": "⚡ Quick Actions",
-    "ANALYTICS": "📊 Analytics",
-    "SYMBOLS": "🔍 Symbols",
-    "RECENT TRADES": "🕒 Recent Trades",
+    "PAGES": "Navigation & Pages",
+    "QUICK ACTIONS": "Quick Actions",
+    "ANALYTICS": "Performance & Insights",
+    "SYMBOLS": "Traded Instruments",
+    "RECENT TRADES": "Recent Executions",
   };
 
-  // ── Reset on open ──────────────────────────────────────────────────────
   useEffect(() => {
     if (isOpen) {
       setQuery("");
       setSelectedIndex(0);
-      setTimeout(() => inputRef.current?.focus(), 80);
+      setTimeout(() => inputRef.current?.focus(), 50);
     }
   }, [isOpen]);
 
-  // ── Keyboard nav ───────────────────────────────────────────────────────
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!isOpen) return;
@@ -363,7 +352,6 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, filteredResults, selectedIndex]);
 
-  // keep selected item scrolled into view
   useEffect(() => {
     const el = listRef.current?.querySelector(`[data-idx="${selectedIndex}"]`);
     el?.scrollIntoView({ block: "nearest" });
@@ -378,150 +366,171 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-[100] flex items-start justify-center pt-[12vh] px-4">
-          {/* Backdrop */}
+        <div className="fixed inset-0 z-[100] flex items-start justify-center pt-[10vh] px-4">
+          
+          {/* Frosted Liquid Glass Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="absolute inset-0 bg-black/50 backdrop-blur-md"
+            className="absolute inset-0 bg-slate-900/25 dark:bg-black/65 backdrop-blur-xl"
           />
 
-          {/* Palette */}
+          {/* Liquid Glassmorphism Shell */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.96, y: -16 }}
+            initial={{ opacity: 0, scale: 0.95, y: -20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.96, y: -16 }}
-            transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
-            className="relative w-full max-w-2xl bg-white/5 backdrop-blur-2xl border border-white/[0.12] shadow-[0_24px_64px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.08)] rounded-2xl overflow-hidden flex flex-col"
+            exit={{ opacity: 0, scale: 0.95, y: -20 }}
+            transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+            className="relative w-full max-w-2xl rounded-3xl overflow-hidden flex flex-col z-10
+              bg-white/80 dark:bg-[#11131a]/80 
+              backdrop-blur-3xl backdrop-saturate-200
+              border border-white/80 dark:border-white/[0.12] 
+              shadow-[0_25px_70px_rgba(0,0,0,0.15),0_10px_30px_rgba(0,0,0,0.08),inset_0_1px_1px_rgba(255,255,255,0.95),inset_0_-1px_1px_rgba(0,0,0,0.02)]
+              dark:shadow-[0_30px_90px_rgba(0,0,0,0.8),0_10px_30px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.15)]"
           >
-            {/* ── Search input row ─────────────────────────── */}
-            <div className="flex items-center px-5 py-4 border-b border-white/[0.08] gap-3 bg-white/[0.02]">
-              <Search className="w-5 h-5 text-gray-400 flex-shrink-0" />
+            {/* Ambient Liquid Glass Reflection Highlight */}
+            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/80 dark:via-white/30 to-transparent pointer-events-none" />
+
+            {/* ── Search Input Row ─────────────────────────── */}
+            <div className="flex items-center px-6 py-4.5 border-b border-gray-200/60 dark:border-white/[0.08] gap-3.5 bg-white/40 dark:bg-white/[0.02] backdrop-blur-md">
+              <div className="p-2 rounded-xl bg-blue-500/10 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400 flex items-center justify-center shrink-0 shadow-2xs">
+                <Search className="w-4 h-4" />
+              </div>
               <input
                 ref={inputRef}
                 type="text"
                 placeholder="Search pages, actions, trades, symbols…"
                 value={query}
                 onChange={(e) => { setQuery(e.target.value); setSelectedIndex(0); }}
-                className="flex-1 bg-transparent border-none outline-none text-white text-[16px] font-medium placeholder:text-[#4B5563]"
+                className="flex-1 bg-transparent border-none outline-none text-gray-900 dark:text-white text-base font-normal placeholder:text-gray-400 dark:placeholder:text-gray-500"
               />
-              <div className="flex items-center gap-1.5">
-                <span className="px-1.5 py-0.5 rounded bg-white/10 border border-white/10 text-[10px] font-bold text-[#A7A7A7] tracking-wider">
+              <div className="flex items-center gap-1.5 shrink-0">
+                <kbd className="px-2 py-1 rounded-lg bg-black/5 dark:bg-white/10 border border-black/5 dark:border-white/10 text-[10px] font-semibold text-gray-500 dark:text-gray-400 tracking-wider shadow-2xs">
                   ESC
-                </span>
+                </kbd>
+                <button 
+                  onClick={onClose}
+                  className="p-1 text-gray-400 hover:text-gray-700 dark:hover:text-white rounded-lg hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
               </div>
             </div>
 
-            {/* ── Results ──────────────────────────────────── */}
-            <div ref={listRef} className="flex-1 max-h-[58vh] overflow-y-auto p-2 no-scrollbar">
+            {/* ── Scrollable Results List ──────────────────── */}
+            <div ref={listRef} className="flex-1 max-h-[55vh] overflow-y-auto p-3 no-scrollbar space-y-4">
               {filteredResults.length > 0 ? (
-                <div className="space-y-4 py-2">
+                <div>
                   {categoryOrder.map((cat) => {
                     const catItems = filteredResults.filter((r) => r.category === cat);
                     if (!catItems.length) return null;
 
                     return (
-                      <div key={cat} className="space-y-0.5">
-                        <div className="px-3 py-1 text-[9px] font-bold tracking-[0.12em] uppercase text-[#4B5563]">
+                      <div key={cat} className="space-y-1 mb-3 last:mb-0">
+                        <div className="px-3.5 py-1 text-[10px] font-semibold tracking-wider uppercase text-gray-400 dark:text-gray-500">
                           {categoryLabels[cat]}
                         </div>
-                        {catItems.map((item) => {
-                          const globalIndex = filteredResults.indexOf(item);
-                          const isSelected = selectedIndex === globalIndex;
+                        <div className="space-y-0.5">
+                          {catItems.map((item) => {
+                            const globalIndex = filteredResults.indexOf(item);
+                            const isSelected = selectedIndex === globalIndex;
+                            const Icon = item.icon;
 
-                          return (
-                            <button
-                              key={item.id}
-                              data-idx={globalIndex}
-                              onClick={() => handleSelect(item)}
-                              onMouseEnter={() => setSelectedIndex(globalIndex)}
-                              className={cn(
-                                "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-100 text-left group",
-                                isSelected
-                                  ? "bg-white/[0.10] border border-white/[0.12] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]"
-                                  : "border border-transparent hover:bg-white/[0.05]"
-                              )}
-                            >
-                              {/* Icon */}
-                              <div
+                            return (
+                              <button
+                                key={item.id}
+                                data-idx={globalIndex}
+                                onClick={() => handleSelect(item)}
+                                onMouseEnter={() => setSelectedIndex(globalIndex)}
                                 className={cn(
-                                  "p-2 rounded-lg transition-colors border flex-shrink-0",
+                                  "w-full flex items-center gap-3.5 px-3.5 py-2.5 rounded-2xl transition-all duration-150 text-left group",
                                   isSelected
-                                    ? "bg-primary/20 text-primary border-primary/30"
-                                    : "bg-white/[0.06] text-gray-400 border-white/[0.08] group-hover:text-white"
+                                    ? "bg-white/95 dark:bg-white/[0.12] text-gray-900 dark:text-white shadow-[0_4px_16px_rgba(0,0,0,0.06),inset_0_1px_1px_rgba(255,255,255,0.9)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.15)] border border-gray-200/80 dark:border-white/20"
+                                    : "text-gray-700 dark:text-gray-300 hover:bg-white/50 dark:hover:bg-white/[0.06] border border-transparent"
                                 )}
                               >
-                                <item.icon className="w-4 h-4" />
-                              </div>
-
-                              {/* Text */}
-                              <div className="flex-1 min-w-0">
-                                <div className="text-[13px] font-semibold text-white leading-tight truncate">
-                                  {item.title}
-                                </div>
-                                <div className="text-[11px] text-[#4B5563] mt-0.5 truncate">
-                                  {item.subtitle}
-                                </div>
-                              </div>
-
-                              {/* Badge */}
-                              {item.badge && (
-                                <span
+                                {/* Icon container with liquid frosted look */}
+                                <div
                                   className={cn(
-                                    "px-2 py-0.5 rounded-full text-[9px] font-bold tracking-wider uppercase flex-shrink-0",
-                                    item.badgeColor || "bg-white/10 text-white/50"
+                                    "p-2 rounded-xl transition-all flex-shrink-0 flex items-center justify-center",
+                                    isSelected
+                                      ? "bg-blue-500 text-white shadow-xs scale-105"
+                                      : "bg-black/[0.04] dark:bg-white/[0.06] text-gray-500 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"
                                   )}
                                 >
-                                  {item.badge}
-                                </span>
-                              )}
+                                  <Icon className="w-4 h-4" />
+                                </div>
 
-                              {/* Chevron */}
-                              {isSelected && (
-                                <ArrowRight className="w-3.5 h-3.5 text-primary flex-shrink-0" />
-                              )}
-                            </button>
-                          );
-                        })}
+                                {/* Title & Subtitle */}
+                                <div className="flex-1 min-w-0">
+                                  <div className="text-[13px] font-semibold text-gray-900 dark:text-white leading-tight truncate">
+                                    {item.title}
+                                  </div>
+                                  <div className="text-[11px] text-gray-400 dark:text-gray-500 mt-0.5 truncate font-normal">
+                                    {item.subtitle}
+                                  </div>
+                                </div>
+
+                                {/* Badge */}
+                                {item.badge && (
+                                  <span
+                                    className={cn(
+                                      "px-2.5 py-0.5 rounded-full text-[10px] font-medium tracking-wide uppercase flex-shrink-0",
+                                      item.badgeColor || "bg-black/5 dark:bg-white/10 text-gray-600 dark:text-gray-300"
+                                    )}
+                                  >
+                                    {item.badge}
+                                  </span>
+                                )}
+
+                                {/* Arrow Indicator on Hover/Selection */}
+                                {isSelected && (
+                                  <ArrowRight className="w-4 h-4 text-blue-500 dark:text-blue-400 flex-shrink-0 animate-in fade-in slide-in-from-left-1 duration-150" />
+                                )}
+                              </button>
+                            );
+                          })}
+                        </div>
                       </div>
                     );
                   })}
                 </div>
               ) : (
-                <div className="py-14 text-center">
-                  <div className="w-12 h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mx-auto mb-4">
-                    <Search className="w-5 h-5 text-[#4B5563]" />
+                <div className="py-12 text-center">
+                  <div className="w-12 h-12 rounded-2xl bg-black/[0.03] dark:bg-white/[0.05] border border-black/5 dark:border-white/10 flex items-center justify-center mx-auto mb-3 text-gray-400">
+                    <Search className="w-5 h-5" />
                   </div>
-                  <p className="text-[13px] text-[#4B5563] font-medium">
-                    No results for <span className="text-white">"{query}"</span>
+                  <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">
+                    No results for "{query}"
                   </p>
-                  <p className="text-[11px] text-[#374151] mt-1">
-                    Try a page name, symbol, or trade tag
+                  <p className="text-xs text-gray-400 mt-1">
+                    Try searching for a symbol, trade, strategy or page name
                   </p>
                 </div>
               )}
             </div>
 
-            {/* ── Footer ───────────────────────────────────── */}
-            <div className="px-5 py-3 border-t border-white/[0.08] bg-white/[0.02] flex items-center justify-between">
-              <div className="flex items-center gap-4 text-[10px] text-[#4B5563] font-semibold tracking-wide">
+            {/* ── Liquid Glass Footer ──────────────────────── */}
+            <div className="px-6 py-3 border-t border-gray-200/60 dark:border-white/[0.08] bg-white/40 dark:bg-white/[0.02] backdrop-blur-md flex items-center justify-between text-xs text-gray-400 dark:text-gray-500 font-medium">
+              <div className="flex items-center gap-4">
                 <div className="flex items-center gap-1.5">
-                  <kbd className="px-1.5 py-0.5 rounded bg-white/10 border border-white/10">↑</kbd>
-                  <kbd className="px-1.5 py-0.5 rounded bg-white/10 border border-white/10">↓</kbd>
+                  <kbd className="px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/10 border border-black/5 dark:border-white/10 text-[10px]">↑</kbd>
+                  <kbd className="px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/10 border border-black/5 dark:border-white/10 text-[10px]">↓</kbd>
                   <span>Navigate</span>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <kbd className="px-1.5 py-0.5 rounded bg-white/10 border border-white/10">↵</kbd>
+                  <kbd className="px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/10 border border-black/5 dark:border-white/10 text-[10px]">↵</kbd>
                   <span>Select</span>
                 </div>
               </div>
-              <div className="flex items-center gap-1.5 text-[10px] text-[#4B5563] font-semibold">
-                <kbd className="px-1.5 py-0.5 rounded bg-white/10 border border-white/10">ESC</kbd>
+              <div className="flex items-center gap-1.5">
+                <kbd className="px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/10 border border-black/5 dark:border-white/10 text-[10px]">ESC</kbd>
                 <span>Close</span>
               </div>
             </div>
+
           </motion.div>
         </div>
       )}
