@@ -122,7 +122,7 @@ export function Dashboard() {
     return allTrades.filter(t => t.accountId === selectedAccountId);
   }, [allTrades, selectedAccountId]);
 
-  // Key metrics calculated dynamically from user trades
+  // Key metrics calculated dynamically from user trades for the selected account
   const stats = useMemo(() => {
     const initialCap = selectedAccount?.initialCapital || 100000;
     const currentEquity = selectedAccount?.currentEquity || initialCap;
@@ -130,16 +130,12 @@ export function Dashboard() {
     if (!trades.length) {
       return {
         balance: currentEquity,
-        totalProfit: 3500.75,
-        avgGrowing: 0.50,
-        winRate: 72.5,
-        profitFactor: 2.35,
-        bestPair: "XAUUSD",
-        topPairs: [
-          { symbol: "Gold (XAUUSD)", pnl: 1240.00, winRate: 75.0, gainTag: "+75.0% Win Rate", iconColor: "bg-amber-500", icon: "🥇" },
-          { symbol: "Euro (EURUSD)", pnl: 680.50, winRate: 68.4, gainTag: "+68.4% Win Rate", iconColor: "bg-emerald-500", icon: "💎" },
-          { symbol: "Bitcoin (BTCUSD)", pnl: 450.00, winRate: 62.5, gainTag: "+62.5% Win Rate", iconColor: "bg-neutral-900 dark:bg-neutral-800", icon: "⚡" },
-        ]
+        totalProfit: 0,
+        avgGrowing: 0,
+        winRate: 0,
+        profitFactor: 0,
+        bestPair: "N/A",
+        topPairs: []
       };
     }
 
@@ -150,9 +146,9 @@ export function Dashboard() {
     
     const grossProfit = winningTrades.reduce((sum, t) => sum + Number(t.pnl || 0), 0);
     const grossLoss = Math.abs(losingTrades.reduce((sum, t) => sum + Number(t.pnl || 0), 0));
-    const profitFactor = grossLoss === 0 ? (grossProfit > 0 ? 3.5 : 1.0) : grossProfit / grossLoss;
+    const profitFactor = grossLoss === 0 ? (grossProfit > 0 ? 3.5 : 0.0) : grossProfit / grossLoss;
 
-    // Group pairs
+    // Group pairs for selected account
     const pairStats: Record<string, { pnl: number, wins: number, total: number }> = {};
     trades.forEach(t => {
       const sym = t.symbol || 'OTHER';
@@ -173,25 +169,18 @@ export function Dashboard() {
       }))
       .sort((a, b) => b.pnl - a.pnl);
 
-    // Fallback if less than 3 pairs
-    while (sortedPairs.length < 3) {
-      if (sortedPairs.length === 0) sortedPairs.push({ symbol: "Gold (XAUUSD)", pnl: 1240.00, winRate: 75.0, gainTag: "+75.0% Win Rate", iconColor: "bg-amber-500", icon: "🥇" });
-      else if (sortedPairs.length === 1) sortedPairs.push({ symbol: "Euro (EURUSD)", pnl: 680.50, winRate: 68.4, gainTag: "+68.4% Win Rate", iconColor: "bg-emerald-500", icon: "💎" });
-      else sortedPairs.push({ symbol: "Bitcoin (BTCUSD)", pnl: 450.00, winRate: 62.5, gainTag: "+62.5% Win Rate", iconColor: "bg-neutral-900 dark:bg-neutral-800", icon: "⚡" });
-    }
-
     return {
       balance: currentEquity + totalPnl,
       totalProfit: totalPnl,
       avgGrowing: ((totalPnl / initialCap) * 100) / Math.max(1, trades.length),
       winRate,
       profitFactor,
-      bestPair: sortedPairs[0]?.symbol || "XAUUSD",
+      bestPair: sortedPairs[0]?.symbol || "N/A",
       topPairs: sortedPairs.slice(0, 3)
     };
   }, [trades, selectedAccount]);
 
-  // Activity Chart Data Calculation
+  // Activity Chart Data Calculation (Strictly for selected account trades)
   const activityChartData = useMemo(() => {
     const parseTradeDate = (dStr: string) => {
       if (!dStr) return new Date();
@@ -215,18 +204,13 @@ export function Dashboard() {
             counts[d.getMonth()] += 1;
           }
         });
-      } else {
-        // Fallback for empty state to look nice
-        counts[0] = 110; counts[1] = 145; counts[2] = 145; counts[3] = 240;
-        counts[4] = 280; counts[5] = 205; counts[6] = 240; counts[7] = 110;
-        counts[8] = 280; counts[9] = 340; counts[10] = 370; counts[11] = 410;
       }
       
       const maxVal = Math.max(...counts, 10);
       return months.map((m, idx) => ({
         m, 
         v: counts[idx], 
-        h: Math.max((counts[idx] / maxVal) * 100, 5)
+        h: Math.max((counts[idx] / maxVal) * 100, counts[idx] > 0 ? 5 : 0)
       }));
     } else {
       // Week View
@@ -236,7 +220,6 @@ export function Dashboard() {
       if (trades.length > 0) {
         const now = new Date();
         const startOfWeek = new Date(now);
-        // Set to Monday
         const day = startOfWeek.getDay();
         const diff = startOfWeek.getDate() - day + (day === 0 ? -6 : 1);
         startOfWeek.setDate(diff);
@@ -246,47 +229,36 @@ export function Dashboard() {
           const d = parseTradeDate(t.date);
           if (!isNaN(d.getTime()) && d >= startOfWeek) {
             let dayIdx = d.getDay() - 1;
-            if (dayIdx === -1) dayIdx = 6; // Sunday
+            if (dayIdx === -1) dayIdx = 6;
             counts[dayIdx] += 1;
           }
         });
-      } else {
-         // Fallback for empty state
-         counts[0] = 12; counts[1] = 25; counts[2] = 18; counts[3] = 30;
-         counts[4] = 15; counts[5] = 5; counts[6] = 0;
       }
       
       const maxVal = Math.max(...counts, 5);
       return days.map((m, idx) => ({
         m, 
         v: counts[idx], 
-        h: Math.max((counts[idx] / maxVal) * 100, 5)
+        h: Math.max((counts[idx] / maxVal) * 100, counts[idx] > 0 ? 5 : 0)
       }));
     }
   }, [trades, activityView]);
 
   const activityMaxVal = useMemo(() => {
-    return Math.max(...activityChartData.map(d => d.v), activityView === 'Month' ? 400 : 50);
+    return Math.max(...activityChartData.map(d => d.v), activityView === 'Month' ? 20 : 10);
   }, [activityChartData, activityView]);
 
-  // Equity Curve calculation
+  // Equity Curve calculation (Strictly for selected account)
   const equityChartData = useMemo(() => {
+    const initialBalance = selectedAccount?.initialCapital || 100000;
+
     if (!trades.length) {
       return [
-        { date: 'Jun 08', val1: 100000, val2: 98000, pnl: 0, dateLabel: 'Jun 08, 2026' },
-        { date: 'Jun 10', val1: 101200, val2: 99500, pnl: 1200, dateLabel: 'Jun 10, 2026' },
-        { date: 'Jun 12', val1: 100800, val2: 100200, pnl: -400, dateLabel: 'Jun 12, 2026' },
-        { date: 'Jun 14', val1: 102400, val2: 101500, pnl: 1600, dateLabel: 'Jun 14, 2026' },
-        { date: 'Jun 16', val1: 103100, val2: 102000, pnl: 700, dateLabel: 'Jun 16, 2026' },
-        { date: 'Jun 18', val1: 104500, val2: 102800, pnl: 1400, dateLabel: 'Jun 18, 2026' },
-        { date: 'Jun 20', val1: 103900, val2: 102500, pnl: -600, dateLabel: 'Jun 20, 2026' },
-        { date: 'Jun 22', val1: 105200, val2: 103200, pnl: 1300, dateLabel: 'Jun 22, 2026' },
-        { date: 'Jun 24', val1: 106100, val2: 104000, pnl: 900, dateLabel: 'Jun 24, 2026' },
-        { date: 'July 2', val1: 107500, val2: 104800, pnl: 1400, dateLabel: 'Jul 02, 2026' },
+        { date: 'Start', val1: initialBalance, val2: initialBalance, pnl: 0, dateLabel: 'Account Opening' },
+        { date: 'Now', val1: initialBalance, val2: initialBalance, pnl: 0, dateLabel: 'No Trades Yet' },
       ];
     }
 
-    const initialBalance = selectedAccount?.initialCapital || 100000;
     let running = initialBalance;
     let baseline = initialBalance;
 
@@ -456,53 +428,7 @@ export function Dashboard() {
         };
       });
     }
-
-    return [
-      {
-        id: 1,
-        description: "BUY XAUUSD (Gold) 0.50 Lot",
-        date: "06 Jun, 2026",
-        amount: "+$450.00",
-        status: "Success",
-        statusColor: "text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40",
-        statusDot: "bg-emerald-500",
-        iconColor: "bg-amber-100 text-amber-600 dark:bg-amber-950/50",
-        iconText: "BUY"
-      },
-      {
-        id: 2,
-        description: "BUY EURUSD 2.00 Lot",
-        date: "04 Jun, 2026",
-        amount: "+$350.00",
-        status: "Success",
-        statusColor: "text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40",
-        statusDot: "bg-emerald-500",
-        iconColor: "bg-teal-100 text-teal-600 dark:bg-teal-950/50",
-        iconText: "BUY"
-      },
-      {
-        id: 3,
-        description: "SELL USDJPY 1.50 Lot",
-        date: "03 Jun, 2026",
-        amount: "-$150.00",
-        status: "Stopped Out",
-        statusColor: "text-rose-600 bg-rose-50 dark:bg-rose-950/40",
-        statusDot: "bg-rose-500",
-        iconColor: "bg-rose-100 text-rose-600 dark:bg-rose-950/50",
-        iconText: "SELL"
-      },
-      {
-        id: 4,
-        description: "BUY GBPUSD 1.00 Lot",
-        date: "02 Jun, 2026",
-        amount: "+$500.00",
-        status: "Success",
-        statusColor: "text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40",
-        statusDot: "bg-emerald-500",
-        iconColor: "bg-blue-100 text-blue-600 dark:bg-blue-950/50",
-        iconText: "BUY"
-      }
-    ];
+    return [];
   }, [trades]);
 
   return (
@@ -605,40 +531,45 @@ export function Dashboard() {
 
               {/* 3 Top Star Cards Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                {stats.topPairs.map((pair) => (
-                  <div 
-                    key={pair.symbol}
-                    className="bg-white dark:bg-[#16181f] rounded-3xl p-5 border border-gray-200/80 dark:border-neutral-800/80 shadow-2xs hover:shadow-md transition-all duration-300 flex flex-col justify-between gap-4 group cursor-pointer"
-                    onClick={() => navigate('/trades')}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2.5">
-                        <div className={`w-8 h-8 rounded-full ${pair.iconColor} flex items-center justify-center text-white font-bold text-xs shadow-xs`}>
-                          {pair.icon}
+                {stats.topPairs.length > 0 ? (
+                  stats.topPairs.map((pair) => (
+                    <div 
+                      key={pair.symbol}
+                      className="bg-white dark:bg-[#16181f] rounded-3xl p-5 border border-gray-200/80 dark:border-neutral-800/80 shadow-2xs hover:shadow-md transition-all duration-300 flex flex-col justify-between gap-4 group cursor-pointer"
+                      onClick={() => navigate('/trades')}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2.5">
+                          <div className={`w-8 h-8 rounded-full ${pair.iconColor} flex items-center justify-center text-white font-bold text-xs shadow-xs`}>
+                            {pair.icon}
+                          </div>
+                          <span className="text-xs font-semibold text-gray-900 dark:text-white truncate max-w-[110px]">
+                            {pair.symbol}
+                          </span>
                         </div>
-                        {/* Card Heading -> 600 weight */}
-                        <span className="text-xs font-semibold text-gray-900 dark:text-white truncate max-w-[110px]">
-                          {pair.symbol}
-                        </span>
+                        <button className="w-7 h-7 rounded-full border border-gray-200 dark:border-neutral-700 flex items-center justify-center text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white group-hover:border-gray-400 transition-colors">
+                          <ArrowUpRight className="w-3.5 h-3.5" />
+                        </button>
                       </div>
-                      <button className="w-7 h-7 rounded-full border border-gray-200 dark:border-neutral-700 flex items-center justify-center text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white group-hover:border-gray-400 transition-colors">
-                        <ArrowUpRight className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
 
-                    <div className="space-y-1">
-                      {/* P&L numbers -> 700 + tabular numerals */}
-                      <h3 className="text-xl font-bold tabular-nums text-gray-900 dark:text-white tracking-tight">
-                        {pair.pnl >= 0 ? `+$${pair.pnl.toLocaleString(undefined, { minimumFractionDigits: 2 })}` : `-$${Math.abs(pair.pnl).toLocaleString(undefined, { minimumFractionDigits: 2 })}`}
-                      </h3>
-                      <div className="flex items-center gap-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
-                        <span className="bg-emerald-50 dark:bg-emerald-950/40 px-1.5 py-0.5 rounded-md font-medium tabular-nums">
-                          {pair.gainTag}
-                        </span>
+                      <div className="space-y-1">
+                        <h3 className="text-xl font-bold tabular-nums text-gray-900 dark:text-white tracking-tight">
+                          {pair.pnl >= 0 ? `+$${pair.pnl.toLocaleString(undefined, { minimumFractionDigits: 2 })}` : `-$${Math.abs(pair.pnl).toLocaleString(undefined, { minimumFractionDigits: 2 })}`}
+                        </h3>
+                        <div className="flex items-center gap-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
+                          <span className="bg-emerald-50 dark:bg-emerald-950/40 px-1.5 py-0.5 rounded-md font-medium tabular-nums">
+                            {pair.gainTag}
+                          </span>
+                        </div>
                       </div>
                     </div>
+                  ))
+                ) : (
+                  <div className="col-span-3 bg-white dark:bg-[#16181f] rounded-3xl p-6 border border-gray-200/80 dark:border-neutral-800/80 shadow-2xs text-center py-8">
+                    <p className="text-xs font-semibold text-gray-900 dark:text-white">No traded assets for this account yet</p>
+                    <p className="text-[11px] text-gray-400 mt-1">Log or import trades to isolate asset breakdown for this account.</p>
                   </div>
-                ))}
+                )}
               </div>
             </div>
 
@@ -769,33 +700,40 @@ export function Dashboard() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-50 dark:divide-neutral-800/40 text-xs">
-                    {recentExecutions.map((tx) => (
-                      <tr key={tx.id} className="hover:bg-gray-50/50 dark:hover:bg-neutral-800/30 transition-colors group">
-                        <td className="py-3.5">
-                          <div className="flex items-center gap-3">
-                            <span className={`w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold ${tx.iconColor}`}>
-                              {tx.iconText}
+                    {recentExecutions.length > 0 ? (
+                      recentExecutions.map((tx) => (
+                        <tr key={tx.id} className="hover:bg-gray-50/50 dark:hover:bg-neutral-800/30 transition-colors group">
+                          <td className="py-3.5">
+                            <div className="flex items-center gap-3">
+                              <span className={`w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold ${tx.iconColor}`}>
+                                {tx.iconText}
+                              </span>
+                              <span className="font-medium text-gray-900 dark:text-white">
+                                {tx.description}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="py-3.5 text-gray-400 dark:text-gray-500 font-normal">
+                            {tx.date}
+                          </td>
+                          <td className={`py-3.5 font-bold tabular-nums ${tx.amount.startsWith('+') ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-500'}`}>
+                            {tx.amount}
+                          </td>
+                          <td className="py-3.5 text-right">
+                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium ${tx.statusColor}`}>
+                              <span className={`w-1.5 h-1.5 rounded-full ${tx.statusDot}`}></span>
+                              <span>{tx.status}</span>
                             </span>
-                            <span className="font-medium text-gray-900 dark:text-white">
-                              {tx.description}
-                            </span>
-                          </div>
-                        </td>
-                        <td className="py-3.5 text-gray-400 dark:text-gray-500 font-normal">
-                          {tx.date}
-                        </td>
-                        {/* P&L numbers -> 700 + tabular-nums */}
-                        <td className={`py-3.5 font-bold tabular-nums ${tx.amount.startsWith('+') ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-500'}`}>
-                          {tx.amount}
-                        </td>
-                        <td className="py-3.5 text-right">
-                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium ${tx.statusColor}`}>
-                            <span className={`w-1.5 h-1.5 rounded-full ${tx.statusDot}`}></span>
-                            <span>{tx.status}</span>
-                          </span>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={4} className="py-8 text-center text-gray-400 font-normal">
+                          No trade executions logged for this account yet.
                         </td>
                       </tr>
-                    ))}
+                    )}
                   </tbody>
                 </table>
               </div>
