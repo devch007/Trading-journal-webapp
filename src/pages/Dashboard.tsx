@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { TopBar } from "../lib/TopBar";
 import { TradeModal } from "../components/TradeModal";
 import { ImportTradesModal } from "../components/ImportTradesModal";
+import { TradingCalendarHeatmap } from "../components/TradingCalendarHeatmap";
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -58,11 +59,18 @@ const TradeXChartTooltip = ({ active, payload }: any) => {
     const isPos = pnl >= 0;
 
     return (
-      <div className="bg-white dark:bg-[#181920] border border-gray-200/90 dark:border-neutral-700/80 p-3.5 rounded-2xl shadow-xl flex flex-col gap-2 min-w-[190px] font-normal">
-        <p className="text-[11px] font-medium text-gray-400 dark:text-gray-400">
-          {data.dateLabel || data.date || 'Execution Point'}
-        </p>
-        <div className="space-y-1.5 pt-1">
+      <div className="bg-white dark:bg-[#181920] border border-gray-200/90 dark:border-neutral-700/80 p-3.5 rounded-2xl shadow-xl flex flex-col gap-2 min-w-[200px] font-normal z-50">
+        <div className="flex items-center justify-between border-b border-gray-100 dark:border-neutral-800 pb-1.5">
+          <p className="text-[11px] font-semibold text-gray-500 dark:text-gray-400">
+            {data.dateLabel || data.date || 'Execution Point'}
+          </p>
+          {data.pnl !== undefined && (
+            <span className={`text-[11px] font-bold tabular-nums px-1.5 py-0.5 rounded ${isPos ? 'text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40' : 'text-rose-500 bg-rose-50 dark:bg-rose-950/40'}`}>
+              {isPos ? '+' : ''}${Number(data.pnl).toFixed(2)}
+            </span>
+          )}
+        </div>
+        <div className="space-y-1.5 pt-0.5">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-[#1e293b] dark:bg-gray-300"></span>
@@ -70,8 +78,8 @@ const TradeXChartTooltip = ({ active, payload }: any) => {
                 ${Number(data.val1).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </span>
             </div>
-            <span className="text-[11px] font-medium text-gray-500 bg-gray-100 dark:bg-neutral-800 px-1.5 py-0.5 rounded">
-              Equity
+            <span className="text-[10px] font-medium text-gray-500 bg-gray-100 dark:bg-neutral-800 px-1.5 py-0.5 rounded">
+              Account Equity
             </span>
           </div>
 
@@ -82,8 +90,8 @@ const TradeXChartTooltip = ({ active, payload }: any) => {
                 ${Number(data.val2).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </span>
             </div>
-            <span className={`text-[11px] font-bold tabular-nums px-1.5 py-0.5 rounded ${isPos ? 'text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40' : 'text-rose-500 bg-rose-50 dark:bg-rose-950/40'}`}>
-              {isPos ? '+' : ''}${Number(pnl).toFixed(2)}
+            <span className="text-[10px] font-medium text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-950/40 px-1.5 py-0.5 rounded">
+              Benchmark
             </span>
           </div>
         </div>
@@ -248,7 +256,7 @@ export function Dashboard() {
     return Math.max(...activityChartData.map(d => d.v), activityView === 'Month' ? 20 : 10);
   }, [activityChartData, activityView]);
 
-  // Equity Curve calculation (Strictly for selected account)
+  // Equity Curve calculation (Strictly for selected account + timeframe filter)
   const equityChartData = useMemo(() => {
     const initialBalance = selectedAccount?.initialCapital || 100000;
 
@@ -259,26 +267,71 @@ export function Dashboard() {
       ];
     }
 
+    // Sort all trades chronologically
+    const allSorted = [...trades].sort((a, b) => getTradeDate(a.date).getTime() - getTradeDate(b.date).getTime());
+
+    // Filter by timeframe if applicable
+    let activeTrades = allSorted;
+    if (timeframe !== 'ALL') {
+      const validTimes = allSorted.map(t => getTradeDate(t.date).getTime()).filter(t => !isNaN(t));
+      if (validTimes.length > 0) {
+        const latestTime = Math.max(...validTimes);
+        const days = timeframe === '1D' ? 1 : timeframe === '1W' ? 7 : 30;
+        const cutoff = latestTime - days * 24 * 60 * 60 * 1000;
+        const inWindow = allSorted.filter(t => getTradeDate(t.date).getTime() >= cutoff);
+        if (inWindow.length > 0) {
+          activeTrades = inWindow;
+        }
+      }
+    }
+
     let running = initialBalance;
     let baseline = initialBalance;
 
-    const sorted = [...trades].sort((a, b) => getTradeDate(a.date).getTime() - getTradeDate(b.date).getTime());
+    // Calculate baseline up to active range
+    const startIndex = allSorted.indexOf(activeTrades[0]);
+    for (let i = 0; i < startIndex; i++) {
+      running += Number(allSorted[i].pnl) || 0;
+      baseline += initialBalance * 0.0005;
+    }
 
-    return sorted.map((t, index) => {
+    const startEquity = running;
+
+    const points = activeTrades.map((t) => {
       const pnl = Number(t.pnl) || 0;
       running += pnl;
-      baseline += initialBalance * 0.002;
+      baseline += initialBalance * 0.0005;
       const d = getTradeDate(t.date);
 
+      const dayStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      const timeStr = d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+
       return {
-        date: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-        dateLabel: d.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }),
-        val1: running,
-        val2: Math.round(baseline),
+        date: dayStr,
+        time: timeStr,
+        dateLabel: `${dayStr} ${timeStr !== '00:00' ? timeStr : ''}`,
+        val1: Number(running.toFixed(2)),
+        val2: Number(baseline.toFixed(2)),
         pnl
       };
     });
-  }, [trades, selectedAccount]);
+
+    if (points.length === 1) {
+      return [
+        {
+          date: 'Start',
+          time: '',
+          dateLabel: 'Opening',
+          val1: Number(startEquity.toFixed(2)),
+          val2: Number(initialBalance.toFixed(2)),
+          pnl: 0
+        },
+        points[0]
+      ];
+    }
+
+    return points;
+  }, [trades, selectedAccount, timeframe]);
 
   const handleNewTrade = async (newTrade: any) => {
     await addTrade({
@@ -589,21 +642,11 @@ export function Dashboard() {
 
               {/* Dual Curve Chart */}
               <div className="h-[280px] w-full relative">
-                
-                {/* Visual marker label */}
-                <div className="absolute top-[26%] left-[56%] -translate-x-1/2 -translate-y-full z-20 pointer-events-none hidden sm:flex flex-col items-center">
-                  <span className="px-2 py-0.5 bg-[#1e293b] text-white text-[10px] font-bold tabular-nums rounded-md shadow-md">
-                    ${Number(stats.balance).toLocaleString()}
-                  </span>
-                  <div className="w-2 h-2 bg-amber-500 rounded-full ring-2 ring-white my-0.5"></div>
-                  <div className="w-[1px] h-12 border-l border-dashed border-gray-400/60"></div>
-                </div>
-
                 <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={equityChartData} margin={{ top: 20, right: 10, left: -10, bottom: 0 }}>
+                  <AreaChart data={equityChartData} margin={{ top: 15, right: 10, left: 5, bottom: 0 }}>
                     <defs>
                       <linearGradient id="curveSlate" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#1e293b" stopOpacity={0.08}/>
+                        <stop offset="0%" stopColor="#1e293b" stopOpacity={0.12}/>
                         <stop offset="100%" stopColor="#1e293b" stopOpacity={0}/>
                       </linearGradient>
                       <linearGradient id="curveTeal" x1="0" y1="0" x2="0" y2="1">
@@ -620,6 +663,8 @@ export function Dashboard() {
                       fontSize={11} 
                       tickLine={false} 
                       axisLine={false} 
+                      minTickGap={35}
+                      interval="preserveStartEnd"
                     />
                     
                     <YAxis 
@@ -627,8 +672,8 @@ export function Dashboard() {
                       fontSize={11} 
                       tickLine={false} 
                       axisLine={false} 
-                      tickFormatter={(val) => `$${val >= 1000 ? `${(val / 1000).toFixed(0)}k` : val}`}
-                      domain={['dataMin - 1000', 'dataMax + 1000']}
+                      tickFormatter={(val) => `$${val >= 10000 ? `${(val / 1000).toFixed(1)}k` : val.toLocaleString()}`}
+                      domain={['auto', 'auto']}
                       className="tabular-nums"
                     />
                     
@@ -647,7 +692,8 @@ export function Dashboard() {
                       type="monotone" 
                       dataKey="val2" 
                       stroke="#0d9488" 
-                      strokeWidth={2.5} 
+                      strokeWidth={2} 
+                      strokeDasharray="4 4"
                       fillOpacity={1} 
                       fill="url(#curveTeal)" 
                     />
@@ -655,6 +701,9 @@ export function Dashboard() {
                 </ResponsiveContainer>
               </div>
             </div>
+
+            {/* Trading Calendar Heatmap */}
+            <TradingCalendarHeatmap trades={trades} selectedAccountId={selectedAccountId} />
 
             {/* Recent Executions History Table */}
             <div className="bg-white dark:bg-[#16181f] rounded-3xl p-6 md:p-7 border border-gray-200/80 dark:border-neutral-800/80 shadow-2xs">
