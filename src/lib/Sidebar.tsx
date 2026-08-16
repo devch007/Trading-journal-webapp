@@ -54,26 +54,23 @@ export function Sidebar({ isMobileOpen, setIsMobileOpen }: SidebarProps) {
       title: "Main Menu",
       items: [
         { title: "Overview", icon: LayoutGrid, href: "/dashboard" },
-        { title: "Investment Tracker", icon: TrendingUp, href: "/trades" },
-        { title: "Project Planner", icon: CheckSquare, href: "/checkout" },
-        { title: "Reports", icon: BarChart3, href: "/ai-engine" },
+        { title: "Trades Log", icon: TrendingUp, href: "/trades" },
+        { title: "AI Engine", icon: Sparkles, href: "/ai-engine" },
         { title: "Linked Account", icon: Wallet, href: "/accounts" },
       ]
     },
     {
-      title: "Customers",
+      title: "Trading",
       items: [
-        { title: "Customer List", icon: Users, href: "/strategies" },
-        { title: "Channels", icon: Radio, href: "/goals" },
-        { title: "Order Management", icon: FileText, href: "/journal" },
+        { title: "Stratzy", icon: Layers, href: "/strategies" },
+        { title: "Goals", icon: Target, href: "/goals" },
+        { title: "Trade Analysis", icon: FileText, href: "/journal" },
       ]
     },
     {
       title: "Management",
       items: [
-        { title: "Roles & Permission", icon: ShieldCheck, href: "/strategies" },
         { title: "Billing and Subscriptions", icon: CreditCard, href: "/settings" },
-        { title: "Integrations", icon: Layers, href: "/accounts" },
       ]
     },
     {
