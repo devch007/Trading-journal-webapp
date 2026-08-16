@@ -24,6 +24,7 @@ import { StrategyProvider } from './contexts/StrategyContext';
 import { Strategies } from './pages/Strategies';
 import { StrategyDetail } from './pages/StrategyDetail';
 import { Goals } from './pages/Goals';
+import { Investments } from './pages/Investments';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, userProfile, loading } = useAuth();
@@ -79,6 +80,7 @@ export default function App() {
                   <Route path="journal" element={<Journal />} />
                   <Route path="strategies" element={<Strategies />} />
                   <Route path="strategies/:id" element={<StrategyDetail />} />
+                  <Route path="investments" element={<Investments />} />
                   <Route path="settings" element={<Settings />} />
                   <Route path="profile" element={<Profile />} />
                 </Route>

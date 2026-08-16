@@ -60,6 +60,9 @@ export function useKeyboardShortcuts() {
       } else if (e.key === '7') {
         e.preventDefault();
         navigate('/goals');
+      } else if (e.key === '8') {
+        e.preventDefault();
+        navigate('/investments');
       }
     };
 
