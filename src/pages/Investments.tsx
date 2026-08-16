@@ -22,7 +22,8 @@ import {
   Coins,
   CheckCircle2,
   DollarSign,
-  HelpCircle
+  HelpCircle,
+  X
 } from 'lucide-react';
 import { useInvestments, Holding, WatchlistItem } from '../hooks/useInvestments';
 import { InvestmentDetailModal } from '../components/InvestmentDetailModal';
