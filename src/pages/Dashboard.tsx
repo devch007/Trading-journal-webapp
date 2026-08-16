@@ -796,7 +796,7 @@ export function Dashboard() {
                         onChange={(e) => setSelectedAccountId(e.target.value)}
                         className="appearance-none bg-transparent text-xs font-medium text-blue-600 dark:text-blue-400 pr-4 cursor-pointer outline-none focus:ring-0"
                       >
-                        {accounts.map(acc => (
+                        {accounts.filter(acc => acc.status === 'ACTIVE').map(acc => (
                           <option key={acc.id} value={acc.id} className="text-gray-900 dark:text-gray-900">
                             {acc.name}
                           </option>

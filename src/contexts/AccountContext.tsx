@@ -20,10 +20,11 @@ export function AccountProvider({ children }: { children: React.ReactNode }) {
   const { trades } = useTrades();
   const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null);
 
-  // Automatically select the first account if none is selected and accounts are available
+  // Automatically select the first active account if none is selected and accounts are available
   useEffect(() => {
     if (!loading && accounts.length > 0 && !selectedAccountId) {
-      setSelectedAccountId(accounts[0].id);
+      const firstActive = accounts.find(a => a.status === 'ACTIVE') || accounts[0];
+      setSelectedAccountId(firstActive.id);
     } else if (!loading && accounts.length === 0) {
       setSelectedAccountId(null);
     }
@@ -34,7 +35,8 @@ export function AccountProvider({ children }: { children: React.ReactNode }) {
     if (selectedAccountId && accounts.length > 0) {
       const exists = accounts.some(a => a.id === selectedAccountId);
       if (!exists) {
-        setSelectedAccountId(accounts[0].id);
+        const firstActive = accounts.find(a => a.status === 'ACTIVE') || accounts[0];
+        setSelectedAccountId(firstActive.id);
       }
     }
   }, [accounts, selectedAccountId]);

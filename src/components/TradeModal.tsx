@@ -216,7 +216,7 @@ export function TradeModal({ isOpen, onClose, onSubmit, trade }: TradeModalProps
                 className={inputClass}
                 required
               >
-                {accounts.map(acc => (
+                {accounts.filter(acc => acc.status === 'ACTIVE').map(acc => (
                   <option key={acc.id} value={acc.id}>
                     {acc.firm} — {acc.name}
                   </option>
