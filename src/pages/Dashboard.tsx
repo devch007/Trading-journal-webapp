@@ -4,6 +4,8 @@ import { TopBar } from "../lib/TopBar";
 import { TradeModal } from "../components/TradeModal";
 import { ImportTradesModal } from "../components/ImportTradesModal";
 import { TradingCalendarHeatmap } from "../components/TradingCalendarHeatmap";
+import { DashboardSkeleton } from "../components/ui/Skeleton";
+import { SmartEmptyState } from "../components/ui/SmartEmptyState";
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -107,13 +109,20 @@ const TradeXChartTooltip = ({ active, payload }: any) => {
 export function Dashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { trades: allTrades, addTrade } = useTrades();
+  const { trades: allTrades, loading, addTrade } = useTrades();
   const { selectedAccountId, selectedAccount, accounts, setSelectedAccountId } = useAccountContext();
   const [isTradeModalOpen, setIsTradeModalOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [timeframe, setTimeframe] = useState<'1D' | '1W' | '1M' | 'ALL'>('1W');
   const [activityView, setActivityView] = useState<'Month' | 'Week'>('Week');
   const [dismissedViolations, setDismissedViolations] = useState<Set<string>>(new Set());
+
+  // Listen to global 'N' key shortcut to open Log Trade modal
+  useEffect(() => {
+    const handleOpenModal = () => setIsTradeModalOpen(true);
+    window.addEventListener('openNewTradeModal', handleOpenModal);
+    return () => window.removeEventListener('openNewTradeModal', handleOpenModal);
+  }, []);
 
   // Reactive theme tracking for Chart canvas colors
   const [isDark, setIsDark] = useState(() => {
@@ -684,10 +693,15 @@ export function Dashboard() {
                     </div>
                   ))
                 ) : (
-                  <div className="col-span-3 bg-white dark:bg-[#16181f] rounded-3xl p-6 border border-gray-200/80 dark:border-neutral-800/80 shadow-2xs text-center py-8">
-                    <p className="text-xs font-semibold text-gray-900 dark:text-white">No traded assets for this account yet</p>
-                    <p className="text-[11px] text-gray-400 mt-1">Log or import trades to isolate asset breakdown for this account.</p>
-                  </div>
+                  <SmartEmptyState 
+                    title="No traded assets for this account yet"
+                    description="Log trades or import an OCR screenshot for this account to automatically calculate top performance stars and asset win-rates."
+                    actionLabel="Log Trade (N)"
+                    onAction={() => setIsTradeModalOpen(true)}
+                    secondaryActionLabel="Import Screenshot"
+                    onSecondaryAction={handleImportClick}
+                    className="col-span-3 py-8"
+                  />
                 )}
               </div>
             </div>
@@ -733,7 +747,7 @@ export function Dashboard() {
               {/* Clean Curve Chart */}
               <div className="h-[280px] w-full relative pt-2">
                 <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={equityChartData} margin={{ top: 15, right: 10, left: 0, bottom: 0 }}>
+                  <AreaChart key={timeframe} data={equityChartData} margin={{ top: 15, right: 10, left: 0, bottom: 0 }}>
                     <defs>
                       <linearGradient id="curveEquity" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="0%" stopColor={isDark ? "#38bdf8" : "#3b82f6"} stopOpacity={isDark ? 0.28 : 0.15}/>
@@ -774,7 +788,7 @@ export function Dashboard() {
                     
                     <Tooltip content={<TradeXChartTooltip />} />
                     
-                    {/* Main Realized Equity Curve */}
+                    {/* Main Realized Equity Curve with Subtle Transition */}
                     <Area 
                       type="monotone" 
                       dataKey="val1" 
@@ -782,9 +796,12 @@ export function Dashboard() {
                       strokeWidth={2.5} 
                       fillOpacity={1} 
                       fill="url(#curveEquity)" 
+                      isAnimationActive={true}
+                      animationDuration={750}
+                      animationEasing="ease-out"
                     />
                     
-                    {/* Benchmark Dotted Target Line (No Area Fill to keep graph crisp) */}
+                    {/* Benchmark Dotted Target Line */}
                     <Area 
                       type="monotone" 
                       dataKey="val2" 
@@ -793,6 +810,9 @@ export function Dashboard() {
                       strokeDasharray="4 4"
                       fillOpacity={0} 
                       fill="none" 
+                      isAnimationActive={true}
+                      animationDuration={750}
+                      animationEasing="ease-out"
                     />
                   </AreaChart>
                 </ResponsiveContainer>

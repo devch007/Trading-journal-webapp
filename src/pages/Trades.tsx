@@ -6,6 +6,8 @@ import { TradeModal } from "../components/TradeModal";
 import { Plus, ChevronDown, Calendar, Trash2, Tag, X, CheckSquare, Square, Layers } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { getTradeDate, parseDurationToMinutes, formatMinutesToDuration } from "../lib/timeUtils";
+import { Skeleton } from "../components/ui/Skeleton";
+import { SmartEmptyState } from "../components/ui/SmartEmptyState";
 
 export function Trades() {
   const { trades: allTrades, loading, addTrade, deleteTrades, updateTrades } = useTrades();
@@ -23,6 +25,16 @@ export function Trades() {
   const [filterTradeType, setFilterTradeType] = useState("ALL");
   const [filterStrategy, setFilterStrategy] = useState("ALL");
   const [filterRange, setFilterRange] = useState("ALL");
+
+  // Listen to global 'N' key shortcut
+  React.useEffect(() => {
+    const handleOpenModal = () => {
+      setEditingTrade(null);
+      setIsTradeModalOpen(true);
+    };
+    window.addEventListener('openNewTradeModal', handleOpenModal);
+    return () => window.removeEventListener('openNewTradeModal', handleOpenModal);
+  }, []);
 
   const uniqueSymbols = useMemo(() => {
     const symbols = new Set<string>();
@@ -526,12 +538,33 @@ export function Trades() {
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-neutral-800/40 text-xs">
                 {loading ? (
-                  <tr>
-                    <td colSpan={12} className="py-12 text-center text-gray-400">Loading trades...</td>
-                  </tr>
+                  Array.from({ length: 5 }).map((_, i) => (
+                    <tr key={i}>
+                      <td className="py-4 pl-2"><Skeleton className="w-4 h-4 rounded" /></td>
+                      <td className="py-4"><Skeleton className="w-6 h-4 rounded" /></td>
+                      <td className="py-4"><Skeleton className="w-20 h-4 rounded" /></td>
+                      <td className="py-4"><Skeleton className="w-16 h-4 rounded" /></td>
+                      <td className="py-4"><Skeleton className="w-12 h-5 rounded-full" /></td>
+                      <td className="py-4"><Skeleton className="w-12 h-4 rounded" /></td>
+                      <td className="py-4"><Skeleton className="w-16 h-4 rounded" /></td>
+                      <td className="py-4"><Skeleton className="w-16 h-4 rounded" /></td>
+                      <td className="py-4"><Skeleton className="w-14 h-4 rounded" /></td>
+                      <td className="py-4"><Skeleton className="w-16 h-4 rounded" /></td>
+                      <td className="py-4"><Skeleton className="w-16 h-4 rounded" /></td>
+                      <td className="py-4"><Skeleton className="w-20 h-4 rounded" /></td>
+                    </tr>
+                  ))
                 ) : (trades || []).length === 0 ? (
                   <tr>
-                    <td colSpan={12} className="py-12 text-center text-gray-400">No trades found matching current filter.</td>
+                    <td colSpan={12} className="py-8 text-center">
+                      <SmartEmptyState 
+                        title="No trades found matching current filter"
+                        description="Try resetting your filters or log a new execution for this account."
+                        actionLabel="Log New Trade (N)"
+                        onAction={() => { setEditingTrade(null); setIsTradeModalOpen(true); }}
+                        className="border-none shadow-none bg-transparent"
+                      />
+                    </td>
                   </tr>
                 ) : (
                   (trades || []).map((trade, index) => {

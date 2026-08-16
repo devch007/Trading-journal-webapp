@@ -31,6 +31,8 @@ import { useTrades, Trade } from "../hooks/useTrades";
 import { useNavigate } from "react-router-dom";
 import { useAccountContext } from "../contexts/AccountContext";
 import { getTradeDate } from "../lib/timeUtils";
+import { Skeleton } from "../components/ui/Skeleton";
+import { SmartEmptyState } from "../components/ui/SmartEmptyState";
 
 export function Journal() {
   const { trades: allTrades, loading, updateTrades, fetchTradeProof } = useTrades();
@@ -218,16 +220,32 @@ export function Journal() {
           {/* Scrollable List */}
           <div className="overflow-y-auto space-y-2.5 no-scrollbar max-h-[calc(100vh-280px)] pr-0.5">
             {loading ? (
-              <div className="flex flex-col items-center justify-center h-40 text-gray-400">
-                <Loader2 className="w-6 h-6 animate-spin text-blue-500 mb-2" />
-                <p className="text-xs font-medium">Loading trades...</p>
-              </div>
+              Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="p-4 rounded-3xl bg-white dark:bg-[#16181f] border border-gray-200/80 dark:border-neutral-800/80 shadow-2xs space-y-3">
+                  <div className="flex justify-between items-center">
+                    <div className="flex items-center gap-2.5">
+                      <Skeleton variant="circle" className="w-8 h-8" />
+                      <div className="space-y-1.5">
+                        <Skeleton className="w-16 h-4 rounded" />
+                        <Skeleton className="w-20 h-3 rounded" />
+                      </div>
+                    </div>
+                    <Skeleton className="w-16 h-5 rounded-lg" />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Skeleton className="w-12 h-4 rounded" />
+                    <Skeleton className="w-20 h-4 rounded" />
+                  </div>
+                </div>
+              ))
             ) : entries.length === 0 ? (
-              <div className="bg-white dark:bg-[#16181f] rounded-3xl border border-gray-200/80 dark:border-neutral-800/80 p-8 text-center shadow-2xs space-y-1">
-                <Target className="w-8 h-8 text-gray-300 dark:text-gray-600 mx-auto mb-2" />
-                <p className="text-xs font-semibold text-gray-700 dark:text-gray-300">No trades found</p>
-                <p className="text-[11px] text-gray-400">No matching trades for the selected filter.</p>
-              </div>
+              <SmartEmptyState 
+                title="No trades to journal"
+                description="Logged trades for this account will appear here for execution scoring, psychology notes, and screenshot proof."
+                actionLabel="Log Trade (N)"
+                onAction={() => window.dispatchEvent(new CustomEvent('openNewTradeModal'))}
+                className="py-10 shadow-none border-none bg-transparent"
+              />
             ) : (
               entries.map(entry => {
                 const pnlNum = Number(entry.pnl) || 0;

@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { Sidebar } from '../lib/Sidebar';
+import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
 
 export function Layout() {
-  const [isExpanded, setIsExpanded] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const location = useLocation();
+
+  // Initialize global keyboard shortcuts (1-7 for navigation, [ or ⌘B for sidebar toggle, N for trade)
+  useKeyboardShortcuts();
 
   useEffect(() => {
     const handleToggle = () => setIsMobileOpen(prev => !prev);
@@ -29,8 +32,6 @@ export function Layout() {
       )}
       
       <Sidebar 
-        isExpanded={isExpanded} 
-        setIsExpanded={setIsExpanded}
         isMobileOpen={isMobileOpen}
         setIsMobileOpen={setIsMobileOpen}
       />
