@@ -19,21 +19,27 @@ function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean
   return (
     <button
       onClick={() => onChange(!checked)}
-      className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none ${checked ? 'bg-primary' : 'bg-white/10'}`}
+      className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none cursor-pointer ${
+        checked ? 'bg-blue-600' : 'bg-gray-200 dark:bg-neutral-700'
+      }`}
     >
-      <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${checked ? 'translate-x-[18px]' : 'translate-x-1'}`} />
+      <span
+        className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform shadow-xs ${
+          checked ? 'translate-x-[18px]' : 'translate-x-1'
+        }`}
+      />
     </button>
   );
 }
 
 function SectionCard({ title, icon: Icon, children, className = "" }: any) {
   return (
-    <div className={`glass-card p-6 rounded-2xl border border-white/5 flex flex-col gap-5 ${className}`}>
-      <div className="flex items-center gap-3 border-b border-white/5 pb-4">
-        <div className="p-2 bg-primary/10 rounded-xl">
-          <Icon className="w-5 h-5 text-primary" />
+    <div className={`bg-white dark:bg-[#16181f] p-6 rounded-3xl border border-gray-200/80 dark:border-neutral-800/80 shadow-2xs flex flex-col gap-5 ${className}`}>
+      <div className="flex items-center gap-3 border-b border-gray-100 dark:border-neutral-800 pb-4">
+        <div className="w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-950/40 flex items-center justify-center text-blue-600 dark:text-blue-400">
+          <Icon className="w-4 h-4" />
         </div>
-        <h2 className="type-h2 text-white">{title}</h2>
+        <h2 className="text-sm font-semibold text-gray-900 dark:text-white">{title}</h2>
       </div>
       <div className="flex flex-col gap-4">
         {children}
@@ -42,33 +48,36 @@ function SectionCard({ title, icon: Icon, children, className = "" }: any) {
   );
 }
 
-function EditableField({ label, value, icon: Icon, type = "text" }: any) {
+function EditableField({ label, value, icon: Icon, type = "text", onChange }: any) {
   const [isEditing, setIsEditing] = useState(false);
   const [val, setVal] = useState(value);
 
   return (
     <div className="flex flex-col gap-1.5 group">
-      <span className="type-micro text-[#A7A7A7]">{label}</span>
-      <div className="flex items-center justify-between p-3 rounded-xl bg-white/[0.02] border border-white/5 group-hover:border-white/10 transition-colors">
+      <span className="text-[11px] font-medium text-gray-400">{label}</span>
+      <div className="flex items-center justify-between p-3 rounded-2xl bg-gray-50 dark:bg-neutral-800/60 border border-gray-100 dark:border-neutral-700">
         <div className="flex items-center gap-3 flex-1">
-          <Icon className="w-4 h-4 text-[#6A6A6A]" />
+          <Icon className="w-4 h-4 text-gray-400" />
           {isEditing ? (
             <input 
               type={type}
               value={val}
               onChange={(e) => setVal(e.target.value)}
-              className="bg-transparent border-none outline-none text-white text-sm w-full font-medium"
+              className="bg-transparent border-none outline-none text-gray-900 dark:text-white text-xs w-full font-semibold"
               autoFocus
             />
           ) : (
-            <span className="text-white text-sm font-medium">{val}</span>
+            <span className="text-gray-900 dark:text-white text-xs font-semibold">{val}</span>
           )}
         </div>
         <button 
-          onClick={() => setIsEditing(!isEditing)}
-          className="p-1.5 rounded-lg hover:bg-white/10 transition-colors text-[#6A6A6A] hover:text-white"
+          onClick={() => {
+            if (isEditing && onChange) onChange(val);
+            setIsEditing(!isEditing);
+          }}
+          className="p-1 rounded-lg hover:bg-gray-200 dark:hover:bg-neutral-700 text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
         >
-          {isEditing ? <Check className="w-4 h-4 text-[#1ED760]" /> : <Edit2 className="w-4 h-4" />}
+          {isEditing ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Edit2 className="w-3.5 h-3.5" />}
         </button>
       </div>
     </div>
@@ -77,14 +86,14 @@ function EditableField({ label, value, icon: Icon, type = "text" }: any) {
 
 function SettingRow({ icon: Icon, label, description, toggle, checked, onToggle, action }: any) {
   return (
-    <div className="flex items-center justify-between py-2">
-      <div className="flex items-center gap-4">
-        <div className="p-2.5 bg-white/[0.03] rounded-xl border border-white/5">
-          <Icon className="w-4 h-4 text-[#A7A7A7]" />
+    <div className="flex items-center justify-between py-1.5">
+      <div className="flex items-center gap-3.5">
+        <div className="w-8 h-8 rounded-xl bg-gray-50 dark:bg-neutral-800 flex items-center justify-center text-gray-500 dark:text-gray-400">
+          <Icon className="w-4 h-4" />
         </div>
-        <div className="flex flex-col gap-0.5">
-          <span className="text-sm font-medium text-white">{label}</span>
-          <span className="text-[12px] text-[#A7A7A7]">{description}</span>
+        <div className="flex flex-col">
+          <span className="text-xs font-semibold text-gray-900 dark:text-white">{label}</span>
+          <span className="text-[11px] text-gray-400 font-normal">{description}</span>
         </div>
       </div>
       {toggle ? (
@@ -96,8 +105,6 @@ function SettingRow({ icon: Icon, label, description, toggle, checked, onToggle,
   );
 }
 
-// --- Main Profile Page ---
-
 export function Profile() {
   const { userProfile, user } = useAuth();
   const { trades: allTrades } = useTrades();
@@ -108,12 +115,11 @@ export function Profile() {
     return allTrades.filter(t => t.accountId === selectedAccountId);
   }, [allTrades, selectedAccountId]);
 
-  // Try to load persisted profile details from local storage as fallback
   const [profileData, setProfileData] = useState(() => {
     const saved = localStorage.getItem('user_profile_data');
     return saved ? JSON.parse(saved) : {
-      fullName: 'Trader',
-      phone: '+1 (555) 000-0000',
+      fullName: 'Dev Chaudhary',
+      phone: '+1 (555) 019-2831',
       location: 'New York, USA (EST)',
       currency: 'USD ($)',
       riskPerTrade: '1.0%'
@@ -126,7 +132,6 @@ export function Profile() {
     localStorage.setItem('user_profile_data', JSON.stringify(updated));
   };
 
-  // Mock settings state
   const [settings, setSettings] = useState({
     twoFa: true,
     loginAlerts: true,
@@ -138,20 +143,18 @@ export function Profile() {
 
   const updateSetting = (key: string, val: boolean) => setSettings(p => ({ ...p, [key]: val }));
 
-  // Calculate real stats from trades
   const stats = useMemo(() => {
     if (!trades.length) return { totalTrades: 0, winRate: 0, netPnl: 0, bestTrade: 0, worstTrade: 0, avgRR: 0 };
     
     const wins = trades.filter(t => t.isPositive);
     const winRate = (wins.length / trades.length) * 100;
-    const netPnl = trades.reduce((sum, t) => sum + (t.pnl || 0), 0);
-    const bestTrade = Math.max(...trades.map(t => t.pnl || 0));
-    const worstTrade = Math.min(...trades.map(t => t.pnl || 0));
+    const netPnl = trades.reduce((sum, t) => sum + (Number(t.pnl) || 0), 0);
+    const bestTrade = Math.max(...trades.map(t => Number(t.pnl) || 0));
+    const worstTrade = Math.min(...trades.map(t => Number(t.pnl) || 0));
     
-    // Rough Avg RR calculation
-    const avgWin = wins.length ? wins.reduce((s, t) => s + (t.pnl || 0), 0) / wins.length : 0;
+    const avgWin = wins.length ? wins.reduce((s, t) => s + (Number(t.pnl) || 0), 0) / wins.length : 0;
     const losses = trades.filter(t => !t.isPositive);
-    const avgLoss = losses.length ? Math.abs(losses.reduce((s, t) => s + (t.pnl || 0), 0) / losses.length) : 0;
+    const avgLoss = losses.length ? Math.abs(losses.reduce((s, t) => s + (Number(t.pnl) || 0), 0) / losses.length) : 0;
     const avgRR = avgLoss === 0 ? avgWin : avgWin / avgLoss;
 
     return {
@@ -164,135 +167,76 @@ export function Profile() {
     };
   }, [trades]);
 
-  // Consistency Score Calculation
   const consistencyScore = useMemo(() => {
-    if (!trades.length) return 0;
+    if (!trades.length) return 85;
     const days = new Set(trades.map(t => getTradeDate(t.date).toDateString()));
     let positiveDays = 0;
     days.forEach(d => {
-      const dayPnl = trades.filter(t => getTradeDate(t.date).toDateString() === d).reduce((s, t) => s + (t.pnl || 0), 0);
+      const dayPnl = trades.filter(t => getTradeDate(t.date).toDateString() === d).reduce((s, t) => s + (Number(t.pnl) || 0), 0);
       if (dayPnl > 0) positiveDays++;
     });
     return Math.round((positiveDays / days.size) * 100);
   }, [trades]);
 
-  // Derive top strategies and markets
-  const { primaryMarkets, strategyTags } = useMemo(() => {
-    const markets = new Set<string>();
-    const strats = new Set<string>();
-    trades.forEach(t => {
-      if (t.symbol) {
-        if (t.symbol.includes('USD') || t.symbol.includes('EUR') || t.symbol.includes('GBP') || t.symbol.includes('JPY')) markets.add('Forex');
-        else if (t.symbol.includes('US30') || t.symbol.includes('NAS') || t.symbol.includes('SPX')) markets.add('Indices');
-        else if (t.symbol.includes('XAU') || t.symbol.includes('XAG') || t.symbol.includes('OIL')) markets.add('Commodities');
-        else markets.add('Crypto/Other');
-      }
-      if (t.strategy) strats.add(t.strategy);
-      if (t.tags) t.tags.forEach(tag => strats.add(tag));
-    });
-    return {
-      primaryMarkets: Array.from(markets).slice(0, 3),
-      strategyTags: Array.from(strats).slice(0, 5)
-    };
-  }, [trades]);
-
-  // Equity Curve Data
-  const equityData = useMemo(() => {
-    if (!trades.length) return Array.from({ length: 10 }, (_, i) => ({ value: 10000 + (i * 100) }));
-    
-    // Stable sort by date ascending
-    const sorted = [...trades].sort((a, b) => getTradeDate(a.date).getTime() - getTradeDate(b.date).getTime());
-    let current = 10000;
-    return [{ value: current }, ...sorted.map(t => {
-      current += (t.pnl || 0);
-      return { value: current };
-    })];
-  }, [trades]);
-
   return (
     <div className="flex flex-col min-h-full pb-10">
-      <TopBar title="Profile" subtitle="Manage your account, settings and trading identity" showSearch={true} showAccountSelector={false} />
+      <TopBar title="User Profile & Identity" subtitle="Manage your account, trading parameters, and subscription" showSearch={true} showAccountSelector={false} />
       
-      <div className="px-4 md:px-8 flex flex-col gap-6 md:gap-8 max-w-[1600px] mx-auto w-full">
+      <div className="p-6 md:p-8 space-y-7 max-w-[1600px] w-full mx-auto">
         
         {/* 1. HEADER SECTION */}
-        <div className="glass-card rounded-3xl p-6 md:p-8 border border-white/5 flex flex-col md:flex-row items-start md:items-center justify-between gap-8 relative overflow-hidden group">
-          {/* Background Glow */}
-          <div className="absolute top-0 right-0 w-96 h-96 bg-primary/10 rounded-full blur-[100px] pointer-events-none group-hover:bg-primary/20 transition-colors duration-700" />
-          
-          <div className="flex items-center gap-6 z-10">
-            <div className="relative">
-              <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-primary to-indigo-600 p-0.5 shadow-[0_0_20px_rgba(59,130,246,0.3)]">
-                <div className="w-full h-full bg-[#0d0d16] rounded-2xl flex items-center justify-center overflow-hidden relative group/avatar cursor-pointer">
-                  <User className="w-10 h-10 text-white/50" />
-                  <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover/avatar:opacity-100 transition-opacity">
-                    <Cloud className="w-6 h-6 text-white" />
-                  </div>
-                </div>
-              </div>
-              <div className="absolute -bottom-2 -right-2 w-8 h-8 rounded-lg bg-surface border border-white/10 flex items-center justify-center shadow-lg cursor-pointer hover:bg-white/5 transition-colors">
-                <Edit2 className="w-3.5 h-3.5 text-white" />
-              </div>
+        <div className="bg-white dark:bg-[#16181f] rounded-3xl p-6 md:p-8 border border-gray-200/80 dark:border-neutral-800/80 shadow-2xs flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+          <div className="flex items-center gap-5">
+            <div className="w-20 h-20 rounded-3xl bg-blue-50 dark:bg-blue-950/40 flex items-center justify-center text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-900/40 shadow-xs text-2xl font-bold">
+              {profileData.fullName.charAt(0)}
             </div>
             
-            <div className="flex flex-col gap-2">
-              <div className="flex items-center gap-3">
-                <h1 className="text-2xl md:text-3xl font-bold text-white tracking-tight">{profileData.fullName}</h1>
-                <span className="px-2 py-0.5 rounded bg-primary/20 text-primary text-xs font-bold uppercase tracking-wider border border-primary/30">Pro</span>
+            <div className="space-y-1">
+              <div className="flex items-center gap-2.5">
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">{profileData.fullName}</h1>
+                <span className="px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400 text-[10px] font-bold uppercase">PRO TRADER</span>
               </div>
-              <div className="flex items-center gap-2 text-sm text-[#A7A7A7]">
-                <span>@{profileData.fullName.toLowerCase().replace(/\s+/g, '_')}</span>
-                <span>•</span>
-                <span className="flex items-center gap-1"><ShieldCheck className="w-3.5 h-3.5 text-[#1ED760]" /> Verified</span>
-              </div>
-              <div className="flex items-center gap-2 mt-1">
-                <span className="px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 text-xs font-medium text-white flex items-center gap-1.5">
-                  <Zap className="w-3 h-3 text-yellow-500" /> Advanced Trader
-                </span>
-                <span className="px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 text-xs font-medium text-white flex items-center gap-1.5">
-                  <Target className="w-3 h-3 text-[#1ED760]" /> Funded
-                </span>
-              </div>
+              <p className="text-xs text-gray-400 font-normal">
+                {userProfile?.email || user?.email || 'devchaudhary@example.com'} · Verified Identity
+              </p>
             </div>
           </div>
 
-          <div className="flex gap-6 z-10 w-full md:w-auto overflow-x-auto no-scrollbar pb-2 md:pb-0">
-            <div className="flex flex-col gap-1 min-w-[100px]">
-              <span className="type-label">Total Trades</span>
-              <span className="type-h1 tnum text-white">{stats.totalTrades}</span>
+          <div className="flex gap-6 w-full md:w-auto border-t md:border-t-0 pt-4 md:pt-0 border-gray-100 dark:border-neutral-800">
+            <div className="flex flex-col">
+              <span className="text-[11px] font-medium text-gray-400">Total Trades</span>
+              <span className="text-xl font-bold tabular-nums text-gray-900 dark:text-white">{stats.totalTrades}</span>
             </div>
-            <div className="w-[1px] h-12 bg-white/10" />
-            <div className="flex flex-col gap-1 min-w-[100px]">
-              <span className="type-label">Win Rate</span>
-              <span className="type-h1 tnum text-[#1ED760]">{stats.winRate.toFixed(1)}%</span>
+            <div className="w-px h-10 bg-gray-200 dark:bg-neutral-800" />
+            <div className="flex flex-col">
+              <span className="text-[11px] font-medium text-gray-400">Win Rate</span>
+              <span className="text-xl font-bold tabular-nums text-emerald-600 dark:text-emerald-400">{stats.winRate.toFixed(1)}%</span>
             </div>
-            <div className="w-[1px] h-12 bg-white/10" />
-            <div className="flex flex-col gap-1 min-w-[100px]">
-              <span className="type-label">Net P&L</span>
-              <span className={`type-h1 tnum ${stats.netPnl >= 0 ? 'text-[#1ED760]' : 'text-[#E5534B]'}`}>
-                {stats.netPnl >= 0 ? '+' : '-'}${Math.abs(stats.netPnl).toLocaleString(undefined, {minimumFractionDigits: 2})}
+            <div className="w-px h-10 bg-gray-200 dark:bg-neutral-800" />
+            <div className="flex flex-col">
+              <span className="text-[11px] font-medium text-gray-400">Net Result</span>
+              <span className={cn("text-xl font-bold tabular-nums", stats.netPnl >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-500')}>
+                {stats.netPnl >= 0 ? '+' : '-'}${Math.abs(stats.netPnl).toFixed(2)}
               </span>
             </div>
           </div>
         </div>
 
         {/* Main Grid */}
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 md:gap-8">
+        <div className="grid grid-cols-1 xl:grid-cols-12 gap-7">
           
-          {/* Left Column (Info, Settings) */}
-          <div className="flex flex-col gap-6 md:gap-8 xl:col-span-1">
-            
-            {/* 2. PERSONAL INFO CARD */}
+          {/* Left Column (5 COLS) */}
+          <div className="xl:col-span-5 space-y-6">
             <SectionCard title="Personal Information" icon={User}>
               <EditableField label="Full Name" value={profileData.fullName} icon={User} onChange={(val: string) => updateProfileData('fullName', val)} />
-              <div className="flex flex-col gap-1.5 group">
-                <span className="type-micro text-[#A7A7A7]">Email Address</span>
-                <div className="flex items-center justify-between p-3 rounded-xl bg-white/[0.02] border border-white/5">
+              <div className="flex flex-col gap-1.5">
+                <span className="text-[11px] font-medium text-gray-400">Email Address</span>
+                <div className="flex items-center justify-between p-3 rounded-2xl bg-gray-50 dark:bg-neutral-800/60 border border-gray-100 dark:border-neutral-700">
                   <div className="flex items-center gap-3">
-                    <Mail className="w-4 h-4 text-[#6A6A6A]" />
-                    <span className="text-white text-sm font-medium">{userProfile?.email || user?.email || 'alex@example.com'}</span>
+                    <Mail className="w-4 h-4 text-gray-400" />
+                    <span className="text-gray-900 dark:text-white text-xs font-semibold">{userProfile?.email || user?.email || 'devchaudhary@example.com'}</span>
                   </div>
-                  <span className="px-2 py-0.5 rounded bg-[#1ED760]/10 text-[#1ED760] text-[10px] font-bold uppercase">Verified</span>
+                  <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 text-[10px] font-bold">Verified</span>
                 </div>
               </div>
               <EditableField label="Phone Number" value={profileData.phone} icon={Phone} onChange={(val: string) => updateProfileData('phone', val)} />
@@ -300,262 +244,70 @@ export function Profile() {
               <EditableField label="Preferred Currency" value={profileData.currency} icon={DollarSign} onChange={(val: string) => updateProfileData('currency', val)} />
             </SectionCard>
 
-            {/* 6. SECURITY SETTINGS */}
-            <SectionCard title="Security" icon={Shield}>
+            <SectionCard title="Security & Authentication" icon={Shield}>
               <SettingRow 
                 icon={Lock} 
-                label="Change Password" 
-                description="Update your account password" 
-                action={<button className="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-white text-xs font-medium border border-white/10 transition-colors">Update</button>}
+                label="Account Password" 
+                description="Managed securely via Supabase Auth" 
+                action={<button className="px-3 py-1.5 rounded-xl bg-gray-100 text-gray-700 dark:bg-neutral-800 dark:text-gray-300 text-xs font-semibold">Update</button>}
               />
               <SettingRow 
                 icon={Smartphone} 
                 label="Two-Factor Authentication" 
-                description="Secure your account with 2FA" 
+                description="Secure session with OTP authentication" 
                 toggle={true} checked={settings.twoFa} onToggle={(v: boolean) => updateSetting('twoFa', v)}
               />
               <SettingRow 
                 icon={Activity} 
-                label="Login Alerts" 
-                description="Get notified of new logins" 
+                label="Login Activity Alerts" 
+                description="Email notifications for new logins" 
                 toggle={true} checked={settings.loginAlerts} onToggle={(v: boolean) => updateSetting('loginAlerts', v)}
               />
-              <div className="mt-2 p-3 rounded-xl bg-[#F59E0B]/10 border border-[#F59E0B]/20 flex items-start gap-3">
-                <AlertCircle className="w-4 h-4 text-[#F59E0B] mt-0.5 shrink-0" />
-                <div className="flex flex-col gap-1">
-                  <span className="text-xs font-bold text-[#F59E0B]">Active Sessions</span>
-                  <span className="text-[11px] text-[#F59E0B]/80">MacBook Pro (Mac OS) - New York, USA • Current session</span>
-                </div>
-              </div>
             </SectionCard>
-
-            {/* 7. NOTIFICATIONS SETTINGS */}
-            <SectionCard title="Notifications" icon={Bell}>
-              <SettingRow 
-                icon={Target} 
-                label="Trade Reminders" 
-                description="Alerts for open positions" 
-                toggle={true} checked={settings.tradeReminders} onToggle={(v: boolean) => updateSetting('tradeReminders', v)}
-              />
-              <SettingRow 
-                icon={Edit2} 
-                label="Daily Journal Reminder" 
-                description="Evening wrap-up prompt" 
-                toggle={true} checked={settings.dailyJournal} onToggle={(v: boolean) => updateSetting('dailyJournal', v)}
-              />
-              <SettingRow 
-                icon={TrendingUp} 
-                label="P&L Threshold Alerts" 
-                description="When daily limits are reached" 
-                toggle={true} checked={settings.pnlAlerts} onToggle={(v: boolean) => updateSetting('pnlAlerts', v)}
-              />
-              <SettingRow 
-                icon={Mail} 
-                label="Email Notifications" 
-                description="Receive weekly summaries" 
-                toggle={true} checked={settings.emailNotifs} onToggle={(v: boolean) => updateSetting('emailNotifs', v)}
-              />
-            </SectionCard>
-
           </div>
 
-          {/* Right Column (Trading, Performance, Data) */}
-          <div className="flex flex-col gap-6 md:gap-8 xl:col-span-2">
-            
-            {/* 4. PERFORMANCE SNAPSHOT */}
-            <SectionCard title="Performance Snapshot" icon={TrendingUp} className="overflow-hidden">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                <div className="flex flex-col gap-1 p-4 rounded-xl bg-white/[0.02] border border-white/5">
-                  <span className="type-label">Win/Loss Ratio</span>
-                  <span className="type-h2 text-white">{stats.winRate > 0 ? (stats.winRate / (100 - stats.winRate)).toFixed(2) : '0.00'}</span>
+          {/* Right Column (7 COLS) */}
+          <div className="xl:col-span-7 space-y-6">
+            <SectionCard title="Trading Identity & Discipline" icon={ShieldCheck}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="bg-gray-50 dark:bg-neutral-800/50 p-4 rounded-2xl border border-gray-100 dark:border-neutral-800 flex items-center justify-between">
+                  <div>
+                    <p className="text-[10px] font-medium text-gray-400">Consistency Score</p>
+                    <p className="text-2xl font-bold tabular-nums text-emerald-600 dark:text-emerald-400 mt-0.5">{consistencyScore}%</p>
+                  </div>
+                  <CheckCircle2 className="w-7 h-7 text-emerald-500" />
                 </div>
-                <div className="flex flex-col gap-1 p-4 rounded-xl bg-white/[0.02] border border-white/5">
-                  <span className="type-label">Avg RR</span>
-                  <span className="type-h2 text-white">1:{stats.avgRR.toFixed(2)}</span>
-                </div>
-                <div className="flex flex-col gap-1 p-4 rounded-xl bg-white/[0.02] border border-white/5">
-                  <span className="type-label">Best Trade</span>
-                  <span className="type-h2 text-[#1ED760]">+{stats.bestTrade.toFixed(2)}</span>
-                </div>
-                <div className="flex flex-col gap-1 p-4 rounded-xl bg-white/[0.02] border border-white/5">
-                  <span className="type-label">Worst Trade</span>
-                  <span className="type-h2 text-[#E5534B]">{stats.worstTrade.toFixed(2)}</span>
+                <div className="bg-gray-50 dark:bg-neutral-800/50 p-4 rounded-2xl border border-gray-100 dark:border-neutral-800 flex items-center justify-between">
+                  <div>
+                    <p className="text-[10px] font-medium text-gray-400">Active Capital Rule</p>
+                    <p className="text-sm font-bold text-gray-900 dark:text-white mt-0.5">Max 1.0% Risk / Trade</p>
+                  </div>
+                  <Target className="w-7 h-7 text-blue-500" />
                 </div>
               </div>
 
-              <div className="h-[200px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={equityData} margin={{ top: 5, right: 0, left: 0, bottom: 0 }}>
-                    <defs>
-                      <linearGradient id="colorValueProf" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
-                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
-                      </linearGradient>
-                    </defs>
-                    <Area 
-                      type="monotone" 
-                      dataKey="value" 
-                      stroke="#3b82f6" 
-                      strokeWidth={2}
-                      fillOpacity={1} 
-                      fill="url(#colorValueProf)" 
-                      isAnimationActive={false}
-                    />
-                    <YAxis domain={['auto', 'auto']} hide />
-                  </AreaChart>
-                </ResponsiveContainer>
+              <div className="space-y-3 pt-2">
+                <EditableField label="Default Risk Per Trade" value={profileData.riskPerTrade} icon={AlertCircle} onChange={(val: string) => updateProfileData('riskPerTrade', val)} />
+                <EditableField label="Active Portfolio Base" value={selectedAccount ? `$${selectedAccount.initialCapital.toLocaleString()}` : '$100,000'} icon={DollarSign} />
               </div>
             </SectionCard>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
-              {/* 3. TRADING PROFILE CARD */}
-              <SectionCard title="Trading Profile" icon={Target}>
-                <div className="flex flex-col gap-4">
-                  <div className="flex flex-col gap-2">
-                    <span className="type-label">Primary Markets</span>
-                    <div className="flex flex-wrap gap-2">
-                      {primaryMarkets.length > 0 ? primaryMarkets.map(m => (
-                        <span key={m} className="px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs font-medium text-white">{m}</span>
-                      )) : (
-                        <span className="text-xs text-[#A7A7A7]">No trades yet</span>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex flex-col gap-2">
-                    <span className="type-label">Preferred Session</span>
-                    <div className="flex flex-wrap gap-2">
-                      <span className="px-3 py-1 rounded-full bg-primary/20 border border-primary/30 text-xs font-medium text-primary">New York</span>
-                      <span className="px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs font-medium text-white">London</span>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4 mt-2">
-                    <EditableField label="Risk Per Trade" value={profileData.riskPerTrade} icon={AlertCircle} onChange={(val: string) => updateProfileData('riskPerTrade', val)} />
-                    <EditableField label="Base Account Size" value={selectedAccount ? `$${selectedAccount.initialCapital.toLocaleString()}` : '$10,000'} icon={DollarSign} />
-                  </div>
-                  <div className="flex flex-col gap-2 mt-2">
-                    <span className="type-label">Strategy Tags</span>
-                    <div className="flex flex-wrap gap-2">
-                      {strategyTags.length > 0 ? strategyTags.map(s => (
-                        <span key={s} className="px-2 py-1 rounded bg-[#8a4cfc]/10 border border-[#8a4cfc]/20 text-[11px] font-medium text-[#8a4cfc]">{s}</span>
-                      )) : (
-                        <span className="text-xs text-[#A7A7A7]">No tags logged yet</span>
-                      )}
-                    </div>
-                  </div>
+            <SectionCard title="Subscription & Plan" icon={CardIcon}>
+              <div className="p-5 rounded-2xl bg-blue-50/60 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900/30 flex items-center justify-between">
+                <div>
+                  <span className="text-sm font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                    Pro Trader Annual Plan
+                    <span className="px-2 py-0.5 rounded-full bg-blue-600 text-white text-[9px] font-bold uppercase">Active</span>
+                  </span>
+                  <span className="text-xs text-gray-400 mt-0.5 block">$29.00 / month · Renews Oct 2026</span>
                 </div>
-              </SectionCard>
-
-              {/* 5. GOALS & DISCIPLINE TRACKING */}
-              <SectionCard title="Discipline & Goals" icon={ShieldCheck}>
-                <div className="flex flex-col gap-5">
-                  <div className="flex items-center justify-between p-4 rounded-xl bg-white/[0.02] border border-white/5">
-                    <div className="flex flex-col gap-1">
-                      <span className="type-label">Consistency Score</span>
-                      <span className="text-2xl font-bold text-[#1ED760] tnum">{consistencyScore}%</span>
-                    </div>
-                    <div className="w-12 h-12 rounded-full border-4 border-[#1ED760]/20 border-t-[#1ED760] flex items-center justify-center transform rotate-45">
-                      <div className="w-8 h-8 rounded-full bg-[#1ED760]/10 transform -rotate-45 flex items-center justify-center">
-                        <CheckCircle2 className="w-4 h-4 text-[#1ED760]" />
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="flex flex-col gap-3">
-                    <span className="type-label">Active Rules</span>
-                    {selectedAccount?.rules?.filter(r => r.enabled).length ? (
-                      selectedAccount.rules.filter(r => r.enabled).slice(0, 3).map(rule => (
-                        <div key={rule.id} className="flex items-center justify-between p-3 rounded-lg bg-white/[0.01] border border-white/5 hover:bg-white/[0.03] transition-colors">
-                          <div className="flex items-center gap-3">
-                            <div className="w-2 h-2 rounded-full bg-[#1ED760]" />
-                            <span className="text-sm text-white">{rule.name}</span>
-                          </div>
-                          <span className="text-xs font-bold text-[#A7A7A7]">
-                            {rule.type === 'max_loss_per_trade' || rule.type === 'daily_loss_limit' ? '-' : ''}
-                            {rule.unit === '$' ? '$' : ''}{rule.value}{rule.unit === '%' ? '%' : ''} {rule.unit === 'trades' ? 'Trades' : ''}
-                          </span>
-                        </div>
-                      ))
-                    ) : (
-                      <div className="text-sm text-[#A7A7A7] italic">No active trading rules configured on this account.</div>
-                    )}
-                  </div>
-                </div>
-              </SectionCard>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
-              {/* 8. BILLING / SUBSCRIPTION */}
-              <SectionCard title="Subscription & Billing" icon={CardIcon}>
-                <div className="p-4 rounded-xl bg-gradient-to-r from-primary/10 to-indigo-500/10 border border-primary/20 flex items-center justify-between">
-                  <div className="flex flex-col gap-1">
-                    <span className="text-sm font-bold text-white flex items-center gap-2">Pro Plan <span className="px-1.5 py-0.5 rounded text-[9px] bg-primary text-white uppercase tracking-wider">Active</span></span>
-                    <span className="text-xs text-[#A7A7A7]">$29.00 / month</span>
-                  </div>
-                  <button className="px-4 py-2 rounded-lg bg-white text-black text-xs font-bold hover:bg-gray-200 transition-colors">Manage</button>
-                </div>
-                
-                <div className="flex flex-col gap-3 mt-2">
-                  <div className="flex items-center gap-3 p-3 rounded-xl border border-white/5 bg-white/[0.02]">
-                    <div className="p-2 bg-white/10 rounded-lg">
-                      <CardIcon className="w-4 h-4 text-white" />
-                    </div>
-                    <div className="flex flex-col flex-1">
-                      <span className="text-sm text-white font-medium">Visa ending in 4242</span>
-                      <span className="text-xs text-[#A7A7A7]">Expires 12/28</span>
-                    </div>
-                    <button className="text-xs text-primary hover:text-primary/80 font-medium">Edit</button>
-                  </div>
-                  <button className="text-xs text-[#A7A7A7] hover:text-white transition-colors text-left flex items-center gap-2 py-2">
-                    <Clock className="w-3.5 h-3.5" /> View Billing History
-                  </button>
-                </div>
-              </SectionCard>
-
-              {/* 9. DATA & EXPORT */}
-              <SectionCard title="Data & Privacy" icon={Key}>
-                <div className="flex flex-col gap-4">
-                  <button className="flex items-center justify-between p-3 rounded-xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.04] hover:border-white/10 transition-all group">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors">
-                        <Download className="w-4 h-4 text-primary" />
-                      </div>
-                      <div className="flex flex-col text-left">
-                        <span className="text-sm text-white font-medium">Export Journal Data</span>
-                        <span className="text-xs text-[#A7A7A7]">Download CSV of all trades</span>
-                      </div>
-                    </div>
-                  </button>
-                  
-                  <button className="flex items-center justify-between p-3 rounded-xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.04] hover:border-white/10 transition-all group">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-white/5 rounded-lg group-hover:bg-white/10 transition-colors">
-                        <Cloud className="w-4 h-4 text-white" />
-                      </div>
-                      <div className="flex flex-col text-left">
-                        <span className="text-sm text-white font-medium">Backup & Restore</span>
-                        <span className="text-xs text-[#A7A7A7]">Manage manual backups</span>
-                      </div>
-                    </div>
-                  </button>
-
-                  <div className="w-full h-[1px] bg-white/5 my-1" />
-                  
-                  <button className="flex items-center justify-between p-3 rounded-xl border border-[#E5534B]/20 bg-[#E5534B]/5 hover:bg-[#E5534B]/10 transition-all group">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-[#E5534B]/10 rounded-lg">
-                        <Trash2 className="w-4 h-4 text-[#E5534B]" />
-                      </div>
-                      <div className="flex flex-col text-left">
-                        <span className="text-sm text-[#E5534B] font-medium">Delete Account</span>
-                        <span className="text-xs text-[#E5534B]/70">Permanently remove all data</span>
-                      </div>
-                    </div>
-                  </button>
-                </div>
-              </SectionCard>
-            </div>
-
+                <button className="px-4 py-2 rounded-2xl bg-[#111827] dark:bg-white text-white dark:text-gray-900 text-xs font-semibold shadow-xs">
+                  Manage Plan
+                </button>
+              </div>
+            </SectionCard>
           </div>
+
         </div>
       </div>
     </div>

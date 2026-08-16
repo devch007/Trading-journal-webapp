@@ -49,9 +49,9 @@ export function PreTradeCheckout() {
   }, [bias, cnfZone, cnfLiq, cnfTime, fvgVal, structVal, confVal]);
 
   const { rating, feedback, color, riskRec } = useMemo(() => {
-    if (totalScore >= 9) return { rating: 'A+', feedback: 'High Probability Setup', color: 'text-[#1ED760]', riskRec: '0.5%' };
-    if (totalScore >= 7) return { rating: 'B', feedback: 'Standard Setup', color: 'text-blue-400', riskRec: '0.25%' };
-    return { rating: 'C', feedback: 'Low Probability. DO NOT TRADE.', color: 'text-[#E5534B]', riskRec: '0%' };
+    if (totalScore >= 9) return { rating: 'A+', feedback: 'High Probability Setup', color: 'text-emerald-600 dark:text-emerald-400', riskRec: '0.5%' };
+    if (totalScore >= 7) return { rating: 'B', feedback: 'Standard Setup', color: 'text-blue-500', riskRec: '0.25%' };
+    return { rating: 'C', feedback: 'Low Probability. DO NOT TRADE.', color: 'text-rose-500', riskRec: '0%' };
   }, [totalScore]);
 
   // --- Section 4: Checklist ---
@@ -98,391 +98,269 @@ export function PreTradeCheckout() {
       date,
       symbol: pair,
       action: 'BUY',
-      size: lotSize || '0.00',
-      result: result === 'Win' ? 'WIN' : result === 'Loss' ? 'LOSS' : 'BE',
-      isPositive: result === 'Win',
+      strategy: tradeType,
+      entry: entry ? parseFloat(entry) : 0,
+      exit: tp ? parseFloat(tp) : 0,
       pnl: 0,
-      session: session as any,
-      entry,
+      isPositive: true,
       notes,
       rating: totalScore,
-      checklist: [
-        { label: 'Bias clear', checked: chkBias },
-        { label: '2+ confluences', checked: chkCnf },
-        { label: 'Valid FVG', checked: chkFvg }
-      ]
+      session,
+      result: result.toUpperCase() || 'PENDING'
     });
-    
+
     navigate('/journal');
   };
 
   return (
-    <div className="flex flex-col min-h-full pb-20 relative overflow-hidden">
-      <div 
-        className="absolute top-0 right-0 w-[500px] h-[500px] opacity-10 pointer-events-none blur-[100px] transition-colors duration-1000"
-        style={{ backgroundColor: totalScore >= 9 ? '#1ED760' : totalScore >= 7 ? '#3b82f6' : totalScore === 0 ? 'transparent' : '#E5534B' }}
+    <div className="flex flex-col min-h-full pb-10">
+      <TopBar 
+        title="Pre-Trade Terminal" 
+        subtitle="Evaluate rule compliance & setup probability before entering" 
+        showSearch={true}
+        actionButton={
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={handleReset} 
+              className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-neutral-800 hover:bg-gray-200 rounded-2xl transition-all shadow-2xs"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              <span>Reset</span>
+            </button>
+            <button 
+              onClick={handleSaveToJournal} 
+              disabled={totalScore < 7 || !isAllChecked} 
+              className="flex items-center gap-1.5 px-5 py-2 text-xs font-semibold text-white dark:text-gray-900 bg-[#111827] dark:bg-white disabled:opacity-40 rounded-2xl transition-all shadow-xs hover:bg-black dark:hover:bg-gray-100"
+            >
+              <Save className="w-3.5 h-3.5" />
+              <span>Approve & Journal</span>
+            </button>
+          </div>
+        }
       />
-      
-      <TopBar title="Pre-Trade Checkout" subtitle="Execute with discipline securely" showSearch={false} />
 
-      <div className="px-4 md:px-8 mt-6 max-w-5xl mx-auto w-full flex flex-col gap-8 relative z-10">
-        
-        {/* Header Action Bar */}
-        <div className="flex items-center justify-between bg-black/40 border border-white/5 p-4 rounded-2xl backdrop-blur-md">
-          <div className="flex items-center gap-3">
-             <div className="p-2.5 rounded-xl bg-blue-500/20 text-blue-400 border border-blue-500/20 shadow-[0_0_15px_rgba(59,130,246,0.2)]">
-                <ClipboardCheck className="w-5 h-5" />
-             </div>
-             <div>
-                <h2 className="text-white font-bold tracking-tight">Checkout Terminal</h2>
-                <p className="text-xs text-gray-500 font-medium">Evaluate before execution</p>
-             </div>
-          </div>
-          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-             <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={handleReset} className="px-5 py-2.5 text-xs font-bold text-gray-400 hover:text-white bg-white/5 hover:bg-white/10 rounded-xl transition-all flex items-center justify-center gap-2">
-                <RotateCcw className="w-4 h-4" />
-                Reset Form
-             </motion.button>
-             <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={handleSaveToJournal} disabled={totalScore < 7 || !isAllChecked} className="px-6 py-2.5 text-xs font-bold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 disabled:opacity-50 disabled:from-gray-800 disabled:to-gray-800 disabled:cursor-not-allowed rounded-xl transition-all shadow-[0_0_20px_rgba(59,130,246,0.3)] flex items-center justify-center gap-2 border border-blue-500/30">
-                <Save className="w-4 h-4" />
-                Approve & Journal
-             </motion.button>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+      <div className="p-6 md:p-8 space-y-7 max-w-[1600px] w-full mx-auto">
+        <div className="grid grid-cols-1 xl:grid-cols-12 gap-7">
           
-          {/* Main Scoring Column */}
-          <div className="xl:col-span-2 space-y-6">
+          {/* Main Scoring Column (8 COLS) */}
+          <div className="xl:col-span-8 space-y-6">
             
             {/* Section 1: Overview */}
-            <div className="p-6 rounded-2xl bg-white/[0.02] border border-white/5 shadow-sm">
-               <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2 mb-5">
-                  <Search className="w-4 h-4 text-white" /> 1. Overview
+            <div className="bg-white dark:bg-[#16181f] p-6 rounded-3xl border border-gray-200/80 dark:border-neutral-800/80 shadow-2xs">
+               <h3 className="text-xs font-bold text-gray-900 dark:text-white uppercase tracking-wider flex items-center gap-2 mb-4">
+                  <Search className="w-4 h-4 text-blue-500" /> 1. Trade Setup Overview
                </h3>
-               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
+               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3.5">
                   <div className="space-y-1.5">
-                    <label className="text-[10px] text-gray-500 uppercase tracking-widest">Date</label>
-                    <input type="date" value={date} onChange={e => setDate(e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs text-white focus:border-blue-500 outline-none" />
+                    <label className="text-[11px] font-medium text-gray-400">Date</label>
+                    <input type="date" value={date} onChange={e => setDate(e.target.value)} className="w-full bg-gray-50 dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-2xl px-3 py-2 text-xs text-gray-900 dark:text-white outline-none focus:ring-1 focus:ring-black/10 dark:focus:ring-white/20" />
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-[10px] text-gray-500 uppercase tracking-widest">Session</label>
-                    <select value={session} onChange={e => setSession(e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs text-white focus:border-blue-500 outline-none">
+                    <label className="text-[11px] font-medium text-gray-400">Session</label>
+                    <select value={session} onChange={e => setSession(e.target.value)} className="w-full bg-gray-50 dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-2xl px-3 py-2 text-xs text-gray-900 dark:text-white outline-none focus:ring-1 focus:ring-black/10 dark:focus:ring-white/20">
                        <option>London</option>
                        <option>NY</option>
                        <option>Asian</option>
                     </select>
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-[10px] text-gray-500 uppercase tracking-widest">Pair</label>
-                    <input type="text" value={pair} onChange={e => setPair(e.target.value)} placeholder="e.g. EURUSD" className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs text-white focus:border-blue-500 outline-none uppercase" />
+                    <label className="text-[11px] font-medium text-gray-400">Pair</label>
+                    <input type="text" value={pair} onChange={e => setPair(e.target.value)} placeholder="e.g. EURUSD" className="w-full bg-gray-50 dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-2xl px-3 py-2 text-xs text-gray-900 dark:text-white outline-none uppercase font-semibold" />
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-[10px] text-gray-500 uppercase tracking-widest">Timeframe</label>
-                    <input type="text" value={timeframe} onChange={e => setTimeframe(e.target.value)} placeholder="e.g. 5m" className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs text-white focus:border-blue-500 outline-none" />
+                    <label className="text-[11px] font-medium text-gray-400">Timeframe</label>
+                    <input type="text" value={timeframe} onChange={e => setTimeframe(e.target.value)} placeholder="e.g. 5m" className="w-full bg-gray-50 dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-2xl px-3 py-2 text-xs text-gray-900 dark:text-white outline-none" />
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-[10px] text-gray-500 uppercase tracking-widest">Setup</label>
-                    <input type="text" value={tradeType} onChange={e => setTradeType(e.target.value)} placeholder="e.g. FVG Hold" className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs text-white focus:border-blue-500 outline-none" />
+                    <label className="text-[11px] font-medium text-gray-400">Strategy</label>
+                    <input type="text" value={tradeType} onChange={e => setTradeType(e.target.value)} placeholder="e.g. FVG Hold" className="w-full bg-gray-50 dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-2xl px-3 py-2 text-xs text-gray-900 dark:text-white outline-none" />
                   </div>
                </div>
             </div>
 
             {/* Section 2: Scoring */}
-            <div className="p-6 rounded-2xl bg-white/[0.02] border border-white/5 shadow-sm">
-               <div className="flex items-center justify-between mb-5">
-                  <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
-                    <Target className="w-4 h-4 text-blue-400" /> 2. Scoring Matrix
+            <div className="bg-white dark:bg-[#16181f] p-6 rounded-3xl border border-gray-200/80 dark:border-neutral-800/80 shadow-2xs space-y-5">
+               <div className="flex items-center justify-between">
+                  <h3 className="text-xs font-bold text-gray-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
+                    <Target className="w-4 h-4 text-blue-500" /> 2. Scoring Matrix
                   </h3>
-                  <div className="bg-white/5 border border-white/10 px-3 py-1 rounded-full flex items-center gap-2">
-                     <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Total</span>
-                     <span className={cn("text-sm font-black", color)}>{totalScore}/10</span>
+                  <div className="bg-gray-100 dark:bg-neutral-800 px-3 py-1 rounded-full flex items-center gap-1.5">
+                     <span className="text-[11px] font-medium text-gray-500 dark:text-gray-400">Score</span>
+                     <span className={cn("text-xs font-bold tabular-nums", color)}>{totalScore}/10</span>
                   </div>
                </div>
 
-               <div className="space-y-6">
-                  {/* Bias */}
-                  <div className="space-y-3">
-                     <label className="text-xs font-bold text-white">1. Bias (0-2 Pts)</label>
-                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                        <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={() => setBias(2)} className={cn("p-3 rounded-xl border text-xs text-left transition-all", bias === 2 ? "bg-[#1ED760]/10 border-[#1ED760] text-[#1ED760]" : "bg-black/40 border-white/10 text-gray-400 hover:border-white/30")}>
-                           <span className="block font-bold mb-1">2 Pts</span> Clear HTF Trend (HH/HL)
-                        </motion.button>
-                        <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={() => setBias(1)} className={cn("p-3 rounded-xl border text-xs text-left transition-all", bias === 1 ? "bg-yellow-500/10 border-yellow-500 text-yellow-500" : "bg-black/40 border-white/10 text-gray-400 hover:border-white/30")}>
-                           <span className="block font-bold mb-1">1 Pt</span> Weak / Ranging Bias
-                        </motion.button>
-                        <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={() => setBias(0)} className={cn("p-3 rounded-xl border text-xs text-left transition-all", bias === 0 ? "bg-[#E5534B]/10 border-[#E5534B] text-[#E5534B]" : "bg-black/40 border-white/10 text-gray-400 hover:border-white/30")}>
-                           <span className="block font-bold mb-1">0 Pts</span> Counter-Trend / No Bias
-                        </motion.button>
-                     </div>
+               {/* Bias */}
+               <div className="space-y-2">
+                  <label className="text-xs font-semibold text-gray-900 dark:text-white">1. HTF Directional Bias (0-2 Pts)</label>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                     <button onClick={() => setBias(2)} className={cn("p-3 rounded-2xl border text-xs text-left transition-all", bias === 2 ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border-emerald-400" : "bg-gray-50 dark:bg-neutral-800/60 border-gray-200 dark:border-neutral-700 text-gray-700 dark:text-gray-300")}>
+                        <span className="block font-bold mb-0.5">2 Pts</span> Clear HTF Trend (HH/HL)
+                     </button>
+                     <button onClick={() => setBias(1)} className={cn("p-3 rounded-2xl border text-xs text-left transition-all", bias === 1 ? "bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300 border-amber-400" : "bg-gray-50 dark:bg-neutral-800/60 border-gray-200 dark:border-neutral-700 text-gray-700 dark:text-gray-300")}>
+                        <span className="block font-bold mb-0.5">1 Pt</span> Weak / Ranging Bias
+                     </button>
+                     <button onClick={() => setBias(0)} className={cn("p-3 rounded-2xl border text-xs text-left transition-all", bias === 0 ? "bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300 border-rose-400" : "bg-gray-50 dark:bg-neutral-800/60 border-gray-200 dark:border-neutral-700 text-gray-700 dark:text-gray-300")}>
+                        <span className="block font-bold mb-0.5">0 Pts</span> Counter-Trend / No Bias
+                     </button>
                   </div>
+               </div>
 
-                  {/* Confluence */}
-                  <div className="space-y-3">
-                     <label className="text-xs font-bold text-white flex justify-between">
-                        <span>2. Confluence (0-3 Pts)</span>
-                        <span className="text-gray-500 font-normal">1 pt each</span>
+               {/* Confluence */}
+               <div className="space-y-2">
+                  <label className="text-xs font-semibold text-gray-900 dark:text-white flex justify-between">
+                     <span>2. Confluence Factors (0-3 Pts)</span>
+                     <span className="text-gray-400 font-normal text-[11px]">1 pt each</span>
+                  </label>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                     <label className={cn("p-3 rounded-2xl border flex items-center justify-between gap-2 cursor-pointer transition-all", cnfZone ? "bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300 border-blue-400" : "bg-gray-50 dark:bg-neutral-800/60 border-gray-200 dark:border-neutral-700 text-gray-700 dark:text-gray-300")}>
+                        <span className="text-xs font-semibold">Key Zone (S/D)</span>
+                        <input type="checkbox" checked={cnfZone} onChange={e => setCnfZone(e.target.checked)} className="w-4 h-4 rounded text-blue-600 focus:ring-0" />
                      </label>
-                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                        <motion.label whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className={cn("p-3 rounded-xl border flex items-center justify-between gap-3 cursor-pointer transition-all", cnfZone ? "bg-blue-500/10 border-blue-500" : "bg-black/40 border-white/10")}>
-                           <span className={cn("text-xs font-bold", cnfZone ? "text-blue-400" : "text-gray-400")}>Key Zone (S/D)</span>
-                           <input type="checkbox" checked={cnfZone} onChange={e => setCnfZone(e.target.checked)} className="w-4 h-4 rounded border-white/20 text-blue-500 bg-transparent focus:ring-0 focus:ring-offset-0" />
-                        </motion.label>
-                        <motion.label whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className={cn("p-3 rounded-xl border flex items-center justify-between gap-3 cursor-pointer transition-all", cnfLiq ? "bg-blue-500/10 border-blue-500" : "bg-black/40 border-white/10")}>
-                           <span className={cn("text-xs font-bold", cnfLiq ? "text-blue-400" : "text-gray-400")}>Liquidity Sweep</span>
-                           <input type="checkbox" checked={cnfLiq} onChange={e => setCnfLiq(e.target.checked)} className="w-4 h-4 rounded border-white/20 text-blue-500 bg-transparent focus:ring-0 focus:ring-offset-0" />
-                        </motion.label>
-                        <motion.label whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className={cn("p-3 rounded-xl border flex items-center justify-between gap-3 cursor-pointer transition-all", cnfTime ? "bg-blue-500/10 border-blue-500" : "bg-black/40 border-white/10")}>
-                           <span className={cn("text-xs font-bold", cnfTime ? "text-blue-400" : "text-gray-400")}>Session Timing</span>
-                           <input type="checkbox" checked={cnfTime} onChange={e => setCnfTime(e.target.checked)} className="w-4 h-4 rounded border-white/20 text-blue-500 bg-transparent focus:ring-0 focus:ring-offset-0" />
-                        </motion.label>
-                     </div>
+                     <label className={cn("p-3 rounded-2xl border flex items-center justify-between gap-2 cursor-pointer transition-all", cnfLiq ? "bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300 border-blue-400" : "bg-gray-50 dark:bg-neutral-800/60 border-gray-200 dark:border-neutral-700 text-gray-700 dark:text-gray-300")}>
+                        <span className="text-xs font-semibold">Liquidity Sweep</span>
+                        <input type="checkbox" checked={cnfLiq} onChange={e => setCnfLiq(e.target.checked)} className="w-4 h-4 rounded text-blue-600 focus:ring-0" />
+                     </label>
+                     <label className={cn("p-3 rounded-2xl border flex items-center justify-between gap-2 cursor-pointer transition-all", cnfTime ? "bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300 border-blue-400" : "bg-gray-50 dark:bg-neutral-800/60 border-gray-200 dark:border-neutral-700 text-gray-700 dark:text-gray-300")}>
+                        <span className="text-xs font-semibold">Session Timing</span>
+                        <input type="checkbox" checked={cnfTime} onChange={e => setCnfTime(e.target.checked)} className="w-4 h-4 rounded text-blue-600 focus:ring-0" />
+                     </label>
                   </div>
+               </div>
 
-                  {/* FVG Quality */}
-                  <div className="space-y-3">
-                     <label className="text-xs font-bold text-white">3. FVG Quality (0-2 Pts)</label>
-                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                        <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={() => setFvgVal(2)} className={cn("p-3 rounded-xl border text-xs text-left transition-all", fvgVal === 2 ? "bg-[#1ED760]/10 border-[#1ED760] text-[#1ED760]" : "bg-black/40 border-white/10 text-gray-400 hover:border-white/30")}>
-                           <span className="block font-bold mb-1">2 Pts</span> Strong impulse + clean gap
-                        </motion.button>
-                        <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={() => setFvgVal(1)} className={cn("p-3 rounded-xl border text-xs text-left transition-all", fvgVal === 1 ? "bg-yellow-500/10 border-yellow-500 text-yellow-500" : "bg-black/40 border-white/10 text-gray-400 hover:border-white/30")}>
-                           <span className="block font-bold mb-1">1 Pt</span> Average
-                        </motion.button>
-                        <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={() => setFvgVal(0)} className={cn("p-3 rounded-xl border text-xs text-left transition-all", fvgVal === 0 ? "bg-[#E5534B]/10 border-[#E5534B] text-[#E5534B]" : "bg-black/40 border-white/10 text-gray-400 hover:border-white/30")}>
-                           <span className="block font-bold mb-1">0 Pts</span> Weak / Messy
-                        </motion.button>
-                     </div>
+               {/* FVG Quality */}
+               <div className="space-y-2">
+                  <label className="text-xs font-semibold text-gray-900 dark:text-white">3. FVG / Zone Quality (0-2 Pts)</label>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                     <button onClick={() => setFvgVal(2)} className={cn("p-3 rounded-2xl border text-xs text-left transition-all", fvgVal === 2 ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border-emerald-400" : "bg-gray-50 dark:bg-neutral-800/60 border-gray-200 dark:border-neutral-700 text-gray-700 dark:text-gray-300")}>
+                        <span className="block font-bold mb-0.5">2 Pts</span> Strong impulse + clean gap
+                     </button>
+                     <button onClick={() => setFvgVal(1)} className={cn("p-3 rounded-2xl border text-xs text-left transition-all", fvgVal === 1 ? "bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300 border-amber-400" : "bg-gray-50 dark:bg-neutral-800/60 border-gray-200 dark:border-neutral-700 text-gray-700 dark:text-gray-300")}>
+                        <span className="block font-bold mb-0.5">1 Pt</span> Average reaction
+                     </button>
+                     <button onClick={() => setFvgVal(0)} className={cn("p-3 rounded-2xl border text-xs text-left transition-all", fvgVal === 0 ? "bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300 border-rose-400" : "bg-gray-50 dark:bg-neutral-800/60 border-gray-200 dark:border-neutral-700 text-gray-700 dark:text-gray-300")}>
+                        <span className="block font-bold mb-0.5">0 Pts</span> Weak / Messy
+                     </button>
                   </div>
+               </div>
 
-                  {/* Structure */}
-                  <div className="space-y-3">
-                     <label className="text-xs font-bold text-white">4. Structure (0-1 Pts)</label>
-                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={() => setStructVal(1)} className={cn("p-3 rounded-xl border text-xs text-left transition-all", structVal === 1 ? "bg-[#1ED760]/10 border-[#1ED760] text-[#1ED760]" : "bg-black/40 border-white/10 text-gray-400 hover:border-white/30")}>
-                           <span className="block font-bold mb-1">1 Pt</span> Clear continuation/shift
-                        </motion.button>
-                        <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={() => setStructVal(0)} className={cn("p-3 rounded-xl border text-xs text-left transition-all", structVal === 0 ? "bg-[#E5534B]/10 border-[#E5534B] text-[#E5534B]" : "bg-black/40 border-white/10 text-gray-400 hover:border-white/30")}>
-                           <span className="block font-bold mb-1">0 Pts</span> Messy / Unclear
-                        </motion.button>
-                     </div>
+               {/* Confirmation */}
+               <div className="space-y-2">
+                  <label className="text-xs font-semibold text-gray-900 dark:text-white">4. Entry Trigger Confirmation (0-2 Pts)</label>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                     <button onClick={() => setConfVal(2)} className={cn("p-3 rounded-2xl border text-xs text-left transition-all", confVal === 2 ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border-emerald-400" : "bg-gray-50 dark:bg-neutral-800/60 border-gray-200 dark:border-neutral-700 text-gray-700 dark:text-gray-300")}>
+                        <span className="block font-bold mb-0.5">2 Pts</span> Strong rejection candle
+                     </button>
+                     <button onClick={() => setConfVal(1)} className={cn("p-3 rounded-2xl border text-xs text-left transition-all", confVal === 1 ? "bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300 border-amber-400" : "bg-gray-50 dark:bg-neutral-800/60 border-gray-200 dark:border-neutral-700 text-gray-700 dark:text-gray-300")}>
+                        <span className="block font-bold mb-0.5">1 Pt</span> Weak confirmation
+                     </button>
+                     <button onClick={() => setConfVal(0)} className={cn("p-3 rounded-2xl border text-xs text-left transition-all", confVal === 0 ? "bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300 border-rose-400" : "bg-gray-50 dark:bg-neutral-800/60 border-gray-200 dark:border-neutral-700 text-gray-700 dark:text-gray-300")}>
+                        <span className="block font-bold mb-0.5">0 Pts</span> No confirmation
+                     </button>
                   </div>
-
-                  {/* Confirmation */}
-                  <div className="space-y-3">
-                     <label className="text-xs font-bold text-white">5. Confirmation (0-2 Pts)</label>
-                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                        <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={() => setConfVal(2)} className={cn("p-3 rounded-xl border text-xs text-left transition-all", confVal === 2 ? "bg-[#1ED760]/10 border-[#1ED760] text-[#1ED760]" : "bg-black/40 border-white/10 text-gray-400 hover:border-white/30")}>
-                           <span className="block font-bold mb-1">2 Pts</span> Strong engulf/rejection
-                        </motion.button>
-                        <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={() => setConfVal(1)} className={cn("p-3 rounded-xl border text-xs text-left transition-all", confVal === 1 ? "bg-yellow-500/10 border-yellow-500 text-yellow-500" : "bg-black/40 border-white/10 text-gray-400 hover:border-white/30")}>
-                           <span className="block font-bold mb-1">1 Pt</span> Weak reaction
-                        </motion.button>
-                        <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={() => setConfVal(0)} className={cn("p-3 rounded-xl border text-xs text-left transition-all", confVal === 0 ? "bg-[#E5534B]/10 border-[#E5534B] text-[#E5534B]" : "bg-black/40 border-white/10 text-gray-400 hover:border-white/30")}>
-                           <span className="block font-bold mb-1">0 Pts</span> No confirmation
-                        </motion.button>
-                     </div>
-                  </div>
-
                </div>
             </div>
 
             {/* Section 5: Execution Plan */}
-            <div className="p-6 rounded-2xl bg-white/[0.02] border border-white/5 shadow-sm">
-               <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2 mb-5">
-                  <Activity className="w-4 h-4 text-white" /> 5. Execution Plan
+            <div className="bg-white dark:bg-[#16181f] p-6 rounded-3xl border border-gray-200/80 dark:border-neutral-800/80 shadow-2xs">
+               <h3 className="text-xs font-bold text-gray-900 dark:text-white uppercase tracking-wider flex items-center gap-2 mb-4">
+                  <Activity className="w-4 h-4 text-blue-500" /> 3. Execution Plan
                </h3>
-               <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+               <div className="grid grid-cols-2 md:grid-cols-5 gap-3.5">
                   <div className="space-y-1.5">
-                    <label className="text-[10px] text-gray-500 uppercase tracking-widest">Entry</label>
-                    <input type="text" value={entry} onChange={e => setEntry(e.target.value)} placeholder="0.00" className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs text-white focus:border-blue-500 outline-none tnum" />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] text-gray-500 uppercase tracking-widest">Stop Loss (px)</label>
-                    <input type="text" value={sl} onChange={e => setSl(e.target.value)} placeholder="15" className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs text-[#E5534B] focus:border-[#E5534B] outline-none tnum" />
+                    <label className="text-[11px] font-medium text-gray-400">Entry</label>
+                    <input type="text" value={entry} onChange={e => setEntry(e.target.value)} placeholder="0.00" className="w-full bg-gray-50 dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-2xl px-3 py-2 text-xs text-gray-900 dark:text-white tabular-nums outline-none" />
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-[10px] text-gray-500 uppercase tracking-widest">Take Profit (px)</label>
-                    <input type="text" value={tp} onChange={e => setTp(e.target.value)} placeholder="30" className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs text-[#1ED760] focus:border-[#1ED760] outline-none tnum" />
+                    <label className="text-[11px] font-medium text-gray-400">Stop Loss</label>
+                    <input type="text" value={sl} onChange={e => setSl(e.target.value)} placeholder="15 px" className="w-full bg-gray-50 dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-2xl px-3 py-2 text-xs text-rose-500 tabular-nums outline-none font-semibold" />
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-[10px] text-gray-500 uppercase tracking-widest">Risk %</label>
-                    <input type="text" value={riskPct} onChange={e => setRiskPct(e.target.value)} placeholder="0.5%" className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs text-white focus:border-blue-500 outline-none tnum" />
+                    <label className="text-[11px] font-medium text-gray-400">Take Profit</label>
+                    <input type="text" value={tp} onChange={e => setTp(e.target.value)} placeholder="30 px" className="w-full bg-gray-50 dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-2xl px-3 py-2 text-xs text-emerald-600 tabular-nums outline-none font-semibold" />
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-[10px] text-gray-500 uppercase tracking-widest">Lot Size</label>
-                    <input type="text" value={lotSize} onChange={e => setLotSize(e.target.value)} placeholder="1.00" className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs text-white focus:border-blue-500 outline-none tnum" />
+                    <label className="text-[11px] font-medium text-gray-400">Risk %</label>
+                    <input type="text" value={riskPct} onChange={e => setRiskPct(e.target.value)} placeholder="0.5%" className="w-full bg-gray-50 dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-2xl px-3 py-2 text-xs text-gray-900 dark:text-white tabular-nums outline-none" />
                   </div>
-               </div>
-            </div>
-
-            {/* Section 6: Review */}
-            <div className="p-6 rounded-2xl bg-white/[0.02] border border-white/5 shadow-sm">
-               <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2 mb-5">
-                  <TrendingUp className="w-4 h-4 text-white" /> 6. Post-Trade Review
-               </h3>
-               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-4">
-                     <div className="grid grid-cols-2 gap-4">
-                       <div className="space-y-1.5">
-                         <label className="text-[10px] text-gray-500 uppercase tracking-widest">Result</label>
-                         <select value={result} onChange={e => setResult(e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs text-white focus:border-blue-500 outline-none">
-                            <option value="">Pending</option>
-                            <option value="Win">Win</option>
-                            <option value="Loss">Loss</option>
-                            <option value="BE">Break Even</option>
-                         </select>
-                       </div>
-                       <div className="space-y-1.5">
-                         <label className="text-[10px] text-gray-500 uppercase tracking-widest">R Multiple</label>
-                         <input type="text" value={rMult} onChange={e => setRMult(e.target.value)} placeholder="+2R" className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs text-white focus:border-blue-500 outline-none tnum" />
-                       </div>
-                     </div>
-                     <div className="flex gap-4">
-                       <label className="flex items-center gap-2 cursor-pointer text-xs text-gray-300">
-                          <input type="checkbox" checked={followedRules} onChange={e => setFollowedRules(e.target.checked)} className="w-4 h-4 rounded border-white/20 bg-transparent text-blue-500 focus:ring-0" />
-                          Followed all rules?
-                       </label>
-                       <label className="flex items-center gap-2 cursor-pointer text-xs text-gray-300">
-                          <input type="checkbox" checked={hasSc} onChange={e => setHasSc(e.target.checked)} className="w-4 h-4 rounded border-white/20 bg-transparent text-blue-500 focus:ring-0" />
-                          Screenshot attached
-                       </label>
-                     </div>
-                  </div>
-                  <div className="space-y-4">
-                     <div className="space-y-1.5">
-                       <label className="text-[10px] text-gray-500 uppercase tracking-widest flex justify-between">
-                         Emotion Level <span className="text-white">{emotion}/10</span>
-                       </label>
-                       <input type="range" min="1" max="10" value={emotion} onChange={e => setEmotion(e.target.value)} className="w-full accent-blue-500" />
-                     </div>
-                     <div className="space-y-1.5">
-                       <label className="text-[10px] text-gray-500 uppercase tracking-widest">Mistake (if any)</label>
-                       <input type="text" value={mistake} onChange={e => setMistake(e.target.value)} placeholder="e.g. FOMO entry, moved SL..." className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs text-white focus:border-red-500 outline-none" />
-                     </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-medium text-gray-400">Lot Size</label>
+                    <input type="text" value={lotSize} onChange={e => setLotSize(e.target.value)} placeholder="1.00" className="w-full bg-gray-50 dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-2xl px-3 py-2 text-xs text-gray-900 dark:text-white tabular-nums outline-none font-semibold" />
                   </div>
                </div>
             </div>
 
           </div>
 
-          {/* Right Layout Column */}
-          <div className="space-y-6">
+          {/* Right Layout Column (4 COLS) */}
+          <div className="xl:col-span-4 space-y-6">
              
             {/* Section 3: Logic Box */}
-            <div className={cn("p-6 rounded-2xl border backdrop-blur-md text-center flex flex-col items-center justify-center min-h-[180px] shadow-2xl transition-all duration-500", totalScore >= 9 ? "bg-[#1ED760]/10 border-[#1ED760]/30" : totalScore >= 7 ? "bg-blue-500/10 border-blue-500/30" : "bg-[#E5534B]/10 border-[#E5534B]/30")}>
-               <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 flex items-center gap-2">
-                 <ShieldCheck className="w-4 h-4" /> 3. Decision Logic
+            <div className="bg-white dark:bg-[#16181f] p-6 rounded-3xl border border-gray-200/80 dark:border-neutral-800/80 shadow-2xs text-center flex flex-col items-center justify-center min-h-[170px]">
+               <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1 flex items-center gap-1.5">
+                 <ShieldCheck className="w-4 h-4 text-blue-500" /> Decision Logic
                </h3>
-               <motion.div key={totalScore} initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="mt-2">
-                 <p className={cn("text-6xl font-black tracking-tighter drop-shadow-xl", color)}>{rating}</p>
-                 <p className="text-white font-bold mt-2">{feedback}</p>
+               <div className="mt-2">
+                 <p className={cn("text-5xl font-black tabular-nums tracking-tight", color)}>{rating}</p>
+                 <p className="text-sm font-bold text-gray-900 dark:text-white mt-1">{feedback}</p>
                  {totalScore >= 7 ? (
-                   <p className="text-xs text-gray-400 mt-2 font-medium">Risk Recommendation: <span className="text-white">{riskRec}</span></p>
+                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">Recommended Risk: <span className="font-bold text-gray-900 dark:text-white">{riskRec}</span></p>
                  ) : (
-                   <p className="text-xs text-[#E5534B] mt-2 font-bold px-3 py-1 bg-[#E5534B]/20 rounded-full border border-[#E5534B]/30">STOP. DO NOT ENTER MARKET.</p>
+                   <p className="text-xs text-rose-600 dark:text-rose-400 mt-2 font-bold px-3 py-1 bg-rose-50 dark:bg-rose-950/40 rounded-full border border-rose-200 dark:border-rose-800/40">DO NOT ENTER MARKET</p>
                  )}
-               </motion.div>
+               </div>
             </div>
 
             {/* Section 4: Checklist Box */}
-            <div className={cn("p-6 rounded-2xl border transition-all duration-300", isAllChecked ? "bg-[#1ED760]/5 border-[#1ED760]/20" : "bg-white/[0.02] border-white/5")}>
-               <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center justify-between mb-5">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4" /> 4. Checklist
-                  </div>
-                  {isAllChecked && <span className="text-[10px] text-[#1ED760] font-black tracking-widest py-1 px-2 bg-[#1ED760]/10 rounded border border-[#1ED760]/20">ALL CLEAR</span>}
-               </h3>
-               <div className="space-y-3 text-sm">
+            <div className="bg-white dark:bg-[#16181f] p-6 rounded-3xl border border-gray-200/80 dark:border-neutral-800/80 shadow-2xs space-y-3">
+               <div className="flex items-center justify-between">
+                  <h3 className="text-xs font-bold text-gray-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-blue-500" /> Mandatory Checklist
+                  </h3>
+                  {isAllChecked && <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-full">PASSED</span>}
+               </div>
+               <div className="space-y-2 text-xs">
                   {[
-                    { state: chkBias, set: setChkBias, label: 'Bias is clear' },
-                    { state: chkCnf, set: setChkCnf, label: 'Min 2 confluences' },
+                    { state: chkBias, set: setChkBias, label: 'Bias is clear & confirmed' },
+                    { state: chkCnf, set: setChkCnf, label: 'Minimum 2 confluences' },
                     { state: chkFvg, set: setChkFvg, label: 'Valid FVG identified' },
-                    { state: chkConf, set: setChkConf, label: 'Confirmation candle' },
-                    { state: chkSes, set: setChkSes, label: 'Session is London/NY' },
-                    { state: chkRisk, set: setChkRisk, label: 'Risk calculated limits' },
-                    { state: chkSl, set: setChkSl, label: 'Stop Loss defined' },
+                    { state: chkConf, set: setChkConf, label: 'Confirmation candle closed' },
+                    { state: chkSes, set: setChkSes, label: 'Session is London or NY' },
+                    { state: chkRisk, set: setChkRisk, label: 'Risk within account limit (≤1%)' },
+                    { state: chkSl, set: setChkSl, label: 'Stop Loss strictly defined' },
                   ].map((item, idx) => (
-                    <label key={idx} className={cn("flex items-center gap-3 cursor-pointer group p-2 rounded-lg transition-colors", item.state ? "bg-[#1ED760]/10" : "hover:bg-white/5")}>
-                      <div className={cn("w-5 h-5 rounded border flex items-center justify-center transition-colors", item.state ? "bg-[#1ED760] border-[#1ED760]" : "border-gray-600 group-hover:border-white")}>
-                        {item.state && <CheckCircle2 className="w-3.5 h-3.5 text-black" />}
-                      </div>
-                      <span className={cn("font-medium transition-colors", item.state ? "text-[#1ED760]" : "text-gray-400 group-hover:text-gray-300")}>{item.label}</span>
-                      <input type="checkbox" className="hidden" checked={item.state} onChange={e => item.set(e.target.checked)} />
+                    <label key={idx} className={cn("flex items-center gap-2.5 cursor-pointer p-2.5 rounded-2xl transition-colors", item.state ? "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-800 dark:text-emerald-300 font-medium" : "bg-gray-50 dark:bg-neutral-800/50 text-gray-600 dark:text-gray-400")}>
+                      <input type="checkbox" checked={item.state} onChange={e => item.set(e.target.checked)} className="w-4 h-4 rounded text-emerald-600 focus:ring-0" />
+                      <span>{item.label}</span>
                     </label>
                   ))}
                </div>
-               
-               {!isAllChecked && (
-                 <div className="mt-5 p-3 rounded-xl bg-[#E5534B]/10 border border-[#E5534B]/20 flex items-start gap-3">
-                   <AlertCircle className="w-4 h-4 text-[#E5534B] flex-shrink-0 mt-0.5" />
-                   <p className="text-[10px] text-gray-300 font-bold uppercase tracking-widest leading-relaxed">If ANY of these are unchecked, you do not have permission to trade.</p>
-                 </div>
-               )}
             </div>
 
             {/* Section 7: Recent Trade Scores */}
-            <div className="p-6 rounded-2xl bg-white/[0.02] border border-white/5 shadow-sm mt-6">
-               <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center justify-between mb-5">
-                  <div className="flex items-center gap-2">
-                    <History className="w-4 h-4" /> Past Scores
-                  </div>
+            <div className="bg-white dark:bg-[#16181f] p-6 rounded-3xl border border-gray-200/80 dark:border-neutral-800/80 shadow-2xs">
+               <h3 className="text-xs font-bold text-gray-900 dark:text-white uppercase tracking-wider flex items-center gap-2 mb-3">
+                  <History className="w-4 h-4 text-blue-500" /> Past Checklist Scores
                </h3>
                {scoredTrades.length === 0 ? (
-                  <p className="text-xs text-gray-500 text-center py-4">No scored trades yet.</p>
+                  <p className="text-xs text-gray-400 text-center py-4">No scored trades yet.</p>
                ) : (
-                  <div className="space-y-3">
+                  <div className="space-y-2">
                      {scoredTrades.map((trade) => (
                         <div 
                           key={trade.id} 
-                          onClick={() => setExpandedTradeId(expandedTradeId === trade.id ? null : trade.id)}
-                          className="p-3 rounded-xl bg-black/40 border border-white/5 flex flex-col group hover:border-white/10 transition-colors cursor-pointer"
+                          className="p-3 rounded-2xl bg-gray-50 dark:bg-neutral-800/50 border border-gray-100 dark:border-neutral-800 flex items-center justify-between"
                         >
-                           <div className="flex items-center justify-between">
-                              <div>
-                                 <div className="flex items-center gap-2">
-                                    <span className="text-sm font-bold text-white">{trade.symbol}</span>
-                                    <span className={cn("text-[10px] font-bold px-1.5 py-0.5 rounded", trade.action === 'BUY' ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400")}>{trade.action}</span>
-                                 </div>
-                                 <span className="text-[10px] text-gray-500">{new Date(trade.date).toLocaleDateString()}</span>
+                           <div>
+                              <div className="flex items-center gap-2">
+                                 <span className="text-xs font-bold text-gray-900 dark:text-white">{trade.symbol}</span>
+                                 <span className="text-[10px] font-medium text-gray-400">{trade.action}</span>
                               </div>
-                              <div className="flex flex-col items-end">
-                                 <span className={cn("text-lg font-black", trade.rating! >= 9 ? "text-[#1ED760]" : trade.rating! >= 7 ? "text-blue-400" : "text-[#E5534B]")}>
-                                    {trade.rating}/10
-                                 </span>
-                              </div>
+                              <span className="text-[10px] text-gray-400">{new Date(trade.date).toLocaleDateString()}</span>
                            </div>
-                           
-                           <AnimatePresence>
-                             {expandedTradeId === trade.id && (
-                               <motion.div
-                                 initial={{ height: 0, opacity: 0, marginTop: 0 }}
-                                 animate={{ height: 'auto', opacity: 1, marginTop: 12 }}
-                                 exit={{ height: 0, opacity: 0, marginTop: 0 }}
-                                 className="overflow-hidden border-t border-white/5 flex flex-col gap-2"
-                               >
-                                 <div className="pt-3 grid grid-cols-2 gap-4">
-                                   <div className="space-y-1">
-                                      <p className="text-[9px] text-gray-500 uppercase tracking-widest">Result</p>
-                                      <p className={cn("text-xs font-bold", trade.result === 'WIN' ? "text-[#1ED760]" : trade.result === 'LOSS' ? "text-[#E5534B]" : "text-gray-400")}>
-                                        {trade.result || 'Pending'}
-                                      </p>
-                                   </div>
-                                   <div className="space-y-1 text-right">
-                                      <p className="text-[9px] text-gray-500 uppercase tracking-widest">Session</p>
-                                      <p className="text-xs font-medium text-gray-300">{trade.session || 'N/A'}</p>
-                                   </div>
-                                 </div>
-                                 
-                                 {trade.notes && (
-                                   <div className="bg-white/5 rounded-lg p-2.5 mt-1 border border-white/5">
-                                      <p className="text-[9px] text-gray-400 uppercase tracking-widest mb-1.5">Trade Notes</p>
-                                      <p className="text-xs text-gray-300 whitespace-pre-line leading-relaxed">{trade.notes}</p>
-                                   </div>
-                                 )}
-                               </motion.div>
-                             )}
-                           </AnimatePresence>
+                           <span className="text-sm font-bold tabular-nums text-emerald-600 dark:text-emerald-400">
+                              {trade.rating}/10
+                           </span>
                         </div>
                      ))}
                   </div>

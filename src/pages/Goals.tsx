@@ -82,7 +82,9 @@ function TodayAtAGlance({ dayTrades, selectedDay, onDayChange }: { dayTrades: an
       {/* Day Navigation Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Target className="w-5 h-5 text-primary" />
+          <div className="w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-950/40 flex items-center justify-center text-blue-600 dark:text-blue-400">
+            <Target className="w-4 h-4" />
+          </div>
           <AnimatePresence mode="wait">
             <motion.h3
               key={selectedDay.toDateString()}
@@ -90,25 +92,25 @@ function TodayAtAGlance({ dayTrades, selectedDay, onDayChange }: { dayTrades: an
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 6 }}
               transition={{ duration: 0.2 }}
-              className="type-h1 text-white text-lg"
+              className="text-base font-bold text-gray-900 dark:text-white"
             >
               {formatDisplayDate(selectedDay)}
             </motion.h3>
           </AnimatePresence>
         </div>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1.5">
           <button
             onClick={goBack}
-            className="p-2 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-primary/30 transition-all group"
+            className="p-2 rounded-xl bg-white dark:bg-[#16181f] border border-gray-200 dark:border-neutral-800 hover:bg-gray-50 dark:hover:bg-neutral-800 transition-all text-gray-600 dark:text-gray-400 shadow-2xs"
             title="Previous day"
           >
-            <ChevronLeft className="w-4 h-4 text-[#A7A7A7] group-hover:text-white transition-colors" />
+            <ChevronLeft className="w-4 h-4" />
           </button>
 
           {!isToday && (
             <button
               onClick={() => onDayChange(today)}
-              className="px-3 py-2 rounded-xl bg-primary/10 border border-primary/20 hover:bg-primary/20 transition-all text-primary type-micro text-[11px] font-bold tracking-wider"
+              className="px-3 py-1.5 rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/40 text-blue-600 dark:text-blue-400 text-xs font-bold"
               title="Back to today"
             >
               TODAY
@@ -118,49 +120,47 @@ function TodayAtAGlance({ dayTrades, selectedDay, onDayChange }: { dayTrades: an
           <button
             onClick={goForward}
             disabled={isToday}
-            className={`p-2 rounded-xl border transition-all group ${
+            className={`p-2 rounded-xl border transition-all ${
               isToday
-                ? 'bg-white/[0.02] border-white/5 opacity-30 cursor-not-allowed'
-                : 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-primary/30'
+                ? 'bg-gray-100 dark:bg-neutral-800 border-gray-200 dark:border-neutral-800 opacity-40 cursor-not-allowed'
+                : 'bg-white dark:bg-[#16181f] border-gray-200 dark:border-neutral-800 hover:bg-gray-50 dark:hover:bg-neutral-800 shadow-2xs'
             }`}
             title="Next day"
           >
-            <ChevronRight className="w-4 h-4 text-[#A7A7A7] group-hover:text-white transition-colors" />
+            <ChevronRight className="w-4 h-4 text-gray-600 dark:text-gray-400" />
           </button>
         </div>
       </div>
       
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         {/* Timeline strip */}
-        <div className="glass-card flex flex-col gap-4 p-6 rounded-2xl relative overflow-hidden group border border-white/5 hover:border-white/10 transition-colors">
+        <div className="bg-white dark:bg-[#16181f] flex flex-col justify-between gap-4 p-6 rounded-3xl border border-gray-200/80 dark:border-neutral-800/80 shadow-2xs">
           <div className="flex justify-between items-center">
-            <span className="type-label">Activity Timeline</span>
-            <span className="type-micro text-[#6A6A6A]">EST Times</span>
+            <span className="text-xs font-semibold text-gray-900 dark:text-white">Activity Timeline</span>
+            <span className="text-[11px] font-medium text-gray-400">EST Times</span>
           </div>
 
           {dayTrades.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-10 rounded-xl border border-dashed border-white/10 text-center gap-3 bg-white/[0.02]">
-              <Target className="w-8 h-8 text-primary/30" />
-              <p className="type-body text-[#A7A7A7]">No trades logged yet. Your activity will map here.</p>
+            <div className="flex flex-col items-center justify-center py-8 rounded-2xl border border-dashed border-gray-200 dark:border-neutral-800 text-center gap-2 bg-gray-50/50 dark:bg-neutral-800/20">
+              <Target className="w-6 h-6 text-gray-400" />
+              <p className="text-xs font-normal text-gray-400">No trades logged yet for this day</p>
             </div>
           ) : (
-            <div className="flex items-end justify-between overflow-x-auto no-scrollbar pb-2 pt-4">
+            <div className="flex items-end justify-between overflow-x-auto no-scrollbar pb-1 pt-2">
               {timeline.map(({ hour, hasTrades, isPositive }) => (
-                <div key={hour} className="flex flex-col items-center justify-end gap-3 flex-shrink-0 min-w-[24px]">
+                <div key={hour} className="flex flex-col items-center justify-end gap-2 flex-shrink-0 min-w-[22px]">
                   {hasTrades ? (
                     <motion.div
                       initial={{ scale: 0 }}
                       animate={{ scale: 1 }}
                       transition={{ type: 'spring', damping: 12 }}
-                      className="w-3.5 h-3.5 rounded-full z-10 relative"
+                      className="w-3 h-3 rounded-full z-10"
                       style={{ background: isPositive ? '#1ED760' : '#E5534B' }}
-                    >
-                      <div className="absolute inset-0 rounded-full blur-sm opacity-50" style={{ background: isPositive ? '#1ED760' : '#E5534B' }} />
-                    </motion.div>
+                    />
                   ) : (
-                    <div className="w-[2px] h-3.5 rounded-full bg-white/10" />
+                    <div className="w-[2px] h-3 rounded-full bg-gray-200 dark:bg-neutral-700" />
                   )}
-                  <span className="type-micro font-bold text-[#6A6A6A]">
+                  <span className="text-[10px] font-medium text-gray-400">
                     {hour > 12 ? `${hour - 12}P` : hour === 12 ? '12P' : `${hour}A`}
                   </span>
                 </div>
@@ -170,39 +170,39 @@ function TodayAtAGlance({ dayTrades, selectedDay, onDayChange }: { dayTrades: an
         </div>
 
         {/* Quick stats grid */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-3.5">
           {[
             {
               label: 'Best Trade',
               value: best ? formatPnl(best.pnl) : '—',
-              color: 'text-[#1ED760]',
+              color: 'text-emerald-600 dark:text-emerald-400',
               empty: !best,
             },
             {
               label: 'Worst Trade',
               value: worst ? formatPnl(worst.pnl) : '—',
-              color: 'text-[#E5534B]',
+              color: 'text-rose-500',
               empty: !worst,
             },
             {
               label: 'Total Trades',
               value: dayTrades.length > 0 ? String(dayTrades.length) : '—',
-              color: 'text-[#60a5fa]',
+              color: 'text-gray-900 dark:text-white',
               empty: dayTrades.length === 0,
             },
             {
               label: streak.type === 'win' ? `Win Streak` : streak.type === 'loss' ? `Loss Streak` : 'Streak',
               value: streak.count > 0 ? `${streak.count} in a row` : '—',
-              color: streak.type === 'win' ? 'text-[#1ED760]' : streak.type === 'loss' ? 'text-[#f59e0b]' : 'text-white',
+              color: streak.type === 'win' ? 'text-emerald-600 dark:text-emerald-400' : streak.type === 'loss' ? 'text-amber-500' : 'text-gray-900 dark:text-white',
               empty: streak.count === 0,
             },
           ].map(({ label, value, color, empty }) => (
             <div
               key={label}
-              className="glass-card flex flex-col justify-center gap-2 rounded-2xl p-5 border border-white/5 hover:border-white/10 transition-colors"
+              className="bg-white dark:bg-[#16181f] flex flex-col justify-center gap-1 rounded-3xl p-5 border border-gray-200/80 dark:border-neutral-800/80 shadow-2xs"
             >
-              <span className="type-label">{label}</span>
-              <span className={cn("type-h1 tnum text-[20px]", empty ? "text-[#6A6A6A]" : color)}>
+              <span className="text-[11px] font-medium text-gray-400">{label}</span>
+              <span className={cn("text-xl font-bold tabular-nums", empty ? "text-gray-400" : color)}>
                 {value}
               </span>
             </div>
@@ -607,26 +607,26 @@ export function Goals() {
 
   return (
     <div className="flex flex-col min-h-full pb-10">
-      <TopBar title="Goals" subtitle="Track and manage your performance targets" showSearch />
+      <TopBar title="Goals & Performance Targets" subtitle="Track and manage your discipline & performance targets" showSearch />
 
-      <div className="px-4 md:px-8 flex flex-col gap-8">
+      <div className="p-6 md:p-8 space-y-7 max-w-[1600px] w-full mx-auto">
         {/* Tab switcher + Summary bar */}
-        <div className="flex flex-col gap-5">
-          <div className="flex p-1.5 self-start bg-white/[0.02] border border-white/5 rounded-xl relative">
+        <div className="flex flex-col gap-4">
+          <div className="flex p-1 self-start bg-white dark:bg-[#16181f] border border-gray-200/80 dark:border-neutral-800/80 rounded-2xl shadow-2xs">
             {(['Day', 'Week', 'Month'] as Timeframe[]).map(tab => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
                 className={cn(
-                  'relative px-8 py-2 type-h2 text-[13px] rounded-lg transition-colors z-10',
-                  activeTab === tab ? 'text-white' : 'text-[#6A6A6A] hover:text-white'
+                  'relative px-6 py-2 text-xs font-semibold rounded-xl transition-all z-10',
+                  activeTab === tab ? 'text-white dark:text-gray-900' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
                 )}
               >
                 {activeTab === tab && (
                   <motion.div
                     layoutId="goalsTab"
-                    className="absolute inset-0 bg-primary/20 border border-primary/30 rounded-lg -z-10"
-                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                    className="absolute inset-0 bg-[#111827] dark:bg-white rounded-xl -z-10 shadow-xs"
+                    transition={{ type: "spring", stiffness: 350, damping: 30 }}
                   />
                 )}
                 {tab}
@@ -655,32 +655,31 @@ export function Goals() {
         <AnimatePresence mode="wait">
           <motion.div
             key={activeTab}
-            initial={{ opacity: 0, scale: 0.98 }}
+            initial={{ opacity: 0, scale: 0.99 }}
             animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.98 }}
+            exit={{ opacity: 0, scale: 0.99 }}
             transition={{ duration: 0.2 }}
           >
             {allZero ? (
               /* Empty state */
-              <div className="flex flex-col items-center justify-center gap-4 py-14 rounded-[12px] border border-dashed border-[#1e2a3a] text-center px-6">
-                <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: '#1d4ed820' }}>
-                  <Target className="w-6 h-6 text-[#1d4ed8]" />
+              <div className="bg-white dark:bg-[#16181f] flex flex-col items-center justify-center gap-3.5 py-12 rounded-3xl border-2 border-dashed border-gray-200 dark:border-neutral-800 text-center px-6 shadow-2xs">
+                <div className="w-12 h-12 rounded-2xl flex items-center justify-center bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400">
+                  <Target className="w-6 h-6" />
                 </div>
                 <div className="flex flex-col gap-1">
-                  <p className="text-white font-bold text-base">Your goals are set — start trading to track progress</p>
-                  <p style={{ fontSize: 13, color: '#4B5563' }}>Targets will update in real time as you log trades</p>
+                  <p className="text-gray-900 dark:text-white font-bold text-base">Your goals are set — start trading to track progress</p>
+                  <p className="text-xs text-gray-400">Targets will update in real time as you log trades</p>
                 </div>
                 <button
                   onClick={() => navigate('/journal')}
-                  className="mt-1 px-5 py-2.5 rounded-[8px] text-white font-bold text-sm hover:opacity-80 transition-opacity"
-                  style={{ background: '#1d4ed8', fontSize: 13 }}
+                  className="mt-2 px-5 py-2.5 rounded-2xl bg-[#111827] dark:bg-white text-white dark:text-gray-900 font-semibold text-xs shadow-xs hover:bg-black dark:hover:bg-gray-100 transition-all"
                 >
                   Log your first trade →
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                {currentGoals.map((goal, i) => (
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+                {currentGoals.map((goal) => (
                   <GoalCard
                     key={`${goal.id}-${activeTab}`}
                     label={goal.label}

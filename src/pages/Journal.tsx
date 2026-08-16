@@ -18,14 +18,16 @@ import {
   TrendingUp,
   TrendingDown,
   BrainCircuit,
-  Loader2
+  Loader2,
+  ArrowUpRight,
+  ArrowDownRight,
+  Clock
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { TopBar } from "../lib/TopBar";
 import { cn } from "../lib/utils";
 import { TradeQualityMeter } from "../components/TradeQualityMeter";
 import { useTrades, Trade } from "../hooks/useTrades";
-import { GoogleGenAI, Type } from "@google/genai";
 import { useNavigate } from "react-router-dom";
 import { useAccountContext } from "../contexts/AccountContext";
 import { getTradeDate } from "../lib/timeUtils";
@@ -35,14 +37,9 @@ export function Journal() {
   const [activeTab, setActiveTab] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  // Optimistic local patch — stores instant UI changes before DB confirms
-  const [localPatch, setLocalPatch] = useState<Record<string, any>>({});
   const [proofCache, setProofCache] = useState<Record<string, string>>({});
   const [isProofLoading, setIsProofLoading] = useState(false);
   
-  const dbSyncRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const pendingUpdatesRef = useRef<Partial<Trade>>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   const { selectedAccountId } = useAccountContext();
@@ -87,7 +84,6 @@ export function Journal() {
 
   const selectedEntry = entries.find(e => e.id === selectedId) || entries[0];
 
-  // Lazy-load proof when trade is selected
   useEffect(() => {
     if (selectedId && !proofCache[selectedId]) {
       const loadProof = async () => {
@@ -102,15 +98,9 @@ export function Journal() {
     }
   }, [selectedId, fetchTradeProof]);
 
-  // Clear patch when switching trades
-  useEffect(() => {
-    setLocalPatch({});
-  }, [selectedId]);
-
   const updateEntry = (updates: Partial<Trade>) => {
     if (!selectedId) return;
     
-    // If updating proof, also update cache
     if (updates.proof) {
       setProofCache(prev => ({ ...prev, [selectedId]: updates.proof as string }));
     } else if (updates.proof === null) {
@@ -121,72 +111,12 @@ export function Journal() {
       });
     }
 
-    // 1. Accumulate updates in a ref for the debounced DB write
-    pendingUpdatesRef.current = { ...pendingUpdatesRef.current, ...updates };
-
-    // 2. Optimistically apply to local patch immediately
-    setLocalPatch(prev => ({ ...prev, ...updates }));
-    
-    // 3. Debounce the actual DB write so rapid clicks batch together
-    if (dbSyncRef.current) clearTimeout(dbSyncRef.current);
-    dbSyncRef.current = setTimeout(() => {
-      const payload = { ...pendingUpdatesRef.current };
-      pendingUpdatesRef.current = {}; // Clear after capturing
-      if (Object.keys(payload).length > 0) {
-        updateTrades([selectedId], payload);
-      }
-    }, 600);
-  };
-
-  const defaultChecklist = [
-    {label: "Checked higher timeframe", checked: false}, 
-    {label: "Risk within limits", checked: false}, 
-    {label: "Fits my trading plan", checked: false}, 
-    {label: "Key levels identified", checked: false}, 
-    {label: "Economic calendar checked", checked: false}
-  ];
-
-  const normalizedEntry = useMemo(() => {
-    if (!selectedEntry) return null;
-    const merged = { ...selectedEntry, ...localPatch };
-    return {
-      ...merged,
-      strategy: merged.strategy || "SCALP",
-      notes: merged.notes || "",
-      emotions: merged.emotions || [],
-      tags: merged.tags || (merged.tag ? [merged.tag] : []),
-      proof: localPatch.proof !== undefined ? localPatch.proof : (selectedId ? (proofCache[selectedId] || null) : null),
-      rating: merged.rating || 0,
-      checklist: merged.checklist || defaultChecklist,
-      tradeType: merged.tradeType || (merged.tag || "Scalp"),
-      sentiment: merged.sentiment || null,
-      entryPrice: merged.entry || "0.0000",
-      exitPrice: merged.exit || "0.0000",
-      duration: merged.duration || "0h 0m",
-      date: (function() {
-        try {
-          const d = getTradeDate(merged.date || merged.createdAt || new Date().toISOString());
-          return d.toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase() + ' ' + d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-        } catch {
-          return "UNKNOWN DATE";
-        }
-      })(),
-      type: merged.action === "BUY" ? "LONG" : "SHORT"
-    };
-  }, [selectedEntry, localPatch, proofCache, selectedId]);
-
-  const formatDate = (trade: Trade) => {
-    try {
-      const date = getTradeDate(trade.date || trade.createdAt || new Date().toISOString());
-      return date.toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase();
-    } catch {
-      return "UNKNOWN DATE";
-    }
+    updateTrades([selectedId], updates);
   };
 
   const handleFileDrop = (e: React.DragEvent) => {
     e.preventDefault();
-    const file = e.dataTransfer.files[0];
+    const file = e.dataTransfer.files?.[0];
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => updateEntry({ proof: reader.result as string });
@@ -194,83 +124,69 @@ export function Journal() {
     }
   };
 
-  const analyzeSentiment = async () => {
-    if (!normalizedEntry || !normalizedEntry.notes || isAnalyzing) return;
-    
-    setIsAnalyzing(true);
-    try {
-      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-      const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
-        contents: `Analyze the sentiment of the following trading journal notes. Categorize it as strictly one of: positive, negative, or neutral.
-        
-        Notes: "${normalizedEntry.notes}"`,
-        config: {
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: Type.OBJECT,
-            properties: {
-              sentiment: {
-                type: Type.STRING,
-                enum: ["positive", "negative", "neutral"],
-                description: "The sentiment of the notes."
-              }
-            },
-            required: ["sentiment"]
-          }
-        }
-      });
-
-      const result = JSON.parse(response.text);
-      if (result.sentiment) {
-        updateEntry({ sentiment: result.sentiment });
-      }
-    } catch (error) {
-      console.error("Sentiment analysis failed:", error);
-    } finally {
-      setIsAnalyzing(false);
-    }
+  const formatDate = (entry: any) => {
+    const d = getTradeDate(entry.date || entry.createdAt);
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   };
 
-  return (
-    <div className="flex flex-col min-h-full pb-10 relative overflow-hidden">
-      {/* Immersive Background Gradients */}
-      <div className="absolute top-0 left-0 w-full h-full pointer-events-none overflow-hidden z-0">
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/10 blur-[120px] rounded-full" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-primary/5 blur-[120px] rounded-full" />
-      </div>
+  const normalizedEntry = selectedEntry ? {
+    id: selectedEntry.id,
+    symbol: selectedEntry.symbol,
+    pnl: Number(selectedEntry.pnl) || 0,
+    type: selectedEntry.action || "BUY",
+    date: formatDate(selectedEntry),
+    entryPrice: selectedEntry.entry || "—",
+    exitPrice: selectedEntry.exit || "—",
+    duration: selectedEntry.duration || "1h 30m",
+    tradeType: selectedEntry.tag || "Scalp",
+    tags: selectedEntry.tags || (selectedEntry.tag ? [selectedEntry.tag] : []),
+    rating: selectedEntry.rating || 7,
+    emotions: selectedEntry.emotions || ['😎'],
+    notes: selectedEntry.notes || "",
+    proof: proofCache[selectedEntry.id] || selectedEntry.proof || "",
+    sentiment: selectedEntry.sentiment || "",
+    checklist: selectedEntry.checklist || [
+      { label: "Followed Trading Plan", checked: true },
+      { label: "Risk within Limits (≤1%)", checked: true },
+      { label: "Clear Exit Criteria", checked: true },
+      { label: "Patience & No FOMO", checked: false },
+      { label: "Positive Mindset", checked: true },
+    ]
+  } : null;
 
+  return (
+    <div className="flex flex-col min-h-full pb-10">
       <TopBar 
-        title="Trade Analysis" 
+        title="Trade Analysis & Journal" 
         subtitle="In-depth Performance Review" 
         showSearch={true}
       />
 
-      <div className="px-4 md:px-8 flex-1 grid grid-cols-1 lg:grid-cols-[380px_1fr] gap-8 relative z-10">
+      <div className="p-6 md:p-8 max-w-[1600px] w-full mx-auto grid grid-cols-1 lg:grid-cols-12 gap-7">
         
-        {/* Left Column: List */}
-        <div className="flex flex-col gap-6 h-[calc(100vh-180px)]">
-          <div className="flex items-center justify-between mb-2">
+        {/* Left Column: Trade Logs List (4 COLS) */}
+        <div className="lg:col-span-4 flex flex-col gap-4">
+          <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <CalendarIcon className="w-5 h-5 text-primary" />
-              <h3 className="text-lg font-bold text-white uppercase tracking-wider text-sm">Trade Logs</h3>
-              <span className="bg-primary/10 text-primary px-2 py-0.5 rounded-full text-[10px] font-bold">{entries.length}</span>
+              <CalendarIcon className="w-4 h-4 text-blue-500" />
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Trade Logs</h3>
+              <span className="bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded-full text-[10px] font-bold tabular-nums">
+                {entries.length}
+              </span>
             </div>
-            <button className="p-2 hover:bg-white/5 rounded-full transition-colors text-gray-400 hover:text-white">
-              <Filter className="w-4 h-4" />
-            </button>
           </div>
 
-          <div className="glass-card p-1 rounded-xl flex bg-black/20 border border-white/5 mb-2">
+          {/* Segmented Filter Pills */}
+          <div className="bg-white dark:bg-[#16181f] p-1 rounded-2xl border border-gray-200/80 dark:border-neutral-800/80 shadow-2xs flex items-center gap-1">
             {["All", "Journaled", "Pending"].map(tab => (
               <button 
                 key={tab} 
                 onClick={() => setActiveTab(tab)}
                 className={cn(
-                  "flex-1 py-2 rounded-lg text-xs font-bold transition-all",
+                  "flex-1 py-1.5 rounded-xl text-xs font-semibold transition-all",
                   activeTab === tab 
-                    ? "bg-primary text-white shadow-lg shadow-primary/20" 
-                    : "text-gray-500 hover:text-gray-300 hover:bg-white/5"
+                    ? "bg-[#111827] dark:bg-white text-white dark:text-gray-900 shadow-xs" 
+                    : "text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
                 )}
               >
                 {tab}
@@ -278,507 +194,309 @@ export function Journal() {
             ))}
           </div>
 
-          <div className="relative mb-4">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+          {/* Search Input */}
+          <div className="relative">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
             <input 
               type="text"
               placeholder="Search trades..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-black/40 border border-white/5 rounded-xl pl-10 pr-4 py-3 text-sm text-white focus:outline-none focus:border-primary/50 transition-all"
+              className="w-full bg-white dark:bg-[#16181f] border border-gray-200/90 dark:border-neutral-800 rounded-2xl pl-10 pr-4 py-2.5 text-xs text-gray-900 dark:text-white placeholder:text-gray-400 font-normal focus:outline-none focus:ring-1 focus:ring-black/10 dark:focus:ring-white/20 shadow-2xs transition-all"
             />
           </div>
 
-          <div className="flex-1 overflow-y-auto pr-2 space-y-4 no-scrollbar">
+          {/* Scrollable List */}
+          <div className="overflow-y-auto space-y-3 no-scrollbar max-h-[calc(100vh-280px)]">
             {loading ? (
-              <div className="flex flex-col items-center justify-center h-40 text-gray-500">
-                <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mb-4" />
-                <p className="text-xs uppercase tracking-widest font-bold">Loading Trades...</p>
+              <div className="flex flex-col items-center justify-center h-40 text-gray-400">
+                <Loader2 className="w-6 h-6 animate-spin text-blue-500 mb-2" />
+                <p className="text-xs font-medium">Loading trades...</p>
               </div>
             ) : entries.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-40 text-gray-500 border border-dashed border-white/10 rounded-2xl">
-                <Target className="w-8 h-8 mb-2 opacity-20" />
-                <p className="text-xs uppercase tracking-widest font-bold opacity-50">No trades found</p>
+              <div className="bg-white dark:bg-[#16181f] rounded-3xl border border-gray-200/80 dark:border-neutral-800/80 p-8 text-center shadow-2xs">
+                <Target className="w-8 h-8 text-gray-300 dark:text-gray-600 mx-auto mb-2" />
+                <p className="text-xs font-semibold text-gray-700 dark:text-gray-300">No trades found</p>
+                <p className="text-[11px] text-gray-400 mt-0.5">Filter criteria returned 0 results</p>
               </div>
             ) : (
-              entries.map(entry => (
-                <motion.div 
-                  key={entry.id} 
-                  layoutId={entry.id}
-                  onClick={() => setSelectedId(entry.id)}
-                  className={cn(
-                    "relative group cursor-pointer rounded-2xl border transition-all duration-300",
-                    selectedId === entry.id 
-                      ? "bg-primary/10 border-primary/50 shadow-[0_0_20px_rgba(59,130,246,0.1)]" 
-                      : "bg-white/5 border-white/5 hover:border-white/20 hover:bg-white/[0.07]"
-                  )}
-                >
-                  <div className="p-5">
-                    <div className="flex justify-between items-start mb-3">
+              entries.map(entry => {
+                const isPos = Number(entry.pnl) >= 0;
+                const isSelected = selectedId === entry.id;
+                return (
+                  <motion.div 
+                    key={entry.id} 
+                    onClick={() => setSelectedId(entry.id)}
+                    className={cn(
+                      "p-4 rounded-3xl border transition-all duration-200 cursor-pointer shadow-2xs",
+                      isSelected 
+                        ? "bg-white dark:bg-[#16181f] border-blue-500/80 shadow-md ring-1 ring-blue-500/30" 
+                        : "bg-white dark:bg-[#16181f] border-gray-200/80 dark:border-neutral-800/80 hover:border-gray-300 dark:hover:border-neutral-700"
+                    )}
+                  >
+                    <div className="flex justify-between items-start mb-2">
                       <div>
-                        <h4 className="type-h2">{entry.symbol}</h4>
-                        <p className="text-[10px] text-on-surface-variant type-label mt-0.5">{formatDate(entry)}</p>
+                        <h4 className="text-sm font-bold text-gray-900 dark:text-white">{entry.symbol}</h4>
+                        <p className="text-[11px] text-gray-400 font-normal tabular-nums">{formatDate(entry)}</p>
                       </div>
-                      <div className={cn(
-                        "type-h2 tnum text-base",
-                        entry.pnl >= 0 ? 'text-[#1ED760]' : 'text-[#E5534B]'
+                      <span className={cn(
+                        "text-sm font-bold tabular-nums",
+                        isPos ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-500'
                       )}>
-                        {entry.pnl >= 0 ? "+" : ""}{entry.pnl.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                      </div>
+                        {isPos ? "+" : ""}${Math.abs(Number(entry.pnl) || 0).toFixed(2)}
+                      </span>
                     </div>
                     
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2">
                       <span className={cn(
-                        "px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-tighter",
-                        entry.action === 'BUY' ? "bg-[#1ED760]/10 text-[#1ED760]" : "bg-[#E5534B]/10 text-[#E5534B]"
+                        "px-2 py-0.5 rounded-full text-[9px] font-bold uppercase",
+                        entry.action === 'BUY' ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40" : "bg-rose-50 text-rose-600 dark:bg-rose-950/40"
                       )}>
                         {entry.action === 'BUY' ? 'LONG' : 'SHORT'}
                       </span>
-                      <span className="text-[10px] text-gray-500 type-label">
-                        {entry.strategy || entry.tag || "SCALP"}
+                      <span className="text-[10px] text-gray-400 font-medium truncate max-w-[130px]">
+                        {entry.strategy || entry.tag || "Scalp"}
                       </span>
-                      {entry.sentiment && (
-                        <div className={cn(
-                          "px-1.5 py-0.5 rounded text-[8px] font-bold uppercase tracking-tighter flex items-center gap-1",
-                          entry.sentiment === 'positive' ? "bg-[#1ED760]/10 text-[#1ED760]" :
-                          entry.sentiment === 'negative' ? "bg-[#E5534B]/10 text-[#E5534B]" :
-                          "bg-gray-500/10 text-gray-400"
-                        )}>
-                          <BrainCircuit className="w-2 h-2" />
-                          {entry.sentiment}
-                        </div>
-                      )}
-                      <div className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity">
-                        <ChevronRight className="w-4 h-4 text-primary" />
+                      <div className="ml-auto">
+                        <ChevronRight className="w-3.5 h-3.5 text-gray-400" />
                       </div>
                     </div>
-                  </div>
-                  
-                  {selectedId === entry.id && (
-                    <motion.div 
-                      layoutId="active-indicator"
-                      className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-primary rounded-r-full"
-                    />
-                  )}
-                </motion.div>
-              ))
+                  </motion.div>
+                );
+              })
             )}
           </div>
         </div>
 
-        {/* Right Column: Detail */}
-        <div className="flex flex-col h-[calc(100vh-180px)] glass-card rounded-2xl border border-white/5 overflow-hidden bg-black/20 backdrop-blur-xl">
+        {/* Right Column: Detail View (8 COLS) */}
+        <div className="lg:col-span-8 bg-white dark:bg-[#16181f] rounded-3xl border border-gray-200/80 dark:border-neutral-800/80 shadow-2xs overflow-hidden flex flex-col">
           {!normalizedEntry ? (
-            <div className="flex-1 flex flex-col items-center justify-center text-gray-500 p-12 text-center">
-              <Target className="w-16 h-16 mb-6 opacity-10" />
-              <h3 className="text-xl type-h2 text-white/50 mb-2">Select a trade to analyze</h3>
-              <p className="text-sm max-w-xs">Choose a trade from the list on the left to view detailed performance metrics and journal entries.</p>
+            <div className="flex-1 flex flex-col items-center justify-center p-16 text-center">
+              <Target className="w-12 h-12 text-gray-300 dark:text-gray-600 mb-4" />
+              <h3 className="text-base font-bold text-gray-900 dark:text-white mb-1">Select a trade to inspect</h3>
+              <p className="text-xs text-gray-400 max-w-xs">Choose any trade log from the left panel to review notes, psychology, and screenshot proof.</p>
             </div>
           ) : (
-            <>
-              {/* Detail Header */}
-              <div className="p-8 border-b border-white/5 flex items-center justify-between bg-white/[0.02]">
-                <div className="flex items-center gap-6">
-                  <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center border border-primary/20 shadow-inner">
-                    <Target className="w-8 h-8 text-primary" />
+            <div className="p-6 md:p-8 space-y-8 overflow-y-auto no-scrollbar max-h-[calc(100vh-200px)]">
+              
+              {/* Header Details */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-gray-100 dark:border-neutral-800">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-950/40 flex items-center justify-center text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-900/40 shadow-xs">
+                    <Target className="w-6 h-6" />
                   </div>
                   <div>
-                    <div className="flex items-center gap-3 mb-1">
-                      <h2 className="type-display">{normalizedEntry.symbol}</h2>
+                    <div className="flex items-center gap-2.5">
+                      <h2 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">{normalizedEntry.symbol}</h2>
                       <span className={cn(
-                        "px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest",
-                        normalizedEntry.pnl >= 0 ? "bg-primary/20 text-primary border border-primary/30" : "bg-[#E5534B]/20 text-[#E5534B] border border-[#E5534B]/30"
+                        "px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase",
+                        normalizedEntry.pnl >= 0 ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40" : "bg-rose-50 text-rose-600 dark:bg-rose-950/40"
                       )}>
                         {normalizedEntry.pnl >= 0 ? "Winner" : "Loser"}
                       </span>
                     </div>
-                    <div className="flex items-center gap-4 text-on-surface-variant">
-                      <span className="text-[10px] type-label flex items-center gap-1.5">
-                        {normalizedEntry.pnl >= 0 ? <TrendingUp className="w-3 h-3 text-primary" /> : <TrendingDown className="w-3 h-3 text-[#E5534B]" />}
-                        {normalizedEntry.type} Position
-                      </span>
-                      <span className="w-1 h-1 rounded-full bg-white/10" />
-                      <span className="text-[10px] type-label flex items-center gap-1.5">
-                        <CalendarIcon className="w-3 h-3" />
-                        {normalizedEntry.date}
-                      </span>
-                    </div>
+                    <p className="text-xs text-gray-400 font-normal mt-0.5">
+                      {normalizedEntry.type} Position · {normalizedEntry.date}
+                    </p>
                   </div>
                 </div>
-                <div className="flex items-center gap-6 text-right">
-                  <div>
-                    <p className="text-[10px] text-on-surface-variant type-label mb-1">Total P&L</p>
-                    <h3 className={cn(
-                      "type-display",
-                      normalizedEntry.pnl >= 0 ? "text-primary" : "text-[#E5534B]"
-                    )}>
-                      {normalizedEntry.pnl >= 0 ? "+" : ""}{normalizedEntry.pnl.toFixed(2)}
-                    </h3>
+
+                <div className="text-left sm:text-right">
+                  <p className="text-[11px] font-medium text-gray-400">Total Net Result</p>
+                  <h3 className={cn(
+                    "text-2xl font-bold tabular-nums",
+                    normalizedEntry.pnl >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-500"
+                  )}>
+                    {normalizedEntry.pnl >= 0 ? "+" : ""}${Math.abs(normalizedEntry.pnl).toFixed(2)}
+                  </h3>
+                </div>
+              </div>
+
+              {/* Trade Quality Breakdown */}
+              <TradeQualityMeter 
+                pnl={normalizedEntry.pnl}
+                rating={normalizedEntry.rating}
+                checklist={normalizedEntry.checklist}
+                notes={normalizedEntry.notes}
+                emotions={normalizedEntry.emotions}
+                proof={normalizedEntry.proof}
+              />
+
+              {/* Quick Metrics Grid */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
+                {[
+                  { label: "Symbol", value: normalizedEntry.symbol },
+                  { label: "Entry Price", value: normalizedEntry.entryPrice },
+                  { label: "Exit Price", value: normalizedEntry.exitPrice },
+                  { label: "Duration", value: normalizedEntry.duration }
+                ].map((item, idx) => (
+                  <div key={idx} className="bg-gray-50 dark:bg-neutral-800/40 p-4 rounded-2xl border border-gray-100 dark:border-neutral-800">
+                    <p className="text-[10px] font-medium text-gray-400 mb-1">{item.label}</p>
+                    <p className="text-sm font-bold tabular-nums text-gray-900 dark:text-white truncate">{item.value}</p>
                   </div>
-                  
-                  {/* Large Analyze Trade Button */}
-                  <button 
-                    onClick={() => navigate('/ai-engine', { state: { analyzeTradeId: normalizedEntry.id } })}
-                    className="relative group flex flex-col items-center justify-center p-4 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 hover:from-primary/30 hover:to-primary/10 border border-primary/30 transition-all cursor-pointer shadow-[0_0_20px_rgba(59,130,246,0.15)] overflow-hidden"
-                  >
-                    <div className="absolute inset-0 bg-primary/10 opacity-0 group-hover:opacity-100 transition-opacity blur-xl rounded-full" />
-                    <BrainCircuit className="w-6 h-6 text-primary mb-1 relative z-10" />
-                    <span className="text-xs font-bold text-white uppercase tracking-widest relative z-10">Analyze Trade</span>
-                  </button>
-                </div>
+                ))}
               </div>
 
-              <div className="flex-1 overflow-y-auto p-8 space-y-10 no-scrollbar">
-                
-                {/* Trade Quality Analysis */}
-                <TradeQualityMeter 
-                  pnl={normalizedEntry.pnl}
-                  rating={normalizedEntry.rating}
-                  checklist={normalizedEntry.checklist}
-                  notes={normalizedEntry.notes}
-                  emotions={normalizedEntry.emotions}
-                  proof={normalizedEntry.proof}
-                />
-
-                {/* Quick Stats Grid */}
-                <div className="grid grid-cols-4 gap-6">
-                  {[
-                    { label: "Symbol", value: normalizedEntry.symbol, icon: Target },
-                    { label: "Entry", value: normalizedEntry.entryPrice, field: "entry", icon: ArrowUpRight },
-                    { label: "Exit", value: normalizedEntry.exitPrice, field: "exit", icon: ArrowDownRight },
-                    { label: "Duration", value: normalizedEntry.duration, field: "duration", icon: Clock }
-                  ].map((item, idx) => (
-                    <div key={idx} className="bg-white/5 p-5 rounded-2xl border border-white/5 group hover:border-primary/30 transition-all">
-                      <div className="flex items-center gap-2 mb-2">
-                        <item.icon className="w-3 h-3 text-gray-500 group-hover:text-primary transition-colors" />
-                        <span className="text-[10px] text-on-surface-variant type-label">{item.label}</span>
-                      </div>
-                      {item.field ? (
-                        <input 
-                          key={`${normalizedEntry.id}-${item.field}`}
-                          defaultValue={item.value as string} 
-                          onBlur={e => updateEntry({ [item.field!]: e.target.value })} 
-                          className="bg-transparent type-metric tnum text-[18px] text-white w-full focus:outline-none border-b border-transparent focus:border-primary/50 transition-all" 
-                        />
-                      ) : (
-                        <div className="type-metric tnum text-[18px] text-white">{item.value}</div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-
-            {/* Trade Settings */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              <div className="space-y-3">
-                <label className="text-[10px] text-on-surface-variant type-label flex items-center gap-2">
-                  <Target className="w-3 h-3 text-primary" /> Trade Type
-                </label>
-                <select 
-                  value={normalizedEntry.tradeType}
-                  onChange={e => updateEntry({ tradeType: e.target.value })}
-                  className="w-full bg-black/40 border border-white/10 rounded-xl p-4 text-sm text-white focus:outline-none focus:border-primary/50 transition-all appearance-none cursor-pointer"
-                >
-                  <option>Scalp</option>
-                  <option>Trend Following</option>
-                  <option>Breakout</option>
-                </select>
-              </div>
-
-              <div className="space-y-3">
-                <label className="text-[10px] text-on-surface-variant type-label flex items-center gap-2">
-                  <Tag className="w-3 h-3 text-primary" /> Tags
-                </label>
-                <div className="flex flex-wrap gap-2 mb-2">
-                  {normalizedEntry.tags.map((tag: string) => (
-                    <span key={tag} className="flex items-center gap-1 px-2 py-1 bg-primary/10 border border-primary/20 rounded-lg text-[10px] font-bold text-primary uppercase tracking-wider">
-                      {tag}
-                      <button 
-                        onClick={() => updateEntry({ tags: normalizedEntry.tags.filter((t: string) => t !== tag) })}
-                        className="hover:text-white transition-colors"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    </span>
-                  ))}
-                </div>
-                <div className="relative">
-                  <input 
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        const val = (e.target as HTMLInputElement).value.trim().toUpperCase();
-                        if (val && !normalizedEntry.tags.includes(val)) {
-                          updateEntry({ tags: [...normalizedEntry.tags, val] });
-                          (e.target as HTMLInputElement).value = '';
-                        }
-                      }
-                    }}
-                    className="w-full bg-black/40 border border-white/10 rounded-xl p-4 text-sm text-white focus:outline-none focus:border-primary/50 transition-all" 
-                    placeholder="Add tag and press Enter..." 
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2 relative group">
-                <div className="flex justify-between items-end mb-1">
-                  <label className="text-[10px] text-on-surface-variant type-label flex items-center gap-2">
-                    <Star className="w-3 h-3 text-amber-400 drop-shadow-[0_0_5px_rgba(251,191,36,0.5)]" /> Execution Rating
+              {/* Execution Rating Slider/Buttons */}
+              <div className="bg-gray-50/80 dark:bg-neutral-800/40 p-5 rounded-3xl border border-gray-100 dark:border-neutral-800 space-y-3">
+                <div className="flex justify-between items-center">
+                  <label className="text-xs font-semibold text-gray-900 dark:text-white flex items-center gap-1.5">
+                    <Star className="w-4 h-4 text-amber-500" />
+                    <span>Execution Rating</span>
                   </label>
-                  <div className="text-right">
-                    <span className={cn(
-                      "text-xl font-black tnum transition-colors duration-300 drop-shadow-md",
-                      normalizedEntry.rating >= 8 ? "text-[#1ED760]" : normalizedEntry.rating >= 5 ? "text-amber-400" : "text-[#E5534B]"
-                    )}>
-                      {normalizedEntry.rating}
-                    </span>
-                    <span className="text-[10px] text-gray-500 font-bold ml-0.5">/10</span>
-                  </div>
+                  <span className="text-sm font-bold text-amber-500 tabular-nums">
+                    {normalizedEntry.rating}/10
+                  </span>
                 </div>
                 
-                <div className="flex gap-1 h-8">
+                <div className="flex gap-1.5 h-7">
                   {[...Array(10)].map((_, i) => {
                     const val = i + 1;
                     const isActive = val <= normalizedEntry.rating;
-                    
-                    let activeColor = "bg-primary";
-                    let shadowColor = "rgba(59,130,246,0.5)";
-                    
-                    if (val <= 3) { 
-                      activeColor = "bg-[#E5534B]"; 
-                      shadowColor = "rgba(229,83,75,0.6)"; 
-                    } else if (val <= 7) { 
-                      activeColor = "bg-amber-400"; 
-                      shadowColor = "rgba(251,191,36,0.6)"; 
-                    } else { 
-                      activeColor = "bg-[#1ED760]"; 
-                      shadowColor = "rgba(30,215,96,0.6)"; 
-                    }
-
                     return (
-                      <motion.button
+                      <button
                         key={val}
-                        whileHover={{ scale: 1.1, y: -2 }}
-                        whileTap={{ scale: 0.9 }}
                         onClick={() => updateEntry({ rating: val })}
                         className={cn(
-                          "flex-1 rounded-sm transition-all duration-300 relative overflow-hidden",
-                          isActive ? activeColor : "bg-white/5 hover:bg-white/10"
+                          "flex-1 rounded-lg transition-all text-[10px] font-bold",
+                          isActive 
+                            ? "bg-[#111827] dark:bg-white text-white dark:text-gray-900 shadow-2xs" 
+                            : "bg-gray-200/80 dark:bg-neutral-700 text-gray-500"
                         )}
-                        style={isActive ? { boxShadow: `0 0 10px ${shadowColor}` } : {}}
                       >
-                        {isActive && (
-                          <div className="absolute inset-0 bg-white/20 opacity-0 hover:opacity-100 transition-opacity" />
-                        )}
-                      </motion.button>
-                    )
+                        {val}
+                      </button>
+                    );
                   })}
                 </div>
-                <div className="flex justify-between text-[9px] text-gray-500 uppercase tracking-widest font-bold mt-2 opacity-50 group-hover:opacity-100 transition-opacity">
-                  <span className="hover:text-[#E5534B] transition-colors cursor-pointer" onClick={() => updateEntry({ rating: 1 })}>Poor</span>
-                  <span className="hover:text-amber-400 transition-colors cursor-pointer" onClick={() => updateEntry({ rating: 5 })}>Average</span>
-                  <span className="hover:text-[#1ED760] transition-colors cursor-pointer" onClick={() => updateEntry({ rating: 10 })}>Perfect</span>
-                </div>
               </div>
-            </div>
 
-            {/* Emotions */}
-            <div className="space-y-4">
-              <label className="text-[10px] text-on-surface-variant type-label flex items-center gap-2">
-                <Smile className="w-3 h-3 text-primary" /> Psychological State
-              </label>
-              <div className="flex gap-4">
-                {['😰', '😥', '😎', '😐', '🤯'].map(emo => (
-                  <button 
-                    key={emo} 
-                    onClick={() => updateEntry({ emotions: normalizedEntry.emotions.includes(emo) ? normalizedEntry.emotions.filter(e => e !== emo) : [...normalizedEntry.emotions, emo] })}
-                    className={cn(
-                      "w-14 h-14 rounded-2xl flex items-center justify-center text-2xl transition-all duration-300 border",
-                      normalizedEntry.emotions.includes(emo) 
-                        ? "bg-primary/20 border-primary shadow-[0_0_15px_rgba(59,130,246,0.2)] scale-110" 
-                        : "bg-white/5 border-white/5 hover:bg-white/10 hover:border-white/20"
-                    )}
-                  >
-                    {emo}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Checklist */}
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <label className="text-[10px] text-on-surface-variant type-label flex items-center gap-2">
-                  <CheckSquare className="w-3 h-3 text-primary" /> Execution Checklist
+              {/* Psychological Emotions State */}
+              <div className="space-y-3">
+                <label className="text-xs font-semibold text-gray-900 dark:text-white flex items-center gap-1.5">
+                  <Smile className="w-4 h-4 text-blue-500" />
+                  <span>Psychological Mindset</span>
                 </label>
-                <span className="text-xs font-bold text-[#1ED760]">{normalizedEntry.checklist.filter(c => c.checked).length}/5 Complete</span>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-                {normalizedEntry.checklist.map((item, idx) => (
-                  <button 
-                    key={idx} 
-                    onClick={() => updateEntry({ checklist: normalizedEntry.checklist.map((c, i) => i === idx ? {...c, checked: !c.checked} : c) })}
-                    className={cn(
-                      "p-4 rounded-2xl border text-left transition-all group",
-                      item.checked 
-                        ? "bg-[#1ED760]/10 border-[#1ED760]/30" 
-                        : "bg-white/5 border-white/5 hover:border-white/20"
-                    )}
-                  >
-                    <div className="mb-3">
-                      {item.checked 
-                        ? <CheckSquare className="w-5 h-5 text-[#1ED760]" /> 
-                        : <Square className="w-5 h-5 text-gray-600 group-hover:text-gray-400" />
-                      }
-                    </div>
-                    <div className={cn(
-                      "text-[10px] font-bold leading-tight uppercase tracking-tight",
-                      item.checked ? "text-[#1ED760]" : "text-gray-500"
-                    )}>
-                      {item.label}
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Notes */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <label className="text-[10px] text-on-surface-variant type-label flex items-center gap-2">
-                  <MessageSquare className="w-3 h-3 text-primary" /> Trade Notes
-                </label>
-                <div className="flex items-center gap-3">
-                  {normalizedEntry.sentiment && (
-                    <div className={cn(
-                      "px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-widest flex items-center gap-1",
-                      normalizedEntry.sentiment === 'positive' ? "bg-[#1ED760]/10 text-[#1ED760] border border-[#1ED760]/20" :
-                      normalizedEntry.sentiment === 'negative' ? "bg-[#E5534B]/10 text-[#E5534B] border border-[#E5534B]/20" :
-                      "bg-gray-500/10 text-gray-400 border border-gray-500/20"
-                    )}>
-                      <BrainCircuit className="w-3 h-3" />
-                      {normalizedEntry.sentiment}
-                    </div>
-                  )}
-                </div>
-              </div>
-              <textarea 
-                key={`${normalizedEntry.id}-notes`}
-                defaultValue={normalizedEntry.notes}
-                onBlur={e => updateEntry({ notes: e.target.value })}
-                className="w-full h-40 bg-black/40 border border-white/10 rounded-2xl p-5 text-sm text-gray-300 focus:outline-none focus:border-primary/50 transition-all resize-none leading-relaxed" 
-                placeholder="Describe your mindset, market conditions, and why you took this setup..." 
-              />
-            </div>
-
-            {/* Proof */}
-            <div className="space-y-3">
-              <label className="text-[10px] text-on-surface-variant type-label flex items-center gap-2">
-                <ImageIcon className="w-3 h-3 text-primary" /> Trade Proof
-              </label>
-              <div 
-                onDragOver={e => e.preventDefault()}
-                onDrop={handleFileDrop}
-                onClick={() => fileInputRef.current?.click()}
-                className="group relative border-2 border-dashed border-white/10 rounded-2xl h-64 flex flex-col items-center justify-center gap-3 text-on-surface-variant hover:border-primary/50 hover:bg-primary/5 transition-all cursor-pointer overflow-hidden"
-              >
-                {normalizedEntry.proof ? (
-                  <div className="relative w-full h-full">
-                    <img src={normalizedEntry.proof} alt="Proof" className="w-full h-full object-cover" />
-                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                      <p className="text-white font-bold text-sm">Click to change screenshot</p>
-                    </div>
+                <div className="flex gap-3">
+                  {['😰', '😥', '😎', '😐', '🤯'].map(emo => (
                     <button 
-                      onClick={(e) => { e.stopPropagation(); updateEntry({ proof: null }); }} 
-                      className="absolute top-4 right-4 bg-[#E5534B] p-2 rounded-xl shadow-lg hover:bg-rose-600 transition-colors z-20"
+                      key={emo} 
+                      onClick={() => updateEntry({ emotions: normalizedEntry.emotions.includes(emo) ? normalizedEntry.emotions.filter(e => e !== emo) : [...normalizedEntry.emotions, emo] })}
+                      className={cn(
+                        "w-12 h-12 rounded-2xl flex items-center justify-center text-xl transition-all border",
+                        normalizedEntry.emotions.includes(emo) 
+                          ? "bg-blue-50 dark:bg-blue-950/40 border-blue-500 shadow-2xs scale-105" 
+                          : "bg-gray-50 dark:bg-neutral-800 border-gray-200 dark:border-neutral-700 hover:border-gray-400"
+                      )}
                     >
-                      <X className="w-4 h-4 text-white" />
+                      {emo}
                     </button>
-                  </div>
-                ) : isProofLoading ? (
-                  <div className="flex flex-col items-center gap-3">
-                    <Loader2 className="w-8 h-8 text-primary animate-spin" />
-                    <p className="text-[10px] text-gray-500 uppercase tracking-widest font-bold">Loading Proof...</p>
-                  </div>
-                ) : (
-                  <>
-                    <div className="p-4 bg-white/5 rounded-2xl group-hover:bg-primary/10 transition-colors">
-                      <UploadCloud className="w-8 h-8 text-gray-500 group-hover:text-primary transition-colors" />
-                    </div>
-                    <div className="text-center">
-                      <p className="font-bold text-white text-sm">Drag and drop screenshots</p>
-                      <p className="text-[10px] text-gray-500 mt-1 uppercase tracking-widest">PNG, JPG, SVG up to 10MB</p>
-                    </div>
-                  </>
-                )}
-                <input type="file" ref={fileInputRef} className="hidden" onChange={e => {
-                  const file = e.target.files?.[0];
-                  if (file) {
-                    const reader = new FileReader();
-                    reader.onloadend = () => updateEntry({ proof: reader.result as string });
-                    reader.readAsDataURL(file);
-                  }
-                }} />
+                  ))}
+                </div>
               </div>
+
+              {/* Checklist */}
+              <div className="space-y-3">
+                <div className="flex justify-between items-center">
+                  <label className="text-xs font-semibold text-gray-900 dark:text-white flex items-center gap-1.5">
+                    <CheckSquare className="w-4 h-4 text-blue-500" />
+                    <span>Discipline Checklist</span>
+                  </label>
+                  <span className="text-xs font-bold text-emerald-600">
+                    {normalizedEntry.checklist.filter(c => c.checked).length}/5 Complete
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  {normalizedEntry.checklist.map((item, idx) => (
+                    <button 
+                      key={idx} 
+                      onClick={() => updateEntry({ checklist: normalizedEntry.checklist.map((c, i) => i === idx ? {...c, checked: !c.checked} : c) })}
+                      className={cn(
+                        "p-3 rounded-2xl border text-left flex items-center gap-2.5 transition-all",
+                        item.checked 
+                          ? "bg-emerald-50 dark:bg-emerald-950/30 border-emerald-300 dark:border-emerald-800/40 text-emerald-800 dark:text-emerald-300" 
+                          : "bg-gray-50 dark:bg-neutral-800/40 border-gray-200/80 dark:border-neutral-800 text-gray-600 dark:text-gray-400"
+                      )}
+                    >
+                      {item.checked ? <CheckSquare className="w-4 h-4 text-emerald-600 shrink-0" /> : <Square className="w-4 h-4 text-gray-400 shrink-0" />}
+                      <span className="text-xs font-medium">{item.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Trade Notes */}
+              <div className="space-y-2.5">
+                <label className="text-xs font-semibold text-gray-900 dark:text-white flex items-center gap-1.5">
+                  <MessageSquare className="w-4 h-4 text-blue-500" />
+                  <span>Trade Notes & Reflection</span>
+                </label>
+                <textarea 
+                  key={`${normalizedEntry.id}-notes`}
+                  defaultValue={normalizedEntry.notes}
+                  onBlur={e => updateEntry({ notes: e.target.value })}
+                  className="w-full h-32 bg-gray-50 dark:bg-neutral-800/60 border border-gray-200 dark:border-neutral-700 rounded-2xl p-4 text-xs text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-black/10 dark:focus:ring-white/20 transition-all resize-none leading-relaxed" 
+                  placeholder="Describe market structure, catalyst, and reasons for entry..." 
+                />
+              </div>
+
+              {/* Trade Proof Drag and Drop */}
+              <div className="space-y-2.5">
+                <label className="text-xs font-semibold text-gray-900 dark:text-white flex items-center gap-1.5">
+                  <ImageIcon className="w-4 h-4 text-blue-500" />
+                  <span>Trade Chart Screenshot</span>
+                </label>
+                <div 
+                  onDragOver={e => e.preventDefault()}
+                  onDrop={handleFileDrop}
+                  onClick={() => fileInputRef.current?.click()}
+                  className="border-2 border-dashed border-gray-200 dark:border-neutral-700/80 rounded-3xl h-52 flex flex-col items-center justify-center gap-2.5 bg-gray-50/50 dark:bg-neutral-800/20 hover:border-blue-500/60 hover:bg-blue-50/10 transition-all cursor-pointer overflow-hidden group"
+                >
+                  {normalizedEntry.proof ? (
+                    <div className="relative w-full h-full">
+                      <img src={normalizedEntry.proof} alt="Proof" className="w-full h-full object-cover" />
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <p className="text-white font-semibold text-xs">Click to replace screenshot</p>
+                      </div>
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); updateEntry({ proof: null }); }} 
+                        className="absolute top-3 right-3 bg-rose-500 p-1.5 rounded-xl shadow-md text-white hover:bg-rose-600 transition-colors z-20"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ) : isProofLoading ? (
+                    <div className="flex flex-col items-center gap-2">
+                      <Loader2 className="w-6 h-6 text-blue-500 animate-spin" />
+                      <p className="text-xs font-medium text-gray-400">Loading proof...</p>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="p-3 bg-white dark:bg-neutral-800 rounded-2xl shadow-2xs">
+                        <UploadCloud className="w-6 h-6 text-gray-400 group-hover:text-blue-500 transition-colors" />
+                      </div>
+                      <div className="text-center">
+                        <p className="font-semibold text-xs text-gray-800 dark:text-gray-200">Drag and drop trade chart</p>
+                        <p className="text-[10px] text-gray-400 mt-0.5">PNG, JPG, WebP up to 10MB</p>
+                      </div>
+                    </>
+                  )}
+                  <input type="file" ref={fileInputRef} className="hidden" onChange={e => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      const reader = new FileReader();
+                      reader.onloadend = () => updateEntry({ proof: reader.result as string });
+                      reader.readAsDataURL(file);
+                    }
+                  }} />
+                </div>
+              </div>
+
             </div>
-          </div>
-        </>
-      )}
-    </div>
+          )}
+        </div>
+
       </div>
     </div>
   );
 }
-
-// Missing icons from lucide-react in the original imports
-const Clock = (props: any) => (
-  <svg
-    {...props}
-    xmlns="http://www.w3.org/2000/svg"
-    width="24"
-    height="24"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <circle cx="12" cy="12" r="10" />
-    <polyline points="12 6 12 12 16 14" />
-  </svg>
-);
-
-const ArrowUpRight = (props: any) => (
-  <svg
-    {...props}
-    xmlns="http://www.w3.org/2000/svg"
-    width="24"
-    height="24"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <line x1="7" y1="17" x2="17" y2="7" />
-    <polyline points="7 7 17 7 17 17" />
-  </svg>
-);
-
-const ArrowDownRight = (props: any) => (
-  <svg
-    {...props}
-    xmlns="http://www.w3.org/2000/svg"
-    width="24"
-    height="24"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <line x1="7" y1="7" x2="17" y2="17" />
-    <polyline points="17 7 17 17 7 17" />
-  </svg>
-);
