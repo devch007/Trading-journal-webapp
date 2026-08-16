@@ -24,6 +24,17 @@ export function AddInvestmentModal({ isOpen, onClose, onAdd }: AddInvestmentModa
   const [thesis, setThesis] = useState('');
   const [isFetchingQuote, setIsFetchingQuote] = useState(false);
 
+  // Close on Escape key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isOpen) {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   // Live lookup from IndianAPI when typing symbol
   const handleSymbolBlur = async () => {
     if (!symbol || symbol.length < 2) return;
@@ -43,6 +54,8 @@ export function AddInvestmentModal({ isOpen, onClose, onAdd }: AddInvestmentModa
       setIsFetchingQuote(false);
     }
   };
+
+  if (!isOpen) return null;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -84,8 +97,14 @@ export function AddInvestmentModal({ isOpen, onClose, onAdd }: AddInvestmentModa
   const labelClass = "text-xs font-semibold text-gray-700 dark:text-gray-300 block mb-1";
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
-      <div className="bg-white dark:bg-[#16181f] border border-gray-200 dark:border-neutral-800 rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden my-8">
+    <div 
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto cursor-pointer"
+      onClick={onClose}
+    >
+      <div 
+        className="bg-white dark:bg-[#16181f] border border-gray-200 dark:border-neutral-800 rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden my-8 cursor-default"
+        onClick={e => e.stopPropagation()}
+      >
         
         {/* Header */}
         <div className="p-6 border-b border-gray-100 dark:border-neutral-800 flex items-center justify-between">
@@ -95,7 +114,14 @@ export function AddInvestmentModal({ isOpen, onClose, onAdd }: AddInvestmentModa
             </h3>
             <p className="text-xs text-gray-400">Track equity, ETF, mutual fund, or commodity</p>
           </div>
-          <button onClick={onClose} className="p-2 text-gray-400 hover:text-gray-900 dark:hover:text-white rounded-xl">
+          <button 
+            type="button" 
+            onClick={(e) => {
+              e.stopPropagation();
+              onClose();
+            }} 
+            className="p-2 text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-neutral-800 rounded-xl transition-colors cursor-pointer"
+          >
             <X className="w-5 h-5" />
           </button>
         </div>
