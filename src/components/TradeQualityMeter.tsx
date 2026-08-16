@@ -1,7 +1,16 @@
 import React from "react";
 import { motion } from "motion/react";
 import { cn } from "../lib/utils";
-import { Info } from "lucide-react";
+import { 
+  TrendingUp, 
+  ShieldCheck, 
+  BookOpen, 
+  Star, 
+  HelpCircle, 
+  CheckCircle2, 
+  AlertCircle,
+  Sparkles
+} from "lucide-react";
 
 interface TradeQualityMeterProps {
   pnl: number;
@@ -26,153 +35,178 @@ export function TradeQualityMeter({
   const profitabilityScore = pnl > 0 ? 30 : pnl === 0 ? 15 : 0;
 
   // 2. Execution (40 pts)
-  // Map checklist items to the 4 categories if possible, or just use a ratio
-  // Categories: Followed Plan, Proper Risk, Good Entry, Patient Exit
-  const executionScore = (checklist.filter(c => c.checked).length / Math.max(checklist.length, 1)) * 40;
+  const checkedCount = (checklist || []).filter(c => c.checked).length;
+  const executionScore = Math.round((checkedCount / Math.max((checklist || []).length, 1)) * 40);
 
   // 3. Journal (20 pts)
-  // Categories: Pre-analysis (proof), Post-review (notes length), Emotions (emotions count), Lessons (notes content)
   let journalScore = 0;
   if (proof) journalScore += 5;
-  if (notes.length > 50) journalScore += 5;
-  if (emotions.length > 0) journalScore += 5;
-  if (notes.toLowerCase().includes("lesson") || notes.length > 150) journalScore += 5;
+  if ((notes || "").length > 20) journalScore += 5;
+  if ((emotions || []).length > 0) journalScore += 5;
+  if ((notes || "").toLowerCase().includes("lesson") || (notes || "").length > 100) journalScore += 5;
 
   // 4. Rating (10 pts)
-  const ratingScore = (rating / 10) * 10;
+  const ratingScore = Math.min(10, Math.max(0, Math.round((rating / 10) * 10)));
 
-  const totalScore = Math.round(profitabilityScore + executionScore + journalScore + ratingScore);
+  const totalScore = Math.min(100, Math.round(profitabilityScore + executionScore + journalScore + ratingScore));
 
-  const getQualityColor = (score: number) => {
-    if (score >= 80) return "text-[#1ED760]";
-    if (score >= 60) return "text-blue-400";
-    if (score >= 40) return "text-amber-400";
-    return "text-[#E5534B]";
+  const getTier = (score: number) => {
+    if (score >= 85) return { label: "A+ EXCELLENT", color: "text-emerald-600 dark:text-emerald-400", bg: "bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800/40", stroke: "#10b981" };
+    if (score >= 70) return { label: "A GOOD", color: "text-teal-600 dark:text-teal-400", bg: "bg-teal-50 dark:bg-teal-950/40 border-teal-200 dark:border-teal-800/40", stroke: "#14b8a6" };
+    if (score >= 50) return { label: "B AVERAGE", color: "text-amber-600 dark:text-amber-400", bg: "bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800/40", stroke: "#f59e0b" };
+    return { label: "C NEEDS WORK", color: "text-rose-600 dark:text-rose-400", bg: "bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-800/40", stroke: "#f43f5e" };
   };
 
-  const getQualityBg = (score: number) => {
-    if (score >= 80) return "bg-[#1ED760]/20 border-[#1ED760]/30";
-    if (score >= 60) return "bg-blue-400/20 border-blue-400/30";
-    if (score >= 40) return "bg-amber-400/20 border-amber-400/30";
-    return "bg-[#E5534B]/20 border-[#E5534B]/30";
-  };
+  const tier = getTier(totalScore);
 
   const categories = [
-    { label: "Profitability", score: profitabilityScore, max: 30, color: "bg-blue-500" },
-    { label: "Execution", score: Math.round(executionScore), max: 40, color: "bg-blue-500" },
-    { label: "Journal", score: journalScore, max: 20, color: "bg-blue-500" },
-    { label: "Rating", score: Math.round(ratingScore), max: 10, color: "bg-blue-500" },
+    { 
+      label: "Profitability", 
+      score: profitabilityScore, 
+      max: 30, 
+      icon: TrendingUp,
+      color: profitabilityScore === 30 ? "text-emerald-500" : profitabilityScore === 15 ? "text-amber-500" : "text-rose-500",
+      barColor: profitabilityScore === 30 ? "bg-emerald-500" : profitabilityScore === 15 ? "bg-amber-500" : "bg-rose-500",
+      desc: pnl > 0 ? "Win Target (+30)" : pnl === 0 ? "Breakeven (+15)" : "Loss (0)"
+    },
+    { 
+      label: "Plan Execution", 
+      score: executionScore, 
+      max: 40, 
+      icon: ShieldCheck,
+      color: executionScore >= 30 ? "text-blue-500" : "text-amber-500",
+      barColor: "bg-blue-500",
+      desc: `${checkedCount}/${(checklist || []).length} Rules Followed`
+    },
+    { 
+      label: "Journal Quality", 
+      score: journalScore, 
+      max: 20, 
+      icon: BookOpen,
+      color: journalScore >= 15 ? "text-indigo-500" : "text-gray-400",
+      barColor: "bg-indigo-500",
+      desc: `${journalScore}/20 Elements Logged`
+    },
+    { 
+      label: "Self Rating", 
+      score: ratingScore, 
+      max: 10, 
+      icon: Star,
+      color: "text-amber-500",
+      barColor: "bg-amber-500",
+      desc: `${rating}/10 Trader Score`
+    },
   ];
 
+  // Circumference for r=46 is 2 * PI * 46 = 289.02
+  const circleCircumference = 289.02;
+  const strokeOffset = circleCircumference - (circleCircumference * totalScore) / 100;
+
   return (
-    <div className={cn("glass-card p-6 rounded-2xl border border-white/5 bg-black/20 backdrop-blur-xl", className)}>
-      <div className="flex items-center gap-2 mb-6">
-        <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center border border-primary/30">
-          <div className="w-2 h-2 rounded-full bg-primary" />
-        </div>
-        <h3 className="type-h2">Trade Quality</h3>
-      </div>
-
-      <div className="flex flex-col md:flex-row gap-8 items-center mb-8">
-        {/* Circular Gauge */}
-        <div className="relative w-32 h-32 flex items-center justify-center">
-          <svg className="w-full h-full -rotate-90">
-            <circle
-              cx="64"
-              cy="64"
-              r="58"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="8"
-              className="text-white/5"
-            />
-            <motion.circle
-              cx="64"
-              cy="64"
-              r="58"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="8"
-              strokeDasharray={364.4}
-              initial={{ strokeDashoffset: 364.4 }}
-              animate={{ strokeDashoffset: 364.4 - (364.4 * totalScore) / 100 }}
-              transition={{ duration: 1.5, ease: "easeOut" }}
-              className={getQualityColor(totalScore)}
-            />
-          </svg>
-          <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className={cn("text-4xl font-bold tnum", getQualityColor(totalScore))}>
-              {totalScore}
-            </span>
+    <div className={cn("p-6 rounded-3xl bg-gray-50/70 dark:bg-neutral-800/40 border border-gray-200/80 dark:border-neutral-800/80 shadow-2xs space-y-6", className)}>
+      
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-600 dark:text-blue-400">
+            <Sparkles className="w-4 h-4" />
+          </div>
+          <div>
+            <h3 className="text-sm font-bold text-gray-900 dark:text-white">
+              Trade Execution Score
+            </h3>
+            <p className="text-[11px] text-gray-400">Objective Process & Discipline Metric</p>
           </div>
         </div>
 
-        {/* Progress Bars */}
-        <div className="flex-1 w-full space-y-4">
-          {categories.map((cat, idx) => (
-            <div key={idx} className="space-y-1.5">
-              <div className="flex justify-between text-[10px] type-label">
-                <span className="text-on-surface-variant">{cat.label}</span>
-                <span className="text-white font-bold">{cat.score}/{cat.max}</span>
-              </div>
-              <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
-                <motion.div 
-                  initial={{ width: 0 }}
-                  animate={{ width: `${(cat.score / cat.max) * 100}%` }}
-                  transition={{ duration: 1, delay: 0.2 * idx }}
-                  className={cn("h-full rounded-full", cat.color)}
-                />
-              </div>
-            </div>
-          ))}
-        </div>
+        <span className={cn("px-3 py-1 rounded-full text-[11px] font-bold border tracking-wide", tier.bg, tier.color)}>
+          {tier.label}
+        </span>
       </div>
 
-      {/* Legend & Info */}
-      <div className="space-y-4 pt-4 border-t border-white/5">
-        <div className="flex items-center gap-2 text-[10px] text-on-surface-variant type-label">
-          <Info className="w-3 h-3" />
-          How is this calculated?
-        </div>
+      {/* Main Dial + Category Breakdown Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
         
-        <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-[10px] leading-relaxed">
-          <div className="flex justify-between">
-            <span className="text-white font-bold">Profitability (30 pts)</span>
-            <span className="text-gray-500">Win: 30 | BE: 15 | Loss: 0</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-white font-bold">Execution (40 pts)</span>
-            <span className="text-gray-500">10 pts per checklist item</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-white font-bold">Journal (20 pts)</span>
-            <span className="text-gray-500">5 pts per journal element</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-white font-bold">Rating (10 pts)</span>
-            <span className="text-gray-500">Your self-rating (1-10)</span>
+        {/* Circular Gauge (4 Cols) */}
+        <div className="md:col-span-4 flex flex-col items-center justify-center">
+          <div className="relative w-36 h-36 flex items-center justify-center">
+            <svg className="w-full h-full -rotate-90">
+              <circle
+                cx="72"
+                cy="72"
+                r="46"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="9"
+                className="text-gray-200 dark:text-neutral-700/60"
+              />
+              <motion.circle
+                cx="72"
+                cy="72"
+                r="46"
+                fill="none"
+                stroke={tier.stroke}
+                strokeWidth="9"
+                strokeLinecap="round"
+                strokeDasharray={circleCircumference}
+                initial={{ strokeDashoffset: circleCircumference }}
+                animate={{ strokeDashoffset: strokeOffset }}
+                transition={{ duration: 1.2, ease: "easeOut" }}
+              />
+            </svg>
+            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+              <span className={cn("text-3xl font-black tabular-nums tracking-tight", tier.color)}>
+                {totalScore}
+              </span>
+              <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">
+                out of 100
+              </span>
+            </div>
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-2 pt-2">
-          {[
-            { label: "80+ Excellent", score: 80 },
-            { label: "60+ Good", score: 60 },
-            { label: "40+ Average", score: 40 },
-            { label: "<40 Needs Work", score: 0 },
-          ].map((level, idx) => (
-            <div 
-              key={idx} 
-              className={cn(
-                "px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-widest border transition-all",
-                getQualityBg(level.score)
-              )}
-            >
-              {level.label}
-            </div>
-          ))}
+        {/* Categories (8 Cols) */}
+        <div className="md:col-span-8 grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {categories.map((cat, idx) => {
+            const Icon = cat.icon;
+            const pct = Math.round((cat.score / cat.max) * 100);
+            return (
+              <div 
+                key={idx}
+                className="p-3 rounded-2xl bg-white dark:bg-[#16181f] border border-gray-100 dark:border-neutral-800 shadow-2xs space-y-2"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5">
+                    <Icon className={cn("w-3.5 h-3.5", cat.color)} />
+                    <span className="text-xs font-semibold text-gray-800 dark:text-gray-200">
+                      {cat.label}
+                    </span>
+                  </div>
+                  <span className="text-xs font-bold tabular-nums text-gray-900 dark:text-white">
+                    {cat.score}<span className="text-gray-400 text-[10px]">/{cat.max}</span>
+                  </span>
+                </div>
+
+                {/* Progress Bar */}
+                <div className="h-1.5 w-full bg-gray-100 dark:bg-neutral-800 rounded-full overflow-hidden">
+                  <motion.div 
+                    initial={{ width: 0 }}
+                    animate={{ width: `${pct}%` }}
+                    transition={{ duration: 0.8, delay: 0.1 * idx }}
+                    className={cn("h-full rounded-full", cat.barColor)}
+                  />
+                </div>
+
+                <p className="text-[10px] text-gray-400 font-medium truncate">
+                  {cat.desc}
+                </p>
+              </div>
+            );
+          })}
         </div>
+
       </div>
+
     </div>
   );
 }

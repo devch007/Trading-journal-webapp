@@ -164,7 +164,6 @@ export function TradingCalendarHeatmap({ trades, selectedAccountId }: TradingCal
               <CalendarIcon className="w-3 h-3" />
               P&L Calendar
             </span>
-            <span className="text-xs text-gray-400 font-medium">Daily Heatmap & Performance</span>
           </div>
           <h3 className="text-lg md:text-xl font-bold text-gray-900 dark:text-white tracking-tight mt-1">
             Trading Activity Heatmap
