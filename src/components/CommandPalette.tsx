@@ -368,33 +368,33 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
       {isOpen && (
         <div className="fixed inset-0 z-[100] flex items-start justify-center pt-[10vh] px-4">
           
-          {/* Frosted Liquid Glass Backdrop */}
+          {/* Deep Frosted Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="absolute inset-0 bg-slate-900/25 dark:bg-black/65 backdrop-blur-xl"
+            className="absolute inset-0 bg-slate-950/50 dark:bg-black/80 backdrop-blur-md"
           />
 
-          {/* Liquid Glassmorphism Shell */}
+          {/* Liquid Glass Shell with Pure Diffusion */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: -20 }}
+            initial={{ opacity: 0, scale: 0.96, y: -16 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: -20 }}
-            transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+            exit={{ opacity: 0, scale: 0.96, y: -16 }}
+            transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
             className="relative w-full max-w-2xl rounded-3xl overflow-hidden flex flex-col z-10
-              bg-white/80 dark:bg-[#11131a]/80 
-              backdrop-blur-3xl backdrop-saturate-200
-              border border-white/80 dark:border-white/[0.12] 
-              shadow-[0_25px_70px_rgba(0,0,0,0.15),0_10px_30px_rgba(0,0,0,0.08),inset_0_1px_1px_rgba(255,255,255,0.95),inset_0_-1px_1px_rgba(0,0,0,0.02)]
-              dark:shadow-[0_30px_90px_rgba(0,0,0,0.8),0_10px_30px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.15)]"
+              bg-white/98 dark:bg-[#12141c]/98 
+              backdrop-blur-3xl
+              border border-gray-200/90 dark:border-white/[0.12] 
+              shadow-[0_30px_90px_rgba(0,0,0,0.22),0_10px_30px_rgba(0,0,0,0.1),inset_0_1px_1px_rgba(255,255,255,1)]
+              dark:shadow-[0_35px_100px_rgba(0,0,0,0.85),0_12px_36px_rgba(0,0,0,0.6),inset_0_1px_1px_rgba(255,255,255,0.15)]"
           >
-            {/* Ambient Liquid Glass Reflection Highlight */}
-            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/80 dark:via-white/30 to-transparent pointer-events-none" />
+            {/* Ambient Liquid Glass Specular Edge */}
+            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white dark:via-white/30 to-transparent pointer-events-none" />
 
             {/* ── Search Input Row ─────────────────────────── */}
-            <div className="flex items-center px-6 py-4.5 border-b border-gray-200/60 dark:border-white/[0.08] gap-3.5 bg-white/40 dark:bg-white/[0.02] backdrop-blur-md">
+            <div className="flex items-center px-6 py-4.5 border-b border-gray-100 dark:border-white/[0.08] gap-3.5 bg-gray-50/50 dark:bg-white/[0.02]">
               <div className="p-2 rounded-xl bg-blue-500/10 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400 flex items-center justify-center shrink-0 shadow-2xs">
                 <Search className="w-4 h-4" />
               </div>
@@ -404,15 +404,15 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
                 placeholder="Search pages, actions, trades, symbols…"
                 value={query}
                 onChange={(e) => { setQuery(e.target.value); setSelectedIndex(0); }}
-                className="flex-1 bg-transparent border-none outline-none text-gray-900 dark:text-white text-base font-normal placeholder:text-gray-400 dark:placeholder:text-gray-500"
+                className="flex-1 bg-transparent border-none outline-none text-gray-900 dark:text-white text-base font-medium placeholder:text-gray-400 dark:placeholder:text-gray-500"
               />
-              <div className="flex items-center gap-1.5 shrink-0">
-                <kbd className="px-2 py-1 rounded-lg bg-black/5 dark:bg-white/10 border border-black/5 dark:border-white/10 text-[10px] font-semibold text-gray-500 dark:text-gray-400 tracking-wider shadow-2xs">
+              <div className="flex items-center gap-2 shrink-0">
+                <kbd className="px-2 py-1 rounded-lg bg-gray-100 dark:bg-white/10 border border-gray-200/80 dark:border-white/10 text-[10px] font-semibold text-gray-500 dark:text-gray-400 tracking-wider shadow-2xs">
                   ESC
                 </kbd>
                 <button 
                   onClick={onClose}
-                  className="p-1 text-gray-400 hover:text-gray-700 dark:hover:text-white rounded-lg hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
+                  className="p-1 text-gray-400 hover:text-gray-700 dark:hover:text-white rounded-lg hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -447,17 +447,17 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
                                 className={cn(
                                   "w-full flex items-center gap-3.5 px-3.5 py-2.5 rounded-2xl transition-all duration-150 text-left group",
                                   isSelected
-                                    ? "bg-white/95 dark:bg-white/[0.12] text-gray-900 dark:text-white shadow-[0_4px_16px_rgba(0,0,0,0.06),inset_0_1px_1px_rgba(255,255,255,0.9)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.15)] border border-gray-200/80 dark:border-white/20"
-                                    : "text-gray-700 dark:text-gray-300 hover:bg-white/50 dark:hover:bg-white/[0.06] border border-transparent"
+                                    ? "bg-blue-50/80 dark:bg-white/[0.12] text-gray-900 dark:text-white shadow-xs border border-blue-200/70 dark:border-white/20"
+                                    : "text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/[0.04] border border-transparent"
                                 )}
                               >
-                                {/* Icon container with liquid frosted look */}
+                                {/* Icon container */}
                                 <div
                                   className={cn(
                                     "p-2 rounded-xl transition-all flex-shrink-0 flex items-center justify-center",
                                     isSelected
-                                      ? "bg-blue-500 text-white shadow-xs scale-105"
-                                      : "bg-black/[0.04] dark:bg-white/[0.06] text-gray-500 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"
+                                      ? "bg-blue-600 text-white shadow-xs"
+                                      : "bg-gray-100 dark:bg-white/[0.06] text-gray-500 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"
                                   )}
                                 >
                                   <Icon className="w-4 h-4" />
@@ -478,7 +478,7 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
                                   <span
                                     className={cn(
                                       "px-2.5 py-0.5 rounded-full text-[10px] font-medium tracking-wide uppercase flex-shrink-0",
-                                      item.badgeColor || "bg-black/5 dark:bg-white/10 text-gray-600 dark:text-gray-300"
+                                      item.badgeColor || "bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-300"
                                     )}
                                   >
                                     {item.badge}
@@ -487,7 +487,7 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
 
                                 {/* Arrow Indicator on Hover/Selection */}
                                 {isSelected && (
-                                  <ArrowRight className="w-4 h-4 text-blue-500 dark:text-blue-400 flex-shrink-0 animate-in fade-in slide-in-from-left-1 duration-150" />
+                                  <ArrowRight className="w-4 h-4 text-blue-600 dark:text-blue-400 flex-shrink-0 animate-in fade-in slide-in-from-left-1 duration-150" />
                                 )}
                               </button>
                             );
@@ -499,7 +499,7 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
                 </div>
               ) : (
                 <div className="py-12 text-center">
-                  <div className="w-12 h-12 rounded-2xl bg-black/[0.03] dark:bg-white/[0.05] border border-black/5 dark:border-white/10 flex items-center justify-center mx-auto mb-3 text-gray-400">
+                  <div className="w-12 h-12 rounded-2xl bg-gray-100 dark:bg-white/[0.05] border border-gray-200 dark:border-white/10 flex items-center justify-center mx-auto mb-3 text-gray-400">
                     <Search className="w-5 h-5" />
                   </div>
                   <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">
@@ -513,20 +513,20 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
             </div>
 
             {/* ── Liquid Glass Footer ──────────────────────── */}
-            <div className="px-6 py-3 border-t border-gray-200/60 dark:border-white/[0.08] bg-white/40 dark:bg-white/[0.02] backdrop-blur-md flex items-center justify-between text-xs text-gray-400 dark:text-gray-500 font-medium">
+            <div className="px-6 py-3 border-t border-gray-100 dark:border-white/[0.08] bg-gray-50/50 dark:bg-white/[0.02] flex items-center justify-between text-xs text-gray-400 dark:text-gray-500 font-medium">
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-1.5">
-                  <kbd className="px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/10 border border-black/5 dark:border-white/10 text-[10px]">↑</kbd>
-                  <kbd className="px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/10 border border-black/5 dark:border-white/10 text-[10px]">↓</kbd>
+                  <kbd className="px-1.5 py-0.5 rounded bg-white dark:bg-white/10 border border-gray-200 dark:border-white/10 text-[10px] text-gray-600 dark:text-gray-300 shadow-2xs">↑</kbd>
+                  <kbd className="px-1.5 py-0.5 rounded bg-white dark:bg-white/10 border border-gray-200 dark:border-white/10 text-[10px] text-gray-600 dark:text-gray-300 shadow-2xs">↓</kbd>
                   <span>Navigate</span>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <kbd className="px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/10 border border-black/5 dark:border-white/10 text-[10px]">↵</kbd>
+                  <kbd className="px-1.5 py-0.5 rounded bg-white dark:bg-white/10 border border-gray-200 dark:border-white/10 text-[10px] text-gray-600 dark:text-gray-300 shadow-2xs">↵</kbd>
                   <span>Select</span>
                 </div>
               </div>
               <div className="flex items-center gap-1.5">
-                <kbd className="px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/10 border border-black/5 dark:border-white/10 text-[10px]">ESC</kbd>
+                <kbd className="px-1.5 py-0.5 rounded bg-white dark:bg-white/10 border border-gray-200 dark:border-white/10 text-[10px] text-gray-600 dark:text-gray-300 shadow-2xs">ESC</kbd>
                 <span>Close</span>
               </div>
             </div>

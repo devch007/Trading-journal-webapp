@@ -282,7 +282,7 @@ export function Trades() {
   };
 
   return (
-    <div className="flex flex-col min-h-full pb-10 relative">
+    <div className="flex flex-col min-h-full pb-10">
       <TopBar 
         title="Trades" 
         subtitle="Market Execution History" 
@@ -290,10 +290,10 @@ export function Trades() {
         actionButton={
           <button 
             onClick={handleOpenNewTrade}
-            className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-background px-6 py-2.5 rounded-xl font-bold text-sm transition-all shadow-[0_0_15px_rgba(59,130,246,0.3)] hover:shadow-[0_0_25px_rgba(59,130,246,0.5)]"
+            className="flex items-center gap-2 bg-[#111827] dark:bg-white text-white dark:text-gray-900 px-5 py-2.5 rounded-2xl font-semibold text-xs transition-all shadow-xs hover:bg-black dark:hover:bg-gray-100 group"
           >
-            <Plus className="w-4 h-4" />
-            ADD TRADE
+            <Plus className="w-4 h-4 group-hover:scale-110 transition-transform" />
+            <span>Log Trade</span>
           </button>
         }
       />
@@ -315,11 +315,11 @@ export function Trades() {
             initial={{ y: 100, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 100, opacity: 0 }}
-            className="fixed bottom-28 left-1/2 -translate-x-1/2 z-[110] flex items-center gap-4 bg-[#1a1a24] border border-primary/30 px-6 py-4 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.5)] backdrop-blur-xl"
+            className="fixed bottom-12 left-1/2 -translate-x-1/2 z-[110] flex items-center gap-4 bg-white/95 dark:bg-[#16181f]/95 border border-gray-200/90 dark:border-neutral-700 px-6 py-3.5 rounded-2xl shadow-xl backdrop-blur-xl"
           >
-            <div className="flex items-center gap-3 pr-4 border-r border-white/10">
-              <span className="text-primary font-bold text-sm">{selectedTradeIds.length}</span>
-              <span className="text-gray-400 text-xs uppercase tracking-wider font-bold">Selected</span>
+            <div className="flex items-center gap-3 pr-4 border-r border-gray-200 dark:border-neutral-700">
+              <span className="text-blue-600 font-bold text-sm tabular-nums">{selectedTradeIds.length}</span>
+              <span className="text-gray-500 text-xs font-semibold uppercase tracking-wider">Selected</span>
             </div>
 
             <div className="flex items-center gap-2">
@@ -330,18 +330,18 @@ export function Trades() {
                     value={newTag}
                     onChange={(e) => setNewTag(e.target.value)}
                     placeholder="NEW TAG..."
-                    className="bg-black/40 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-primary/50 w-32"
+                    className="bg-gray-50 dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-xl px-3 py-1.5 text-xs text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-blue-500 w-32"
                     autoFocus
                   />
                   <button 
                     onClick={handleBulkTag}
-                    className="p-2 bg-primary text-background rounded-lg hover:bg-primary/90 transition-colors"
+                    className="p-2 bg-[#111827] dark:bg-white text-white dark:text-gray-900 rounded-xl hover:bg-black transition-colors"
                   >
                     <Tag className="w-4 h-4" />
                   </button>
                   <button 
                     onClick={() => setIsTagging(false)}
-                    className="p-2 hover:bg-white/5 rounded-lg text-gray-400 transition-colors"
+                    className="p-2 hover:bg-gray-100 dark:hover:bg-neutral-800 rounded-xl text-gray-400 transition-colors"
                   >
                     <X className="w-4 h-4" />
                   </button>
@@ -349,33 +349,33 @@ export function Trades() {
               ) : (
                 <button 
                   onClick={() => setIsTagging(true)}
-                  className="flex items-center gap-2 px-4 py-2 hover:bg-white/5 rounded-xl text-gray-300 transition-colors text-xs font-bold"
+                  className="flex items-center gap-2 px-3.5 py-2 hover:bg-gray-100 dark:hover:bg-neutral-800 rounded-xl text-gray-700 dark:text-gray-300 transition-colors text-xs font-semibold"
                 >
-                  <Tag className="w-4 h-4 text-primary" />
-                  TAG
+                  <Tag className="w-4 h-4 text-blue-500" />
+                  <span>Tag</span>
                 </button>
               )}
 
               {isCommissioning ? (
-                <div className="flex items-center gap-2 ml-2 border-l border-white/10 pl-2">
+                <div className="flex items-center gap-2 ml-2 border-l border-gray-200 dark:border-neutral-700 pl-2">
                   <input 
                     type="number" 
                     step="0.01"
                     value={bulkCommission}
                     onChange={(e) => setBulkCommission(e.target.value)}
                     placeholder="COMM (-$)..."
-                    className="bg-black/40 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-primary/50 w-28 tnum"
+                    className="bg-gray-50 dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-xl px-3 py-1.5 text-xs text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-blue-500 w-28 tabular-nums"
                     autoFocus
                   />
                   <button 
                     onClick={handleBulkCommission}
-                    className="p-2 bg-primary text-background rounded-lg hover:bg-primary/90 transition-colors uppercase text-[10px] font-bold"
+                    className="p-2 bg-[#111827] dark:bg-white text-white dark:text-gray-900 rounded-xl hover:bg-black transition-colors text-[10px] font-bold"
                   >
                     Set
                   </button>
                   <button 
                     onClick={() => setIsCommissioning(false)}
-                    className="p-2 hover:bg-white/5 rounded-lg text-gray-400 transition-colors"
+                    className="p-2 hover:bg-gray-100 dark:hover:bg-neutral-800 rounded-xl text-gray-400 transition-colors"
                   >
                     <X className="w-4 h-4" />
                   </button>
@@ -383,34 +383,34 @@ export function Trades() {
               ) : (
                 <button 
                   onClick={() => setIsCommissioning(true)}
-                  className="flex items-center gap-2 px-4 py-2 hover:bg-white/5 rounded-xl text-gray-300 transition-colors text-xs font-bold"
+                  className="flex items-center gap-2 px-3.5 py-2 hover:bg-gray-100 dark:hover:bg-neutral-800 rounded-xl text-gray-700 dark:text-gray-300 transition-colors text-xs font-semibold"
                 >
-                  <span className="text-primary font-bold">$</span>
-                  COMMISSION
+                  <span className="text-blue-500 font-bold">$</span>
+                  <span>Commission</span>
                 </button>
               )}
 
               {selectedTradeIds.length > 1 && (
                 <button 
                   onClick={handleBulkClub}
-                  className="flex items-center gap-2 px-4 py-2 hover:bg-[#E2A233]/10 rounded-xl text-[#E2A233] transition-colors text-xs font-bold"
+                  className="flex items-center gap-2 px-3.5 py-2 hover:bg-amber-50 dark:hover:bg-amber-950/40 rounded-xl text-amber-600 dark:text-amber-400 transition-colors text-xs font-semibold"
                 >
                   <Layers className="w-4 h-4" />
-                  CLUB
+                  <span>Club</span>
                 </button>
               )}
 
               <button 
                 onClick={handleBulkDelete}
-                className="flex items-center gap-2 px-4 py-2 hover:bg-[#E5534B]/10 rounded-xl text-[#E5534B] transition-colors text-xs font-bold"
+                className="flex items-center gap-2 px-3.5 py-2 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-xl text-rose-600 dark:text-rose-400 transition-colors text-xs font-semibold"
               >
                 <Trash2 className="w-4 h-4" />
-                DELETE
+                <span>Delete</span>
               </button>
 
               <button 
                 onClick={() => setSelectedTradeIds([])}
-                className="p-2 hover:bg-white/5 rounded-xl text-gray-500 transition-colors"
+                className="p-2 hover:bg-gray-100 dark:hover:bg-neutral-800 rounded-xl text-gray-400 transition-colors"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -419,194 +419,177 @@ export function Trades() {
         )}
       </AnimatePresence>
       
-      <div className="px-4 md:px-8 flex flex-col gap-6">
+      <div className="p-6 md:p-8 space-y-7 max-w-[1600px] w-full mx-auto">
         
-        <div className="glass-card rounded-2xl p-6 flex flex-col gap-6">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center gap-3 flex-wrap">
+        {/* Main Trades Table Card */}
+        <div className="bg-white dark:bg-[#16181f] rounded-3xl p-6 md:p-7 border border-gray-200/80 dark:border-neutral-800/80 shadow-2xs flex flex-col gap-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                Executed Trades Log
+              </h2>
+              <p className="text-xs font-normal text-gray-400 mt-0.5">
+                Filter and inspect closed & open trades
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2.5 flex-wrap">
               {/* Symbol Filter */}
-              <div className="relative group">
+              <div className="relative">
                 <select
                   value={filterSymbol}
                   onChange={(e) => setFilterSymbol(e.target.value)}
-                  className="appearance-none bg-white/5 group-hover:bg-white/10 border border-white/10 rounded-full pl-[4.5rem] pr-8 py-2 type-micro text-[#A7A7A7] cursor-pointer transition-colors focus:outline-none focus:border-primary/50"
+                  className="appearance-none bg-gray-50 dark:bg-neutral-800/60 hover:bg-gray-100 dark:hover:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-xl pl-3 pr-8 py-2 text-xs font-medium text-gray-700 dark:text-gray-300 cursor-pointer transition-colors focus:outline-none shadow-2xs"
                 >
-                  <option value="ALL" className="bg-[#1a1a24]">All Pairs</option>
+                  <option value="ALL">All Pairs</option>
                   {uniqueSymbols.map(sym => (
-                    <option key={sym} value={sym} className="bg-[#1a1a24]">{sym}</option>
+                    <option key={sym} value={sym}>{sym}</option>
                   ))}
                 </select>
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none type-label text-[10px]">Symbol</span>
-                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-400 pointer-events-none" />
+                <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
               </div>
 
               {/* Action Filter */}
-              <div className="relative group">
+              <div className="relative">
                 <select
                   value={filterAction}
                   onChange={(e) => setFilterAction(e.target.value)}
-                  className="appearance-none bg-white/5 group-hover:bg-white/10 border border-white/10 rounded-full pl-[3.5rem] pr-8 py-2 type-micro text-[#A7A7A7] cursor-pointer transition-colors focus:outline-none focus:border-primary/50"
+                  className="appearance-none bg-gray-50 dark:bg-neutral-800/60 hover:bg-gray-100 dark:hover:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-xl pl-3 pr-8 py-2 text-xs font-medium text-gray-700 dark:text-gray-300 cursor-pointer transition-colors focus:outline-none shadow-2xs"
                 >
-                  <option value="ALL" className="bg-[#1a1a24]">Any</option>
-                  <option value="BUY" className="bg-[#1a1a24]">Buy</option>
-                  <option value="SELL" className="bg-[#1a1a24]">Sell</option>
+                  <option value="ALL">Any Action</option>
+                  <option value="BUY">Buy</option>
+                  <option value="SELL">Sell</option>
                 </select>
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none type-label text-[10px]">Type</span>
-                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-400 pointer-events-none" />
-              </div>
-
-              {/* Trade Type Filter */}
-              <div className="relative group">
-                <select
-                  value={filterTradeType}
-                  onChange={(e) => setFilterTradeType(e.target.value)}
-                  className="appearance-none bg-white/5 group-hover:bg-white/10 border border-white/10 rounded-full pl-[5.5rem] pr-8 py-2 type-micro text-[#A7A7A7] cursor-pointer transition-colors focus:outline-none focus:border-primary/50"
-                >
-                  <option value="ALL" className="bg-[#1a1a24]">All Types</option>
-                  {uniqueTags.map(tag => (
-                    <option key={tag} value={tag} className="bg-[#1a1a24]">{tag}</option>
-                  ))}
-                </select>
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none type-label text-[10px]">Trade Type</span>
-                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-400 pointer-events-none" />
+                <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
               </div>
 
               {/* Strategy Filter */}
-              <div className="relative group">
+              <div className="relative">
                 <select
                   value={filterStrategy}
                   onChange={(e) => setFilterStrategy(e.target.value)}
-                  className="appearance-none bg-white/5 group-hover:bg-white/10 border border-white/10 rounded-full pl-[5rem] pr-8 py-2 type-micro text-[#A7A7A7] cursor-pointer transition-colors focus:outline-none focus:border-primary/50"
+                  className="appearance-none bg-gray-50 dark:bg-neutral-800/60 hover:bg-gray-100 dark:hover:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-xl pl-3 pr-8 py-2 text-xs font-medium text-gray-700 dark:text-gray-300 cursor-pointer transition-colors focus:outline-none shadow-2xs"
                 >
-                  <option value="ALL" className="bg-[#1a1a24]">All Strategies</option>
+                  <option value="ALL">All Strategies</option>
                   {uniqueStrategies.map(strategy => (
-                    <option key={strategy} value={strategy} className="bg-[#1a1a24]">{strategy}</option>
+                    <option key={strategy} value={strategy}>{strategy}</option>
                   ))}
                 </select>
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none type-label text-[10px]">Strategy</span>
-                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-400 pointer-events-none" />
+                <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
               </div>
 
               {/* Date Range Filter */}
-              <div className="relative group">
+              <div className="relative">
                 <select
                   value={filterRange}
                   onChange={(e) => setFilterRange(e.target.value)}
-                  className="appearance-none bg-white/5 group-hover:bg-white/10 border border-white/10 rounded-full pl-[4.5rem] pr-8 py-2 type-micro text-[#A7A7A7] cursor-pointer transition-colors focus:outline-none focus:border-primary/50"
+                  className="appearance-none bg-gray-50 dark:bg-neutral-800/60 hover:bg-gray-100 dark:hover:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-xl pl-3 pr-8 py-2 text-xs font-medium text-gray-700 dark:text-gray-300 cursor-pointer transition-colors focus:outline-none shadow-2xs"
                 >
-                  <option value="7D" className="bg-[#1a1a24]">Last 7 Days</option>
-                  <option value="30D" className="bg-[#1a1a24]">Last 30 Days</option>
-                  <option value="90D" className="bg-[#1a1a24]">Last 90 Days</option>
-                  <option value="ALL" className="bg-[#1a1a24]">All Time</option>
+                  <option value="7D">Last 7 Days</option>
+                  <option value="30D">Last 30 Days</option>
+                  <option value="90D">Last 90 Days</option>
+                  <option value="ALL">All Time</option>
                 </select>
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none type-label text-[10px]">Range</span>
-                <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-400 pointer-events-none" />
+                <Calendar className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
               </div>
             </div>
           </div>
           
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
+            <table className="w-full text-left">
               <thead>
-                <tr className="type-label text-[10px] border-b border-white/5">
-                  <th className="pb-4 pl-4 w-10">
+                <tr className="text-[11px] font-semibold text-gray-400 dark:text-gray-500 border-b border-gray-100 dark:border-neutral-800">
+                  <th className="pb-3 pl-2 w-10">
                     <button 
                       onClick={toggleSelectAll}
-                      className="p-1 hover:bg-white/5 rounded transition-colors"
+                      className="p-1 hover:bg-gray-100 dark:hover:bg-neutral-800 rounded-lg transition-colors"
                     >
                       {selectedTradeIds.length === (trades || []).length && (trades || []).length > 0 ? (
-                        <CheckSquare className="w-4 h-4 text-primary" />
+                        <CheckSquare className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                       ) : (
-                        <Square className="w-4 h-4 text-[#6A6A6A]" />
+                        <Square className="w-4 h-4 text-gray-400" />
                       )}
                     </button>
                   </th>
-                  <th className="pb-4">#</th>
-                  <th className="pb-4">Date/Time</th>
-                  <th className="pb-4">Symbol</th>
-                  <th className="pb-4">Type</th>
-                  <th className="pb-4">Entry</th>
-                  <th className="pb-4">Exit</th>
-                  <th className="pb-4">Lots</th>
-                  <th className="pb-4">Session</th>
-                  <th className="pb-4">Conf.</th>
-                  <th className="pb-4">P&L</th>
-                  <th className="pb-4">Duration</th>
-                  <th className="pb-4 pr-4">Tag</th>
+                  <th className="pb-3 font-semibold">#</th>
+                  <th className="pb-3 font-semibold">Date & Time</th>
+                  <th className="pb-3 font-semibold">Symbol</th>
+                  <th className="pb-3 font-semibold">Side</th>
+                  <th className="pb-3 font-semibold">Entry</th>
+                  <th className="pb-3 font-semibold">Exit</th>
+                  <th className="pb-3 font-semibold">Volume</th>
+                  <th className="pb-3 font-semibold">Session</th>
+                  <th className="pb-3 font-semibold">Conf.</th>
+                  <th className="pb-3 font-semibold">Result P&L</th>
+                  <th className="pb-3 font-semibold pr-2">Strategy / Tags</th>
                 </tr>
               </thead>
-              <tbody className="text-sm">
+              <tbody className="divide-y divide-gray-100 dark:divide-neutral-800/40 text-xs">
                 {loading ? (
                   <tr>
-                    <td colSpan={11} className="py-8 text-center text-gray-500">Loading trades...</td>
+                    <td colSpan={12} className="py-12 text-center text-gray-400">Loading trades...</td>
                   </tr>
                 ) : (trades || []).length === 0 ? (
                   <tr>
-                    <td colSpan={11} className="py-8 text-center text-gray-500">No trades found for this account.</td>
+                    <td colSpan={12} className="py-12 text-center text-gray-400">No trades found matching current filter.</td>
                   </tr>
                 ) : (
                   (trades || []).map((trade, index) => {
                     const isSelected = selectedTradeIds.includes(trade.id);
+                    const isPos = trade.isPositive || Number(trade.pnl) >= 0;
                     return (
                       <tr 
                         key={trade.id} 
-                        className={`border-b border-white/5 hover:bg-white/[0.02] transition-colors group cursor-pointer ${isSelected ? 'bg-primary/5' : ''}`}
+                        className={`hover:bg-gray-50/70 dark:hover:bg-neutral-800/40 transition-colors group cursor-pointer ${isSelected ? 'bg-blue-50/60 dark:bg-blue-950/20' : ''}`}
                         onClick={() => handleOpenEditTrade(trade)}
                       >
-                        <td className="py-4 pl-4" onClick={(e) => toggleSelectTrade(trade.id, e)}>
-                          <button 
-                            className="p-1 hover:bg-white/5 rounded transition-colors"
-                          >
+                        <td className="py-3.5 pl-2" onClick={(e) => toggleSelectTrade(trade.id, e)}>
+                          <button className="p-1 hover:bg-gray-200 dark:hover:bg-neutral-700 rounded-lg transition-colors">
                             {isSelected ? (
-                              <CheckSquare className="w-4 h-4 text-primary" />
+                              <CheckSquare className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                             ) : (
-                              <Square className="w-4 h-4 text-gray-600" />
+                              <Square className="w-4 h-4 text-gray-300 dark:text-gray-600" />
                             )}
                           </button>
                         </td>
-                        <td className="py-4 text-[#6A6A6A] text-[12px] tnum">{trades.length - index}</td>
-                        <td className="py-4 text-[#A7A7A7] text-[12px] tnum">
-                          {getTradeDate(trade.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' })}
-                          <span className="opacity-40 ml-1">
-                            {getTradeDate(trade.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                          </span>
+                        <td className="py-3.5 text-gray-400 tabular-nums">{trades.length - index}</td>
+                        <td className="py-3.5 text-gray-500 dark:text-gray-400 font-normal tabular-nums">
+                          {getTradeDate(trade.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                         </td>
-                        <td className="py-4 type-h2 text-[13px] text-white">{trade.symbol}</td>
-                        <td className="py-4">
-                          <span className={`px-2 py-0.5 rounded type-micro text-[10px] ${trade.action === 'BUY' ? 'bg-[#1ED760]/20 text-[#1ED760]' : 'bg-[#E5534B]/20 text-[#E5534B]'}`}>
+                        <td className="py-3.5 font-semibold text-gray-900 dark:text-white">{trade.symbol}</td>
+                        <td className="py-3.5">
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${trade.action === 'BUY' ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400' : 'bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400'}`}>
                             {trade.action}
                           </span>
                         </td>
-                        <td className="py-4 text-[#A7A7A7] tnum text-[12px]">{trade.entry || "0.0000"}</td>
-                        <td className="py-4 text-[#A7A7A7] tnum text-[12px]">{trade.exit || "0.0000"}</td>
-                        <td className="py-4 text-[#A7A7A7] tnum text-[12px]">{trade.size.replace(' Lot', '')}</td>
-                        <td className="py-4 type-micro text-[10px] text-[#6A6A6A]">{trade.session || "Else"}</td>
-                        <td className="py-4">
-                          <span className={`px-1.5 py-0.5 rounded type-micro text-[9px] ${
-                            trade.confidence === 'High' ? 'bg-[#1ED760]/10 text-[#1ED760] border border-[#1ED760]/20' : 
-                            trade.confidence === 'Medium' ? 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20' : 
-                            'bg-[#E5534B]/10 text-[#E5534B] border border-[#E5534B]/20'
+                        <td className="py-3.5 text-gray-600 dark:text-gray-300 tabular-nums">{trade.entry || "—"}</td>
+                        <td className="py-3.5 text-gray-600 dark:text-gray-300 tabular-nums">{trade.exit || "—"}</td>
+                        <td className="py-3.5 text-gray-600 dark:text-gray-300 tabular-nums">{trade.size}</td>
+                        <td className="py-3.5 text-gray-400 font-medium text-[11px]">{trade.session || "Else"}</td>
+                        <td className="py-3.5">
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${
+                            trade.confidence === 'High' ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40' : 
+                            trade.confidence === 'Medium' ? 'bg-amber-50 text-amber-600 dark:bg-amber-950/40' : 
+                            'bg-rose-50 text-rose-600 dark:bg-rose-950/40'
                           }`}>
                             {trade.confidence || "High"}
                           </span>
                         </td>
-                        <td className={`py-4 tnum font-bold text-[13px] ${trade.isPositive ? 'text-[#1ED760]' : 'text-[#E5534B]'}`}>
+                        <td className={`py-3.5 font-bold tabular-nums ${isPos ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-500'}`}>
                           {formatCurrency(trade.pnl)}
                         </td>
-                        <td className="py-4 text-[#6A6A6A] text-[12px]">{trade.duration || "1h 30m"}</td>
-                        <td className="py-4 pr-4">
+                        <td className="py-3.5 pr-2">
                           <div className="flex flex-wrap gap-1">
-                            {trade.tags && Array.isArray(trade.tags) && trade.tags.length > 0 ? (
-                              trade.tags.map((tag: string) => (
-                                <span key={tag} className="px-2 py-0.5 rounded border border-white/10 type-micro text-[10px] text-[#6A6A6A]">
-                                  {tag}
-                                </span>
-                              ))
-                            ) : (
-                              <span className="px-2 py-0.5 rounded border border-white/10 type-micro text-[10px] text-[#6A6A6A]">
-                                {trade.tag || "BREAKOUT"}
+                            {trade.strategy && (
+                              <span className="px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 text-[10px] font-semibold">
+                                {trade.strategy}
                               </span>
                             )}
+                            {trade.tags && Array.isArray(trade.tags) && trade.tags.map((tag: string) => (
+                              <span key={tag} className="px-2 py-0.5 rounded-md bg-gray-100 dark:bg-neutral-800 text-gray-600 dark:text-gray-400 text-[10px] font-normal">
+                                {tag}
+                              </span>
+                            ))}
                           </div>
                         </td>
                       </tr>
@@ -616,47 +599,39 @@ export function Trades() {
               </tbody>
             </table>
           </div>
-          
-          {/* Pagination Dots */}
-          <div className="flex justify-center gap-2 mt-2">
-            <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>
-            <div className="w-1.5 h-1.5 rounded-full bg-white/20"></div>
-            <div className="w-1.5 h-1.5 rounded-full bg-white/20"></div>
-            <div className="w-1.5 h-1.5 rounded-full bg-white/20"></div>
-            <div className="w-1.5 h-1.5 rounded-full bg-white/20"></div>
-          </div>
         </div>
 
-        {/* Summary Section */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="glass-card p-5 rounded-2xl flex flex-col justify-between">
-            <p className="type-label mb-2">Total P&L (Monthly)</p>
-            <h2 className={`type-metric ${stats.totalPnl >= 0 ? 'text-[#1ED760]' : 'text-[#E5534B]'}`}>
+        {/* Summary Metric Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="bg-white dark:bg-[#16181f] p-5 rounded-3xl border border-gray-200/80 dark:border-neutral-800/80 shadow-2xs flex flex-col justify-between gap-2">
+            <p className="text-xs font-medium text-gray-400">Total Net P&L</p>
+            <h2 className={`text-2xl font-bold tabular-nums ${stats.totalPnl >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-500'}`}>
               {formatCurrency(stats.totalPnl)}
             </h2>
           </div>
           
-          <div className="glass-card p-5 rounded-2xl flex flex-col justify-between">
-            <p className="type-label mb-2">Win Rate</p>
-            <h2 className="type-metric text-[#1ED760]">
+          <div className="bg-white dark:bg-[#16181f] p-5 rounded-3xl border border-gray-200/80 dark:border-neutral-800/80 shadow-2xs flex flex-col justify-between gap-2">
+            <p className="text-xs font-medium text-gray-400">Win Rate</p>
+            <h2 className="text-2xl font-bold tabular-nums text-gray-900 dark:text-white">
               {stats.winRate.toFixed(1)}%
             </h2>
           </div>
 
-          <div className="glass-card p-5 rounded-2xl flex flex-col justify-between">
-            <p className="type-label mb-2">Avg. Duration</p>
-            <h2 className="type-metric text-white">
+          <div className="bg-white dark:bg-[#16181f] p-5 rounded-3xl border border-gray-200/80 dark:border-neutral-800/80 shadow-2xs flex flex-col justify-between gap-2">
+            <p className="text-xs font-medium text-gray-400">Avg. Trade Duration</p>
+            <h2 className="text-2xl font-bold tabular-nums text-gray-900 dark:text-white">
               {stats.avgDuration}
             </h2>
           </div>
 
-          <div className="glass-card p-5 rounded-2xl flex flex-col justify-between">
-            <p className="type-label mb-2">Total Trades</p>
-            <h2 className="type-metric text-[#1ED760]">
+          <div className="bg-white dark:bg-[#16181f] p-5 rounded-3xl border border-gray-200/80 dark:border-neutral-800/80 shadow-2xs flex flex-col justify-between gap-2">
+            <p className="text-xs font-medium text-gray-400">Total Executed Trades</p>
+            <h2 className="text-2xl font-bold tabular-nums text-gray-900 dark:text-white">
               {stats.totalTrades}
             </h2>
           </div>
         </div>
+
       </div>
     </div>
   );

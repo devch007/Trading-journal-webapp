@@ -105,6 +105,15 @@ export function Accounts() {
         title="Accounts Management" 
         subtitle="Monitor and manage your prop firm evaluations and live accounts." 
         showSearch={true} 
+        actionButton={
+          <button 
+            onClick={() => { setEditingAccount(null); setIsModalOpen(true); }}
+            className="flex items-center gap-2 bg-[#111827] dark:bg-white text-white dark:text-gray-900 px-5 py-2.5 rounded-2xl font-semibold text-xs transition-all shadow-xs hover:bg-black dark:hover:bg-gray-100 group"
+          >
+            <Plus className="w-4 h-4 group-hover:scale-110 transition-transform" />
+            <span>Add Account</span>
+          </button>
+        }
       />
       
       <AccountModal 
@@ -114,37 +123,35 @@ export function Accounts() {
         initialData={editingAccount}
       />
 
-      <div className="px-4 md:px-8 flex flex-col gap-8">
+      <div className="p-6 md:p-8 space-y-7 max-w-[1600px] w-full mx-auto">
         {/* Active Accounts Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           
           {activeAccounts.map((account) => (
             <div 
               key={account.id} 
-              className="glass-card p-6 rounded-2xl flex flex-col relative overflow-hidden group cursor-pointer hover:bg-white/[0.02] transition-colors"
+              className="bg-white dark:bg-[#16181f] p-6 rounded-3xl border border-gray-200/80 dark:border-neutral-800/80 shadow-2xs flex flex-col justify-between relative overflow-hidden group cursor-pointer hover:shadow-md transition-all duration-300 min-h-[260px]"
               onClick={() => handleViewTrades(account.id)}
             >
-              <div className="absolute right-0 top-0 opacity-5 pointer-events-none">
-                <Building2 className="w-32 h-32 -mt-4 -mr-4" />
-              </div>
-              
-              <div className="flex justify-between items-start mb-6 relative z-10">
+              <div className="flex justify-between items-start mb-5 relative z-10">
                 <div>
-                  <p className="type-micro text-primary mb-1">{account.type}</p>
-                  <h2 className="text-white type-h1">{account.firm}</h2>
-                  <h3 className="text-white type-h2">{account.name}</h3>
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 text-[10px] font-semibold mb-2">
+                    {account.type}
+                  </span>
+                  <h2 className="text-xl font-bold text-gray-900 dark:text-white tracking-tight">{account.firm}</h2>
+                  <h3 className="text-xs font-medium text-gray-500 dark:text-gray-400 mt-0.5">{account.name}</h3>
                 </div>
                 <div className="flex flex-col items-end gap-2">
-                  <div className="bg-white/10 px-3 py-1 rounded-full border border-white/5">
-                    <span className="text-white/70 type-micro">{account.badge}</span>
+                  <div className="bg-gray-100 dark:bg-neutral-800 px-3 py-1 rounded-full border border-gray-200/80 dark:border-neutral-700">
+                    <span className="text-gray-700 dark:text-gray-300 text-[11px] font-medium">{account.badge}</span>
                   </div>
-                  <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button 
                       onClick={(e) => {
                         e.stopPropagation();
                         handleArchive(account.id, 'SUCCESS');
                       }} 
-                      className="p-1.5 bg-[#1ED760]/10 hover:bg-[#1ED760]/20 text-[#1ED760] rounded-lg transition-colors"
+                      className="p-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-600 rounded-lg transition-colors"
                       title="Mark as Success"
                     >
                       <CheckCircle2 className="w-3.5 h-3.5" />
@@ -154,7 +161,7 @@ export function Accounts() {
                         e.stopPropagation();
                         handleArchive(account.id, 'FAILED');
                       }} 
-                      className="p-1.5 bg-[#E5534B]/10 hover:bg-[#E5534B]/20 text-[#E5534B] rounded-lg transition-colors"
+                      className="p-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg transition-colors"
                       title="Mark as Failed"
                     >
                       <XCircle className="w-3.5 h-3.5" />
@@ -164,7 +171,7 @@ export function Accounts() {
                         e.stopPropagation();
                         handleViewTrades(account.id);
                       }} 
-                      className="p-1.5 bg-white/10 hover:bg-white/20 rounded-lg text-white transition-colors"
+                      className="p-1.5 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-700 dark:text-gray-300 transition-colors"
                       title="View Trades"
                     >
                       <Eye className="w-3.5 h-3.5" />
@@ -174,7 +181,7 @@ export function Accounts() {
                         e.stopPropagation();
                         openEditModal(account);
                       }} 
-                      className="p-1.5 bg-white/10 hover:bg-white/20 rounded-lg text-white transition-colors" 
+                      className="p-1.5 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-700 dark:text-gray-300 transition-colors" 
                       title="Edit"
                     >
                       <Edit2 className="w-3.5 h-3.5" />
@@ -184,7 +191,7 @@ export function Accounts() {
                         e.stopPropagation();
                         handleDelete(account.id);
                       }} 
-                      className="p-1.5 bg-[#E5534B]/10 hover:bg-[#E5534B]/20 text-[#E5534B] rounded-lg transition-colors" 
+                      className="p-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg transition-colors" 
                       title="Delete"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
@@ -193,29 +200,29 @@ export function Accounts() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4 mb-8 relative z-10">
+              <div className="grid grid-cols-2 gap-4 my-auto pt-2 border-t border-gray-100 dark:border-neutral-800">
                 <div>
-                  <p className="type-label mb-1">Initial Capital</p>
-                  <p className="text-white tnum font-bold text-lg">{formatCurrency(account.initialCapital)}</p>
+                  <p className="text-[11px] font-medium text-gray-400">Initial Capital</p>
+                  <p className="text-gray-900 dark:text-white tabular-nums font-bold text-base mt-0.5">{formatCurrency(account.initialCapital)}</p>
                 </div>
                 <div>
-                  <p className="type-label mb-1">Current Equity</p>
-                  <p className={`tnum font-bold text-lg ${account.isPositive ? 'text-[#1ED760]' : 'text-[#E5534B]'}`}>
+                  <p className="text-[11px] font-medium text-gray-400">Current Equity</p>
+                  <p className={`tabular-nums font-bold text-base mt-0.5 ${account.isPositive ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-500'}`}>
                     {formatCurrency(account.currentEquity)}
                   </p>
                 </div>
               </div>
 
-              <div className="mt-auto relative z-10">
-                <div className="flex justify-between text-xs mb-2">
-                  <span className="type-label text-[11px]">Current Drawdown</span>
-                  <span className="text-white tnum text-[12px]">
-                    <span className={account.isPositive ? 'text-[#1ED760]' : 'text-[#E5534B]'}>{account.currentDrawdown}%</span> / {account.maxDrawdown}%
+              <div className="mt-4 pt-3 border-t border-gray-100 dark:border-neutral-800">
+                <div className="flex justify-between text-xs mb-1.5 font-medium">
+                  <span className="text-gray-400 text-[11px]">Current Drawdown</span>
+                  <span className="text-gray-800 dark:text-gray-200 tabular-nums text-[11px]">
+                    <span className={account.isPositive ? 'text-emerald-600' : 'text-rose-500 font-bold'}>{account.currentDrawdown}%</span> / {account.maxDrawdown}%
                   </span>
                 </div>
-                <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
+                <div className="h-2 w-full bg-gray-100 dark:bg-neutral-800 rounded-full overflow-hidden">
                   <div 
-                    className={`h-full rounded-full ${account.isPositive ? 'bg-[#1ED760]' : 'bg-[#E5534B]'}`} 
+                    className={`h-full rounded-full ${account.isPositive ? 'bg-emerald-500' : 'bg-rose-500'}`} 
                     style={{ width: `${Math.min((parseFloat(account.currentDrawdown) / account.maxDrawdown) * 100, 100)}%` }}
                   />
                 </div>
@@ -226,87 +233,79 @@ export function Accounts() {
           {/* Add New Account Card */}
           <button 
             onClick={() => { setEditingAccount(null); setIsModalOpen(true); }}
-            className="glass-card p-6 rounded-2xl flex flex-col items-center justify-center gap-4 border-dashed border-2 border-white/10 hover:border-primary/50 hover:bg-primary/5 transition-all group min-h-[280px]"
+            className="bg-white dark:bg-[#16181f] p-6 rounded-3xl border-2 border-dashed border-gray-200 dark:border-neutral-700/80 hover:border-blue-500/60 hover:bg-blue-50/10 dark:hover:bg-blue-950/10 transition-all group min-h-[260px] flex flex-col items-center justify-center gap-3.5 cursor-pointer shadow-2xs"
           >
-            <div className="w-14 h-14 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-              <Plus className="w-6 h-6 text-white/50 group-hover:text-primary transition-colors" />
+            <div className="w-12 h-12 rounded-2xl bg-gray-100 dark:bg-neutral-800 flex items-center justify-center group-hover:bg-blue-500 group-hover:text-white transition-all shadow-2xs">
+              <Plus className="w-5 h-5 text-gray-500 dark:text-gray-400 group-hover:text-white transition-colors" />
             </div>
             <div className="text-center">
-              <h3 className="text-white type-h2 text-lg mb-1">Add New Account</h3>
-              <p className="type-body">Sync your broker or prop firm</p>
+              <h3 className="text-base font-bold text-gray-900 dark:text-white">Add New Account</h3>
+              <p className="text-xs font-normal text-gray-400 mt-0.5">Sync your broker or prop firm challenge</p>
             </div>
           </button>
         </div>
 
         {/* Account History */}
-        <div className="glass-card rounded-2xl flex flex-col overflow-hidden">
-          <div className="p-6 flex justify-between items-center border-b border-white/5">
-            <h3 className="type-h1 text-white">Account History</h3>
-            <button className="type-micro text-primary hover:text-primary/80 transition-colors">View Full Archive</button>
+        <div className="bg-white dark:bg-[#16181f] rounded-3xl border border-gray-200/80 dark:border-neutral-800/80 shadow-2xs overflow-hidden">
+          <div className="p-6 md:p-7 flex justify-between items-center border-b border-gray-100 dark:border-neutral-800">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Account History</h3>
+              <p className="text-xs text-gray-400 mt-0.5">Archived evaluations and completed challenges</p>
+            </div>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
+            <table className="w-full text-left">
               <thead>
-                <tr className="type-label text-[11px] bg-white/[0.02]">
-                  <th className="px-6 py-4">Account Name</th>
-                  <th className="px-6 py-4">Firm</th>
-                  <th className="px-6 py-4">Starting Balance</th>
-                  <th className="px-6 py-4">Result</th>
-                  <th className="px-6 py-4">Total Profit</th>
-                  <th className="px-6 py-4">Date Closed</th>
+                <tr className="text-[11px] font-semibold text-gray-400 dark:text-gray-500 border-b border-gray-100 dark:border-neutral-800 bg-gray-50/50 dark:bg-neutral-800/30">
+                  <th className="px-6 py-3.5">Account Name</th>
+                  <th className="px-6 py-3.5">Firm</th>
+                  <th className="px-6 py-3.5">Starting Balance</th>
+                  <th className="px-6 py-3.5">Result</th>
+                  <th className="px-6 py-3.5">Total Profit</th>
+                  <th className="px-6 py-3.5">Date Closed</th>
                 </tr>
               </thead>
-              <tbody className="text-sm">
+              <tbody className="divide-y divide-gray-100 dark:divide-neutral-800/40 text-xs">
                 {accountHistory.length > 0 ? accountHistory.map((history) => (
                   <tr 
                     key={history.id} 
-                    className="border-b border-white/5 hover:bg-white/[0.02] transition-colors group cursor-pointer"
+                    className="hover:bg-gray-50/70 dark:hover:bg-neutral-800/40 transition-colors group cursor-pointer"
                     onClick={() => handleViewTrades(history.id)}
                   >
-                    <td className="px-6 py-5">
+                    <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
                         {history.status === 'SUCCESS' ? (
-                          <CheckCircle2 className="w-4 h-4 text-primary" />
+                          <CheckCircle2 className="w-4 h-4 text-emerald-500" />
                         ) : (
-                          <XCircle className="w-4 h-4 text-[#E5534B]" />
+                          <XCircle className="w-4 h-4 text-rose-500" />
                         )}
-                        <span className="type-h2 text-[14px] text-white">{history.name}</span>
+                        <span className="font-semibold text-gray-900 dark:text-white">{history.name}</span>
                       </div>
                     </td>
-                    <td className="px-6 py-5 type-body text-[13px]">{history.firm}</td>
-                    <td className="px-6 py-5 tnum text-white font-bold text-[14px]">{formatCurrency(history.initialCapital)}</td>
-                    <td className="px-6 py-5">
-                      <span className={`px-3 py-1 rounded-full type-micro text-[11px] ${
+                    <td className="px-6 py-4 text-gray-500 dark:text-gray-400">{history.firm}</td>
+                    <td className="px-6 py-4 tabular-nums text-gray-900 dark:text-white font-bold">{formatCurrency(history.initialCapital)}</td>
+                    <td className="px-6 py-4">
+                      <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold ${
                         history.status === 'SUCCESS' 
-                          ? 'bg-[#1ED760]/10 text-[#1ED760] border border-[#1ED760]/20' 
-                          : 'bg-[#E5534B]/10 text-[#E5534B] border border-[#E5534B]/20'
+                          ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400' 
+                          : 'bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400'
                       }`}>
                         {history.status}
                       </span>
                     </td>
-                    <td className={`px-6 py-5 tnum font-bold text-[14px] ${history.totalPnl >= 0 ? 'text-[#1ED760]' : 'text-[#E5534B]'}`}>
+                    <td className={`px-6 py-4 tabular-nums font-bold ${history.totalPnl >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-500'}`}>
                       {formatProfit(history.totalPnl)}
                     </td>
-                    <td className="px-6 py-5 type-body text-[13px]">
+                    <td className="px-6 py-4 text-gray-500 dark:text-gray-400 font-normal">
                       <div className="flex justify-between items-center">
                         <span>{history.dateClosed || 'N/A'}</span>
-                        <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button 
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleViewTrades(history.id);
-                            }} 
-                            className="p-1.5 bg-white/10 hover:bg-white/20 rounded-lg text-white transition-colors"
-                            title="View Trades"
-                          >
-                            <Eye className="w-3.5 h-3.5" />
-                          </button>
+                        <div className="flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
                           <button 
                             onClick={(e) => {
                               e.stopPropagation();
                               handleRestore(history.id);
                             }} 
-                            className="p-1.5 bg-primary/10 hover:bg-primary/20 text-primary rounded-lg transition-colors"
+                            className="p-1.5 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg transition-colors"
                             title="Restore to Active"
                           >
                             <RotateCcw className="w-3.5 h-3.5" />
@@ -314,19 +313,9 @@ export function Accounts() {
                           <button 
                             onClick={(e) => {
                               e.stopPropagation();
-                              openEditModal(history);
-                            }} 
-                            className="p-1.5 bg-white/10 hover:bg-white/20 rounded-lg text-white transition-colors" 
-                            title="Edit"
-                          >
-                            <Edit2 className="w-3.5 h-3.5" />
-                          </button>
-                          <button 
-                            onClick={(e) => {
-                              e.stopPropagation();
                               handleDelete(history.id);
                             }} 
-                            className="p-1.5 bg-[#E5534B]/10 hover:bg-[#E5534B]/20 text-[#E5534B] rounded-lg transition-colors" 
+                            className="p-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg transition-colors" 
                             title="Delete"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
@@ -337,7 +326,7 @@ export function Accounts() {
                   </tr>
                 )) : (
                   <tr>
-                    <td colSpan={6} className="px-6 py-8 text-center text-on-surface-variant">
+                    <td colSpan={6} className="px-6 py-10 text-center text-gray-400">
                       No account history found.
                     </td>
                   </tr>
@@ -349,32 +338,35 @@ export function Accounts() {
 
         {/* Bottom Stats */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="glass-card p-6 rounded-2xl flex flex-col justify-between min-h-[160px]">
-            <div className="flex justify-between items-end mb-6">
-              <h3 className="type-h2 text-white">Global Win Rate</h3>
-              <span className="type-display text-primary tnum">{globalStats.winRate.toFixed(1)}%</span>
+          <div className="bg-white dark:bg-[#16181f] p-6 md:p-7 rounded-3xl border border-gray-200/80 dark:border-neutral-800/80 shadow-2xs flex flex-col justify-between min-h-[160px]">
+            <div className="flex justify-between items-end mb-4">
+              <div>
+                <h3 className="text-base font-semibold text-gray-900 dark:text-white">Global Evaluation Win Rate</h3>
+                <p className="text-xs text-gray-400 mt-0.5">Success rate across all past accounts</p>
+              </div>
+              <span className="text-3xl font-bold tabular-nums text-emerald-600 dark:text-emerald-400">{globalStats.winRate.toFixed(1)}%</span>
             </div>
             <div>
-              <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden mb-3">
-                <div className="h-full bg-primary rounded-full" style={{ width: `${globalStats.winRate}%` }} />
+              <div className="h-2.5 w-full bg-gray-100 dark:bg-neutral-800 rounded-full overflow-hidden mb-2.5">
+                <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${globalStats.winRate}%` }} />
               </div>
-              <div className="flex justify-between type-label text-[11px]">
+              <div className="flex justify-between text-xs font-medium text-gray-400">
                 <span>{globalStats.wins} Wins</span>
                 <span>{globalStats.losses} Losses</span>
               </div>
             </div>
           </div>
 
-          <div className="glass-card p-6 rounded-2xl flex flex-col justify-between min-h-[160px] relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent pointer-events-none" />
-            <div className="relative z-10">
-              <div className="flex justify-between items-start mb-2">
-                <h3 className="type-h2 text-white">Total Funding Secured</h3>
-                <span className="type-display text-[#1ED760] tnum">{formatCurrency(globalStats.totalFunding)}</span>
-              </div>
-              <div className="flex items-center gap-1 text-[#1ED760] type-micro mt-4">
-                <TrendingUp className="w-4 h-4" />
-                <span>+12% from last month</span>
+          <div className="bg-white dark:bg-[#16181f] p-6 md:p-7 rounded-3xl border border-gray-200/80 dark:border-neutral-800/80 shadow-2xs flex flex-col justify-between min-h-[160px]">
+            <div>
+              <h3 className="text-base font-semibold text-gray-900 dark:text-white">Total Funding Secured</h3>
+              <p className="text-xs text-gray-400 mt-0.5">Aggregate funded capital under management</p>
+            </div>
+            <div className="flex items-baseline justify-between pt-3">
+              <span className="text-3xl font-bold tabular-nums text-gray-900 dark:text-white">{formatCurrency(globalStats.totalFunding)}</span>
+              <div className="flex items-center gap-1 text-emerald-600 text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-1 rounded-full">
+                <TrendingUp className="w-3.5 h-3.5" />
+                <span>+12% active capital</span>
               </div>
             </div>
           </div>

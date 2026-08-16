@@ -217,12 +217,12 @@ export const GoalCard: React.FC<GoalCardProps> = ({
       <div className="flex flex-col gap-4 relative z-10">
         {/* Row 1: Label + Status badge */}
         <div className="flex justify-between items-center">
-          <span className="type-label text-[11px]">
+          <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">
             {label}
           </span>
           <span
-            className="px-2.5 py-1 rounded-full type-micro border tracking-wider"
-            style={{ background: status.bg, color: status.color, borderColor: `${status.color}33`, fontSize: '9px' }}
+            className="px-2.5 py-1 rounded-full text-[10px] font-semibold border tracking-wider"
+            style={{ background: status.bg, color: status.color, borderColor: `${status.color}33` }}
           >
             {status.text}
           </span>
@@ -232,9 +232,9 @@ export const GoalCard: React.FC<GoalCardProps> = ({
         <div className="flex items-center justify-between gap-5">
           <div className="flex items-center gap-5 flex-1 min-w-0">
             {/* Ring */}
-            <div className="relative flex-shrink-0 drop-shadow-lg" style={{ width: RING_SIZE, height: RING_SIZE }}>
+            <div className="relative flex-shrink-0" style={{ width: RING_SIZE, height: RING_SIZE }}>
               <svg width={RING_SIZE} height={RING_SIZE} style={{ transform: 'rotate(-90deg)' }}>
-                <circle cx={RING_SIZE / 2} cy={RING_SIZE / 2} r={RING_R} fill="transparent" stroke="rgba(255,255,255,0.05)" strokeWidth={isHero ? 7 : 6} />
+                <circle cx={RING_SIZE / 2} cy={RING_SIZE / 2} r={RING_R} fill="transparent" className="stroke-gray-100 dark:stroke-neutral-800" strokeWidth={isHero ? 7 : 6} />
                 <motion.circle
                   cx={RING_SIZE / 2} cy={RING_SIZE / 2} r={RING_R}
                   fill="transparent" stroke={ringColor} strokeWidth={isHero ? 7 : 6}
@@ -246,7 +246,7 @@ export const GoalCard: React.FC<GoalCardProps> = ({
                 />
               </svg>
               <div className="absolute inset-0 flex items-center justify-center">
-                <span className={cn("type-h2 tnum", isHero ? "text-[14px]" : "text-[12px]")}>
+                <span className={cn("font-bold tabular-nums text-gray-900 dark:text-white", isHero ? "text-sm" : "text-xs")}>
                   {Math.round(pct)}%
                 </span>
               </div>
@@ -255,18 +255,18 @@ export const GoalCard: React.FC<GoalCardProps> = ({
             {/* Value block */}
             <div className="flex flex-col gap-1 min-w-0">
               <div className="flex items-baseline gap-2 flex-wrap">
-                <span className={cn("type-h1 tnum text-white", isHero ? "text-[32px]" : "text-[26px]")}>
+                <span className={cn("font-bold tabular-nums text-gray-900 dark:text-white tracking-tight", isHero ? "text-3xl" : "text-2xl")}>
                   {formatValue(displayValue, type, prefix, unit)}
                 </span>
-                <span className="type-label text-[13px] text-[#A7A7A7]">
+                <span className="text-xs font-medium text-gray-400">
                   / {formatTarget(target, type, unit)}
                 </span>
               </div>
-              <p className="type-body text-[#A7A7A7] mt-1 line-clamp-1">
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 line-clamp-1">
                 {motivationalCopy}
               </p>
               {isHero && bestStat && (
-                <p className="type-body text-primary font-bold mt-0.5" style={{ fontSize: 13 }}>
+                <p className="text-xs text-blue-600 dark:text-blue-400 font-semibold mt-0.5">
                   {bestStat}
                 </p>
               )}

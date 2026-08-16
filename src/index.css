@@ -226,23 +226,27 @@
   .text-muted { color: #A7A7A7; }
   .text-muted-dim { color: #6A6A6A; }
 
-  .glass-card {
-    background: rgba(255, 255, 255, 0.04);
-    backdrop-filter: blur(12px);
+  /* Mirai Clean Minimalist Card Stack */
+  .glass-card, .mirai-card {
+    background: #ffffff;
+    border: 1px solid rgba(229, 231, 235, 0.85);
+    border-radius: 1.5rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02), 0 1px 2px rgba(0, 0, 0, 0.03);
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .dark .glass-card, .dark .mirai-card {
+    background: #16181f;
     border: 1px solid rgba(255, 255, 255, 0.08);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
   }
-  .glass-card:hover {
-    transform: translateY(-4px);
-    border-color: rgba(255, 255, 255, 0.2);
-    background: linear-gradient(45deg, rgba(59, 130, 246, 0.1), rgba(59, 130, 246, 0.05));
+  .glass-card:hover, .mirai-card:hover {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
   }
-  .aurora-bg {
-    background: radial-gradient(circle at 20% 30%, rgba(59, 130, 246, 0.15) 0%, transparent 40%),
-                radial-gradient(circle at 80% 70%, rgba(155, 255, 207, 0.1) 0%, transparent 40%),
-                radial-gradient(circle at 50% 50%, rgba(96, 165, 250, 0.08) 0%, transparent 50%);
-    background-color: #0d0d16;
+  .dark .glass-card:hover, .dark .mirai-card:hover {
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+    border-color: rgba(255, 255, 255, 0.14);
   }
+
   .no-scrollbar::-webkit-scrollbar { display: none; }
   .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 

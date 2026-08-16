@@ -54,8 +54,8 @@ export function GoalsSummary({ goals, overallPercent }: GoalsSummaryProps) {
             return (
               <div key={s} className="flex items-center gap-2">
                 <Dot color={color} />
-                <span className="type-label font-medium text-white/70 tracking-wide text-[11px]">
-                  <span className="text-white font-bold mr-1">{count}</span>
+                <span className="font-medium text-gray-600 dark:text-gray-300 tracking-wide text-xs">
+                  <span className="text-gray-900 dark:text-white font-bold mr-1 tabular-nums">{count}</span>
                   {label}
                 </span>
               </div>
@@ -63,13 +63,13 @@ export function GoalsSummary({ goals, overallPercent }: GoalsSummaryProps) {
           })}
         </div>
         {/* Overall text */}
-        <span className="type-h2 text-[14px] text-white">
-          {Math.round(overallPercent)}% <span className="text-[#A7A7A7] font-normal">Complete</span>
+        <span className="text-sm font-bold tabular-nums text-gray-900 dark:text-white">
+          {Math.round(overallPercent)}% <span className="text-gray-400 font-normal">Complete</span>
         </span>
       </div>
 
       {/* Full-width progress bar */}
-      <div className="w-full rounded-full overflow-hidden relative z-10" style={{ height: 6, background: 'rgba(255,255,255,0.05)' }}>
+      <div className="w-full rounded-full overflow-hidden relative z-10 bg-gray-100 dark:bg-neutral-800" style={{ height: 7 }}>
         <motion.div
           className="h-full rounded-full relative"
           initial={{ width: 0 }}
