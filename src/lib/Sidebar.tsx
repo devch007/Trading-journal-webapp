@@ -1,106 +1,199 @@
-import { Link, useLocation } from "react-router-dom";
+import React, { useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { 
   LayoutGrid, 
-  CandlestickChart, 
-  Notebook, 
-  Settings2, 
-  CircleUser,
-  Wallet,
-  Sparkles,
-  Layers,
-  Crosshair,
-  Activity
+  TrendingUp, 
+  CheckSquare, 
+  BarChart3, 
+  Wallet, 
+  Users, 
+  Radio, 
+  FileText, 
+  ShieldCheck, 
+  CreditCard, 
+  Layers, 
+  Headphones, 
+  HelpCircle, 
+  Settings, 
+  Search, 
+  LogOut,
+  ChevronRight,
+  Sparkles
 } from "lucide-react";
 import { cn } from "./utils";
-import { FloatingDock } from "../components/ui/floating-dock";
+import { useAuth } from "../contexts/AuthContext";
 
 interface SidebarProps {
-  isExpanded: boolean;
-  setIsExpanded: (val: boolean) => void;
+  isExpanded?: boolean;
+  setIsExpanded?: (val: boolean) => void;
   isMobileOpen?: boolean;
   setIsMobileOpen?: (val: boolean) => void;
 }
 
-export function Sidebar({ isExpanded, setIsExpanded, isMobileOpen, setIsMobileOpen }: SidebarProps) {
+export function Sidebar({ isMobileOpen, setIsMobileOpen }: SidebarProps) {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, userProfile, logout } = useAuth();
+  const [searchTerm, setSearchTerm] = useState("");
 
   const isPathActive = (path: string) => {
     if (path === "/dashboard") return location.pathname === "/dashboard" || location.pathname === "/";
     return location.pathname.startsWith(path);
   };
 
-  const navItems = [
-    { 
-      title: "Tradova",
-      icon: (
-        <div className="flex h-full w-full items-center justify-center rounded-full bg-blue-600 font-bold text-white text-xs">
-          T
-        </div>
-      ),
-      href: "/dashboard" 
+  const displayName = userProfile?.email 
+    ? userProfile.email.split('@')[0] 
+    : user?.email 
+      ? user.email.split('@')[0] 
+      : "Max Verstappen";
+      
+  const displayEmail = userProfile?.email || user?.email || "maxverstappen@gmail.com";
+
+  const navSections = [
+    {
+      title: "Main Menu",
+      items: [
+        { title: "Overview", icon: LayoutGrid, href: "/dashboard" },
+        { title: "Investment Tracker", icon: TrendingUp, href: "/trades" },
+        { title: "Project Planner", icon: CheckSquare, href: "/checkout" },
+        { title: "Reports", icon: BarChart3, href: "/ai-engine" },
+        { title: "Linked Account", icon: Wallet, href: "/accounts" },
+      ]
     },
-    { 
-      title: "Dashboard",
-      icon: <LayoutGrid className={cn("h-full w-full", isPathActive("/dashboard") ? "text-blue-500" : "text-neutral-500 dark:text-neutral-300")} />,
-      href: "/dashboard" 
+    {
+      title: "Customers",
+      items: [
+        { title: "Customer List", icon: Users, href: "/strategies" },
+        { title: "Channels", icon: Radio, href: "/goals" },
+        { title: "Order Management", icon: FileText, href: "/journal" },
+      ]
     },
-    { 
-      title: "Goals",
-      icon: <Crosshair className={cn("h-full w-full", isPathActive("/goals") ? "text-blue-500" : "text-neutral-500 dark:text-neutral-300")} />,
-      href: "/goals" 
+    {
+      title: "Management",
+      items: [
+        { title: "Roles & Permission", icon: ShieldCheck, href: "/strategies" },
+        { title: "Billing and Subscriptions", icon: CreditCard, href: "/settings" },
+        { title: "Integrations", icon: Layers, href: "/accounts" },
+      ]
     },
-    { 
-      title: "Accounts",
-      icon: <Wallet className={cn("h-full w-full", isPathActive("/accounts") ? "text-blue-500" : "text-neutral-500 dark:text-neutral-300")} />,
-      href: "/accounts" 
-    },
-    { 
-      title: "Trades",
-      icon: <CandlestickChart className={cn("h-full w-full", isPathActive("/trades") ? "text-blue-500" : "text-neutral-500 dark:text-neutral-300")} />,
-      href: "/trades" 
-    },
-    { 
-      title: "AI Engine",
-      icon: <Sparkles className={cn("h-full w-full", isPathActive("/ai-engine") ? "text-blue-500" : "text-neutral-500 dark:text-neutral-300")} />,
-      href: "/ai-engine" 
-    },
-    { 
-      title: "Checkout",
-      icon: <Activity className={cn("h-full w-full", isPathActive("/checkout") ? "text-blue-500" : "text-neutral-500 dark:text-neutral-300")} />,
-      href: "/checkout" 
-    },
-    { 
-      title: "Journal",
-      icon: <Notebook className={cn("h-full w-full", isPathActive("/journal") ? "text-blue-500" : "text-neutral-500 dark:text-neutral-300")} />,
-      href: "/journal" 
-    },
-    { 
-      title: "Strategies",
-      icon: <Layers className={cn("h-full w-full", isPathActive("/strategies") ? "text-blue-500" : "text-neutral-500 dark:text-neutral-300")} />,
-      href: "/strategies" 
-    },
-    { 
-      title: "Settings",
-      icon: <Settings2 className={cn("h-full w-full", isPathActive("/settings") ? "text-blue-500" : "text-neutral-500 dark:text-neutral-300")} />,
-      href: "/settings" 
-    },
-    { 
-      title: "Profile",
-      icon: <CircleUser className={cn("h-full w-full", isPathActive("/profile") ? "text-blue-500" : "text-neutral-500 dark:text-neutral-300")} />,
-      href: "/profile" 
-    },
+    {
+      title: "Setting",
+      items: [
+        { title: "Customer Support", icon: Headphones, href: "/settings" },
+        { title: "Help Center", icon: HelpCircle, href: "/profile" },
+        { title: "System Settings", icon: Settings, href: "/settings" },
+      ]
+    }
   ];
 
   return (
-    <div className="fixed bottom-6 left-0 right-0 z-[100] flex justify-center pointer-events-none">
-      <div className="pointer-events-auto">
-        <FloatingDock
-          items={navItems}
-          desktopClassName="bg-black/40 backdrop-blur-lg border border-white/10 shadow-2xl"
-          mobileClassName="translate-y-0 bottom-4 right-4"
-        />
-      </div>
-    </div>
+    <>
+      <aside 
+        className={cn(
+          "w-64 bg-[#fbfbfc] dark:bg-[#0f1015] border-r border-[#eaecf0] dark:border-neutral-800/80 flex flex-col h-full shrink-0 transition-transform duration-300 z-50",
+          "fixed inset-y-0 left-0 md:static md:translate-x-0",
+          isMobileOpen ? "translate-x-0" : "-translate-x-full"
+        )}
+      >
+        {/* Brand Logo Header */}
+        <div className="px-6 pt-7 pb-5 flex items-center justify-between">
+          <Link to="/dashboard" className="flex items-center gap-2.5 group">
+            <span className="font-extrabold text-2xl tracking-tight text-[#111827] dark:text-white font-headline">
+              mirai
+            </span>
+          </Link>
+        </div>
+
+        {/* Search Bar in Sidebar */}
+        <div className="px-5 mb-3">
+          <div className="relative flex items-center">
+            <Search className="w-4 h-4 text-gray-400 absolute left-3 pointer-events-none" />
+            <input 
+              type="text" 
+              placeholder="Search..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-9 pr-3 py-2 text-xs bg-white dark:bg-[#16181f] border border-[#e5e7eb] dark:border-neutral-800 rounded-xl text-gray-800 dark:text-gray-200 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-black/10 dark:focus:ring-white/20 transition-all shadow-xs"
+            />
+          </div>
+        </div>
+
+        {/* Scrollable Navigation Items */}
+        <div className="flex-1 overflow-y-auto px-4 py-2 space-y-6 no-scrollbar">
+          {navSections.map((section, idx) => {
+            // Filter items by search if user is typing
+            const filteredItems = section.items.filter(item => 
+              item.title.toLowerCase().includes(searchTerm.toLowerCase())
+            );
+
+            if (filteredItems.length === 0) return null;
+
+            return (
+              <div key={idx} className="space-y-1">
+                <p className="px-3 text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1.5">
+                  {section.title}
+                </p>
+                <div className="space-y-1">
+                  {filteredItems.map((item) => {
+                    const active = isPathActive(item.href);
+                    const Icon = item.icon;
+
+                    return (
+                      <Link
+                        key={item.title}
+                        to={item.href}
+                        onClick={() => setIsMobileOpen?.(false)}
+                        className={cn(
+                          "flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-[13px] font-medium transition-all duration-200 group relative",
+                          active
+                            ? "bg-white dark:bg-[#1c1e26] text-gray-900 dark:text-white font-semibold shadow-xs border border-gray-200/70 dark:border-neutral-700/60"
+                            : "text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-black/[0.02] dark:hover:bg-white/[0.03]"
+                        )}
+                      >
+                        <Icon 
+                          className={cn(
+                            "w-4 h-4 shrink-0 transition-colors",
+                            active 
+                              ? "text-gray-900 dark:text-white" 
+                              : "text-gray-400 dark:text-gray-500 group-hover:text-gray-700 dark:group-hover:text-gray-300"
+                          )} 
+                        />
+                        <span className="truncate">{item.title}</span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* User Profile Card at Bottom */}
+        <div className="p-3.5 border-t border-[#eaecf0] dark:border-neutral-800/80 bg-[#fbfbfc] dark:bg-[#0f1015]">
+          <div className="flex items-center justify-between p-2 rounded-xl bg-white dark:bg-[#16181f] border border-[#e5e7eb] dark:border-neutral-800 shadow-2xs">
+            <Link to="/profile" className="flex items-center gap-2.5 overflow-hidden flex-1">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-amber-500 to-rose-500 flex items-center justify-center text-white text-xs font-bold shrink-0 shadow-xs">
+                {displayName.charAt(0).toUpperCase()}
+              </div>
+              <div className="flex flex-col min-w-0">
+                <span className="text-xs font-semibold text-gray-900 dark:text-white truncate">
+                  {displayName}
+                </span>
+                <span className="text-[10px] text-gray-400 dark:text-gray-500 truncate">
+                  {displayEmail}
+                </span>
+              </div>
+            </Link>
+            <button 
+              onClick={logout}
+              title="Logout"
+              className="p-1.5 text-gray-400 hover:text-rose-500 rounded-lg hover:bg-gray-50 dark:hover:bg-neutral-800 transition-colors shrink-0"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+      </aside>
+    </>
   );
 }
-

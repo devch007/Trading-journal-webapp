@@ -1,24 +1,50 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Bell, Wallet, ChevronDown, Search, LogOut, Command, Menu } from "lucide-react";
+import { 
+  Bell, 
+  Wallet, 
+  ChevronDown, 
+  Search, 
+  LogOut, 
+  Command, 
+  Menu, 
+  Headphones, 
+  Radio,
+  CheckCircle2,
+  SlidersHorizontal,
+  Sun,
+  Moon
+} from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import { useAccountContext } from "../contexts/AccountContext";
 import { CommandPalette } from "../components/CommandPalette";
 import { ThemeToggle } from "../components/ThemeToggle";
 
 interface TopBarProps {
-  title: string;
-  subtitle: string;
+  title?: string;
+  subtitle?: string;
   showAccountSelector?: boolean;
   showSearch?: boolean;
   actionButton?: React.ReactNode;
 }
 
-export function TopBar({ title, subtitle, showAccountSelector = true, showSearch = false, actionButton }: TopBarProps) {
-  const { logout } = useAuth();
+export function TopBar({ 
+  title = "Dashboard", 
+  subtitle, 
+  showAccountSelector = true, 
+  showSearch = true, 
+  actionButton 
+}: TopBarProps) {
+  const { user, userProfile, logout } = useAuth();
   const { accounts, selectedAccount, setSelectedAccountId } = useAccountContext();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const displayName = userProfile?.email 
+    ? userProfile.email.split('@')[0] 
+    : user?.email 
+      ? user.email.split('@')[0] 
+      : "Max Verstappen";
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -42,156 +68,134 @@ export function TopBar({ title, subtitle, showAccountSelector = true, showSearch
   }, []);
 
   return (
-    <header className="flex justify-between items-center w-full px-4 py-6 md:px-8 md:py-10">
-      <div className="flex items-center gap-3">
+    <header className="flex justify-between items-center w-full px-6 py-4 md:px-8 md:py-5 border-b border-[#eaecf0]/80 dark:border-neutral-800/80 bg-white/60 dark:bg-[#0f1015]/60 backdrop-blur-md sticky top-0 z-40">
+      {/* Left: Title + Market Online Badge */}
+      <div className="flex items-center gap-3.5">
         <button 
-          className="md:hidden p-2 -ml-2 text-white/70 hover:text-white transition-colors"
+          className="md:hidden p-2 -ml-2 text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors"
           onClick={() => document.dispatchEvent(new CustomEvent('toggleMobileSidebar'))}
         >
-          <Menu className="w-6 h-6" />
+          <Menu className="w-5 h-5" />
         </button>
-        <div>
-          <h1 className="type-h1 text-primary text-[20px] md:text-[28px]">{title}</h1>
-          <p className="type-label mt-0.5 md:mt-1 hidden sm:block">
-            {subtitle}
-          </p>
+
+        <div className="flex items-center gap-3">
+          <h1 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-white tracking-tight font-headline">
+            {title}
+          </h1>
+
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/60 dark:border-emerald-800/40 text-emerald-600 dark:text-emerald-400 text-xs font-semibold">
+            <Radio className="w-3.5 h-3.5 animate-pulse text-emerald-500" />
+            <span>Market online</span>
+          </div>
         </div>
       </div>
-      <div className="flex items-center gap-3 md:gap-6">
+
+      {/* Center: Search Bar matching reference image */}
+      <div className="hidden lg:flex items-center max-w-md w-full mx-8">
+        <button
+          onClick={() => setIsCommandPaletteOpen(true)}
+          className="w-full flex items-center gap-2.5 px-4 py-2 bg-[#f4f5f8] dark:bg-[#16181f] border border-[#e5e7eb] dark:border-neutral-800 rounded-full text-left text-xs text-gray-400 hover:border-gray-300 dark:hover:border-neutral-700 transition-all shadow-2xs group"
+        >
+          <Search className="w-4 h-4 text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300" />
+          <span className="flex-1 font-normal text-gray-500 dark:text-gray-400">Search...</span>
+          <kbd className="hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-mono font-medium text-gray-400 bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-md">
+            ⌘K
+          </kbd>
+        </button>
+      </div>
+
+      {/* Right: Action Buttons & User Profile Chip */}
+      <div className="flex items-center gap-3 md:gap-4">
         {actionButton}
-        {showSearch && (
-          <button
-            onClick={() => setIsCommandPaletteOpen(true)}
-            className="relative group hidden sm:flex items-center gap-2.5 px-3 py-2 rounded-xl border transition-all duration-300 text-left overflow-hidden"
-            style={{
-              background: 'rgba(255,255,255,0.04)',
-              borderColor: 'rgba(255,255,255,0.08)',
-              backdropFilter: 'blur(12px)',
-              width: 220,
-              boxShadow: '0 0 0 0 rgba(59,130,246,0)',
-            }}
-            onMouseEnter={e => {
-              (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(59,130,246,0.35)';
-              (e.currentTarget as HTMLButtonElement).style.background = 'rgba(59,130,246,0.07)';
-              (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 0 18px rgba(59,130,246,0.12)';
-            }}
-            onMouseLeave={e => {
-              (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(255,255,255,0.08)';
-              (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.04)';
-              (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 0 0 0 rgba(59,130,246,0)';
-            }}
+
+        {/* Support Headphones Icon */}
+        <button 
+          className="p-2 rounded-full text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-neutral-800 transition-colors"
+          title="Customer Support"
+        >
+          <Headphones className="w-4 h-4" />
+        </button>
+
+        {/* Notifications Bell with dot */}
+        <div className="relative">
+          <button 
+            className="p-2 rounded-full text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-neutral-800 transition-colors"
+            title="Notifications"
           >
-            {/* Animated gradient shimmer on hover */}
-            <span
-              className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
-              style={{
-                background: 'linear-gradient(105deg, transparent 40%, rgba(59,130,246,0.06) 50%, transparent 60%)',
-              }}
-            />
-
-            {/* Icon with subtle pulse dot */}
-            <span className="relative flex-shrink-0">
-              <Search className="w-3.5 h-3.5 text-[#4B5563] group-hover:text-[#60a5fa] transition-colors duration-200" />
-            </span>
-
-            {/* Placeholder text */}
-            <span
-              className="flex-1 transition-colors duration-200 group-hover:text-[#9ca3af]"
-              style={{ fontSize: 12, fontWeight: 500, color: '#374151', letterSpacing: '0.01em' }}
-            >
-              Search anything…
-            </span>
-
-            {/* ⌘K badge */}
-            <span className="flex items-center gap-0.5 flex-shrink-0">
-              <kbd
-                className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-md border transition-colors duration-200"
-                style={{
-                  background: 'rgba(255,255,255,0.06)',
-                  borderColor: 'rgba(255,255,255,0.10)',
-                  fontSize: 10,
-                  fontWeight: 600,
-                  color: '#4B5563',
-                  letterSpacing: '0.03em',
-                  lineHeight: 1,
-                }}
-              >
-                <Command className="w-2.5 h-2.5" />
-                K
-              </kbd>
-            </span>
+            <Bell className="w-4 h-4" />
+            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-amber-500 rounded-full ring-2 ring-white dark:ring-neutral-900"></span>
           </button>
-        )}
+        </div>
+
+        {/* Theme Toggle */}
         <div className="hidden sm:block">
           <ThemeToggle />
         </div>
-        <div className="relative group">
-          <Bell className="text-[#efecf9]/60 hover:text-white transition-colors cursor-pointer w-5 h-5 md:w-6 md:h-6" />
-          <span className="absolute top-0 right-0 w-2 h-2 bg-error rounded-full border border-background"></span>
-        </div>
-        
-        {showAccountSelector ? (
-          <div className="relative group" ref={dropdownRef}>
-            <button 
-              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-              className="flex items-center gap-2 md:gap-3 bg-surface-container-high hover:bg-white/5 px-2.5 md:px-4 py-2 md:py-2.5 rounded-xl border border-white/10 transition-all focus-within:ring-2 focus-within:ring-primary/50 group"
-            >
-              <Wallet className="text-primary w-5 h-5" />
-              <div className="hidden md:flex flex-col items-start leading-tight">
-                <span className="type-micro text-[#6A6A6A]">
-                  {selectedAccount ? selectedAccount.name : 'No Account'}
-                </span>
-                <span className="tnum text-[15px] font-bold text-on-surface">
-                  ${selectedAccount ? (selectedAccount.currentEquity ?? selectedAccount.initialCapital).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00'}
-                </span>
-              </div>
-              <ChevronDown className={`text-on-surface-variant w-4 h-4 group-hover:text-white transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
-            </button>
-            
-            {isDropdownOpen && accounts && (
-              <div className="absolute top-full right-0 mt-2 w-64 bg-surface-container-high border border-white/10 rounded-xl shadow-2xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
-                <div className="max-h-64 overflow-y-auto">
-                  {accounts.filter(a => a.status === 'ACTIVE').length > 0 ? (
-                    accounts.filter(a => a.status === 'ACTIVE').map(account => (
-                      <button
-                        key={account.id}
-                        onClick={() => {
-                          setSelectedAccountId(account.id);
-                          setIsDropdownOpen(false);
-                        }}
-                        className={`w-full flex items-center justify-between px-4 py-3 hover:bg-white/5 transition-colors text-left ${selectedAccount?.id === account.id ? 'bg-primary/10' : ''}`}
-                      >
-                        <div className="flex flex-col">
-                          <span className="type-h2 text-[14px] text-white">{account.name}</span>
-                          <span className="type-body text-[12px]">{account.firm}</span>
-                        </div>
-                        <span className="tnum text-[14px] font-bold text-primary">
-                          ${(account.currentEquity ?? account.initialCapital).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                        </span>
-                      </button>
-                    ))
-                  ) : (
-                    <div className="px-4 py-4 text-center type-micro text-gray-500">
-                      No active accounts
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
-        ) : (
-          <button className="text-[#efecf9]/60 hover:text-white transition-colors">
-            <Wallet className="w-5 h-5 md:w-6 md:h-6" />
+
+        {/* User Account / Profile Chip Dropdown */}
+        <div className="relative" ref={dropdownRef}>
+          <button 
+            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+            className="flex items-center gap-2.5 pl-1.5 pr-3 py-1.5 rounded-full bg-[#f4f5f8] dark:bg-[#16181f] border border-[#e5e7eb] dark:border-neutral-800 hover:bg-gray-100 dark:hover:bg-neutral-800/80 transition-all text-left shadow-2xs"
+          >
+            <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-amber-500 to-rose-500 flex items-center justify-center text-white text-xs font-bold shrink-0">
+              {displayName.charAt(0).toUpperCase()}
+            </div>
+            <span className="text-xs font-semibold text-gray-800 dark:text-gray-200 hidden sm:inline truncate max-w-[120px]">
+              {displayName}
+            </span>
+            <ChevronDown className={`w-3.5 h-3.5 text-gray-400 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
           </button>
-        )}
-        
-        <button 
-          onClick={logout}
-          className="p-1.5 md:p-2 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-on-surface-variant hover:text-[#E5534B] transition-colors"
-          title="Logout"
-        >
-          <LogOut className="w-5 h-5" />
-        </button>
+
+          {isDropdownOpen && (
+            <div className="absolute top-full right-0 mt-2 w-64 bg-white dark:bg-[#16181f] border border-gray-200 dark:border-neutral-800 rounded-2xl shadow-xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200 p-1.5">
+              <div className="px-3 py-2 border-b border-gray-100 dark:border-neutral-800 mb-1">
+                <p className="text-xs font-semibold text-gray-900 dark:text-white truncate">{displayName}</p>
+                <p className="text-[11px] text-gray-400 truncate">{user?.email || 'maxverstappen@gmail.com'}</p>
+              </div>
+
+              {accounts && accounts.length > 0 && (
+                <div className="py-1">
+                  <p className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-gray-400">
+                    Switch Trading Account
+                  </p>
+                  {accounts.filter(a => a.status === 'ACTIVE').map(account => (
+                    <button
+                      key={account.id}
+                      onClick={() => {
+                        setSelectedAccountId(account.id);
+                        setIsDropdownOpen(false);
+                      }}
+                      className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-left text-xs transition-colors ${
+                        selectedAccount?.id === account.id 
+                          ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 font-semibold' 
+                          : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-neutral-800'
+                      }`}
+                    >
+                      <div className="flex flex-col">
+                        <span>{account.name}</span>
+                        <span className="text-[10px] text-gray-400">{account.firm}</span>
+                      </div>
+                      <span className="font-semibold">
+                        ${(account.currentEquity ?? account.initialCapital).toLocaleString()}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              <div className="pt-1 border-t border-gray-100 dark:border-neutral-800">
+                <button
+                  onClick={logout}
+                  className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                  <span>Log out</span>
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       <CommandPalette 
