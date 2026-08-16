@@ -813,66 +813,69 @@ export function Dashboard() {
               )}
             </div>
 
-            {/* Card 2: Asset Allocation & Strategy Breakdown */}
-            <div className="bg-white dark:bg-[#16181f] rounded-3xl p-6 border border-gray-200/80 dark:border-neutral-800/80 shadow-2xs space-y-5">
+            {/* Card 2: Activity Bar Chart Card */}
+            <div className="bg-white dark:bg-[#16181f] rounded-3xl p-6 border border-gray-200/80 dark:border-neutral-800/80 shadow-2xs space-y-4">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="p-2 rounded-xl bg-gray-50 dark:bg-neutral-800 text-gray-900 dark:text-white">
-                    <Briefcase className="w-4 h-4" />
-                  </div>
-                  {/* Card heading -> 600 weight */}
-                  <span className="text-sm font-semibold text-gray-900 dark:text-white">
-                    Asset & Strategy Allocation
-                  </span>
+                <h3 className="text-base font-bold text-gray-900 dark:text-white">
+                  Activity
+                </h3>
+                <div className="relative">
+                  <button className="flex items-center gap-1.5 text-xs font-semibold text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white bg-gray-50 dark:bg-neutral-800 px-3 py-1.5 rounded-xl border border-gray-200/80 dark:border-neutral-700 transition-colors">
+                    <span>Month</span>
+                    <ChevronDown className="w-3.5 h-3.5 text-gray-400" />
+                  </button>
                 </div>
-                <button 
-                  onClick={() => navigate('/strategies')}
-                  className="w-7 h-7 rounded-full border border-gray-200 dark:border-neutral-700 flex items-center justify-center text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
-                >
-                  <ArrowUpRight className="w-3.5 h-3.5" />
-                </button>
               </div>
 
-              {/* Sub-header: 3 Traded Pairs & edge badge */}
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-gray-900 dark:text-white">
-                  3 Traded Pairs
-                </span>
-                <span className="text-[11px] font-medium tabular-nums text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-md">
-                  +{stats.winRate.toFixed(1)}% Win Rate
-                </span>
-              </div>
+              {/* Subdued top divider */}
+              <div className="w-full h-px bg-gray-100 dark:bg-neutral-800" />
 
-              {/* Segmented progress bar (Forex, Metals, Crypto) */}
-              <div className="flex items-center gap-1.5 w-full h-3">
-                <div className="h-full bg-emerald-500 rounded-full w-[45%] shadow-xs" title="Forex"></div>
-                <div className="h-full bg-amber-400 rounded-full w-[35%] shadow-xs" title="Metals"></div>
-                <div className="h-full bg-indigo-500 rounded-full w-[20%] shadow-xs" title="Crypto"></div>
-              </div>
-
-              {/* Pair Breakdown List */}
-              <div className="space-y-3.5 pt-1">
-                {stats.topPairs.map((p) => (
-                  <div key={p.symbol} className="flex items-center justify-between">
-                    <div className="flex items-center gap-2.5">
-                      <div className={`w-7 h-7 rounded-full ${p.iconColor} flex items-center justify-center text-white font-bold text-xs`}>
-                        {p.icon}
-                      </div>
-                      <div>
-                        <p className="text-xs font-semibold text-gray-900 dark:text-white">{p.symbol}</p>
-                        <p className="text-[11px] font-normal tabular-nums text-gray-400">${p.pnl.toLocaleString()}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span className="text-[11px] font-bold tabular-nums text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 px-1.5 py-0.5 rounded">
-                        {p.winRate.toFixed(1)}%
-                      </span>
-                      <button onClick={() => navigate('/trades')} className="text-gray-400 hover:text-gray-600">
-                        <MoreHorizontal className="w-4 h-4" />
-                      </button>
-                    </div>
+              {/* Activity Capsule Bar Chart */}
+              <div className="pt-2">
+                <div className="flex items-end gap-2.5 h-48 w-full">
+                  {/* Y-Axis Labels */}
+                  <div className="flex flex-col justify-between h-40 text-[10px] font-medium text-gray-400 dark:text-gray-500 pb-5 select-none shrink-0 pr-1">
+                    <span>400</span>
+                    <span>300</span>
+                    <span>200</span>
+                    <span>100</span>
+                    <span>0</span>
                   </div>
-                ))}
+
+                  {/* 12-Month Capsule Pillars */}
+                  <div className="grid grid-cols-12 gap-1.5 sm:gap-2 flex-1 h-full items-end pb-1">
+                    {[
+                      { m: 'JAN', v: 110, h: 28 },
+                      { m: 'FEB', v: 145, h: 36 },
+                      { m: 'MAR', v: 145, h: 36 },
+                      { m: 'APR', v: 240, h: 60 },
+                      { m: 'MAY', v: 280, h: 70 },
+                      { m: 'JUN', v: 205, h: 51 },
+                      { m: 'JUL', v: 240, h: 60 },
+                      { m: 'AUG', v: 110, h: 28 },
+                      { m: 'SEP', v: 280, h: 70 },
+                      { m: 'OCT', v: 340, h: 85 },
+                      { m: 'NOV', v: 370, h: 92 },
+                      { m: 'DEC', v: 410, h: 100 },
+                    ].map((col) => (
+                      <div key={col.m} className="flex flex-col items-center gap-2 h-full justify-end group cursor-pointer">
+                        {/* Capsule Track */}
+                        <div className="w-2.5 sm:w-3 bg-blue-50/70 dark:bg-blue-950/20 rounded-full h-40 flex flex-col justify-end p-0 overflow-hidden relative group-hover:bg-blue-100/70 dark:group-hover:bg-blue-950/40 transition-colors">
+                          {/* Filled Blue Capsule */}
+                          <div 
+                            style={{ height: `${col.h}%` }}
+                            className="w-full bg-[#3b82f6] rounded-full transition-all duration-500 shadow-xs group-hover:bg-blue-600"
+                            title={`${col.m}: ${col.v} trades logged`}
+                          />
+                        </div>
+                        {/* Month Label */}
+                        <span className="text-[9px] sm:text-[10px] font-semibold text-gray-400 dark:text-gray-500 group-hover:text-gray-900 dark:group-hover:text-white transition-colors">
+                          {col.m}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
 
