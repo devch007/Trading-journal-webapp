@@ -18,7 +18,8 @@ import {
   Search, 
   LogOut,
   ChevronRight,
-  Sparkles
+  Sparkles,
+  Target
 } from "lucide-react";
 import { cn } from "./utils";
 import { useAuth } from "../contexts/AuthContext";
