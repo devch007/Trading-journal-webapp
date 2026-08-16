@@ -73,24 +73,24 @@ const TradeXChartTooltip = ({ active, payload }: any) => {
         <div className="space-y-1.5 pt-0.5">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-[#1e293b] dark:bg-gray-300"></span>
+              <span className="w-2 h-2 rounded-full bg-[#1e293b] dark:bg-[#38bdf8]"></span>
               <span className="text-xs font-bold tabular-nums text-gray-900 dark:text-white">
                 ${Number(data.val1).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </span>
             </div>
-            <span className="text-[10px] font-medium text-gray-500 bg-gray-100 dark:bg-neutral-800 px-1.5 py-0.5 rounded">
+            <span className="text-[10px] font-medium text-gray-500 dark:text-gray-300 bg-gray-100 dark:bg-neutral-800 px-1.5 py-0.5 rounded">
               Account Equity
             </span>
           </div>
 
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-[#0d9488]"></span>
+              <span className="w-2 h-2 rounded-full bg-[#0d9488] dark:bg-[#2dd4bf]"></span>
               <span className="text-xs font-bold tabular-nums text-gray-900 dark:text-white">
                 ${Number(data.val2).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </span>
             </div>
-            <span className="text-[10px] font-medium text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-950/40 px-1.5 py-0.5 rounded">
+            <span className="text-[10px] font-medium text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-950/60 px-1.5 py-0.5 rounded">
               Benchmark
             </span>
           </div>
@@ -111,6 +111,25 @@ export function Dashboard() {
   const [timeframe, setTimeframe] = useState<'1D' | '1W' | '1M' | 'ALL'>('1W');
   const [activityView, setActivityView] = useState<'Month' | 'Week'>('Week');
   const [dismissedViolations, setDismissedViolations] = useState<Set<string>>(new Set());
+
+  // Reactive theme tracking for Chart canvas colors
+  const [isDark, setIsDark] = useState(() => {
+    if (typeof document !== 'undefined') {
+      return document.documentElement.classList.contains('dark');
+    }
+    return false;
+  });
+
+  useEffect(() => {
+    const checkDark = () => setIsDark(document.documentElement.classList.contains('dark'));
+    const observer = new MutationObserver(checkDark);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    window.addEventListener('storage', checkDark);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('storage', checkDark);
+    };
+  }, []);
 
   // Rule violations
   const violations = useRuleViolations(selectedAccount, allTrades);
@@ -297,7 +316,7 @@ export function Dashboard() {
 
     const startEquity = running;
 
-    const points = activeTrades.map((t) => {
+    const points = activeTrades.map((t, index) => {
       const pnl = Number(t.pnl) || 0;
       running += pnl;
       baseline += initialBalance * 0.0005;
@@ -307,6 +326,8 @@ export function Dashboard() {
       const timeStr = d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
 
       return {
+        id: t.id || index,
+        index: index + 1,
         date: dayStr,
         time: timeStr,
         dateLabel: `${dayStr} ${timeStr !== '00:00' ? timeStr : ''}`,
@@ -319,6 +340,8 @@ export function Dashboard() {
     if (points.length === 1) {
       return [
         {
+          id: 'start',
+          index: 0,
           date: 'Start',
           time: '',
           dateLabel: 'Opening',
@@ -611,27 +634,37 @@ export function Dashboard() {
                 )}
               </div>
             </div>
-
-            {/* Portfolio Growth Over Time Curve Chart */}
-            <div className="bg-white dark:bg-[#16181f] rounded-3xl p-6 md:p-7 border border-gray-200/80 dark:border-neutral-800/80 shadow-2xs">
-              <div className="flex items-center justify-between mb-6">
+                    {/* Portfolio Growth Over Time Curve Chart */}
+            <div className="bg-white dark:bg-[#16181f] rounded-3xl p-6 md:p-7 border border-gray-200/80 dark:border-neutral-800/80 shadow-2xs space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                  {/* Card heading -> 600 weight */}
-                  <h3 className="text-base font-semibold text-gray-900 dark:text-white">
-                    Portfolio Growth Over Time
-                  </h3>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-base font-semibold text-gray-900 dark:text-white">
+                      Portfolio Growth Over Time
+                    </h3>
+                    <div className="flex items-center gap-3 ml-2 text-[11px] font-medium text-gray-400">
+                      <span className="flex items-center gap-1">
+                        <span className="w-2.5 h-1 rounded-full bg-blue-500"></span>
+                        Equity
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <span className="w-2.5 h-0.5 border-b border-dashed border-teal-500"></span>
+                        Target
+                      </span>
+                    </div>
+                  </div>
                   <p className="text-xs font-normal text-gray-400 mt-0.5">Realized Cumulative Equity vs Initial Capital Benchmark</p>
                 </div>
 
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1 self-start sm:self-auto bg-gray-50 dark:bg-neutral-800/60 p-1 rounded-2xl border border-gray-200/60 dark:border-neutral-700/60">
                   {(['1D', '1W', '1M', 'ALL'] as const).map((t) => (
                     <button
                       key={t}
                       onClick={() => setTimeframe(t)}
-                      className={`px-3 py-1 text-xs font-medium rounded-xl transition-all ${
+                      className={`px-3 py-1 text-xs font-semibold rounded-xl transition-all ${
                         timeframe === t 
                           ? 'bg-[#111827] dark:bg-white text-white dark:text-gray-900 shadow-xs' 
-                          : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-neutral-800'
+                          : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-white/60 dark:hover:bg-neutral-700/40'
                       }`}
                     >
                       {t}
@@ -640,35 +673,40 @@ export function Dashboard() {
                 </div>
               </div>
 
-              {/* Dual Curve Chart */}
-              <div className="h-[280px] w-full relative">
+              {/* Clean Curve Chart */}
+              <div className="h-[280px] w-full relative pt-2">
                 <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={equityChartData} margin={{ top: 15, right: 10, left: 5, bottom: 0 }}>
+                  <AreaChart data={equityChartData} margin={{ top: 15, right: 10, left: 0, bottom: 0 }}>
                     <defs>
-                      <linearGradient id="curveSlate" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#1e293b" stopOpacity={0.12}/>
-                        <stop offset="100%" stopColor="#1e293b" stopOpacity={0}/>
-                      </linearGradient>
-                      <linearGradient id="curveTeal" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#0d9488" stopOpacity={0.15}/>
-                        <stop offset="100%" stopColor="#0d9488" stopOpacity={0}/>
+                      <linearGradient id="curveEquity" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor={isDark ? "#38bdf8" : "#3b82f6"} stopOpacity={isDark ? 0.28 : 0.15}/>
+                        <stop offset="100%" stopColor={isDark ? "#38bdf8" : "#3b82f6"} stopOpacity={0}/>
                       </linearGradient>
                     </defs>
                     
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                    <CartesianGrid strokeDasharray="3 3" stroke={isDark ? "rgba(255,255,255,0.05)" : "#f1f5f9"} vertical={false} />
                     
                     <XAxis 
-                      dataKey="date" 
-                      stroke="#94a3b8" 
+                      dataKey="index" 
+                      stroke={isDark ? "#64748b" : "#94a3b8"} 
                       fontSize={11} 
                       tickLine={false} 
                       axisLine={false} 
                       minTickGap={35}
-                      interval="preserveStartEnd"
+                      tickFormatter={(idx) => {
+                        const pt = equityChartData.find(p => p.index === idx);
+                        if (!pt) return '';
+                        const ptIdx = equityChartData.indexOf(pt);
+                        const prevPt = ptIdx > 0 ? equityChartData[ptIdx - 1] : null;
+                        if (!prevPt || prevPt.date !== pt.date) {
+                          return pt.date;
+                        }
+                        return '';
+                      }}
                     />
                     
                     <YAxis 
-                      stroke="#94a3b8" 
+                      stroke={isDark ? "#64748b" : "#94a3b8"} 
                       fontSize={11} 
                       tickLine={false} 
                       axisLine={false} 
@@ -679,23 +717,25 @@ export function Dashboard() {
                     
                     <Tooltip content={<TradeXChartTooltip />} />
                     
+                    {/* Main Realized Equity Curve */}
                     <Area 
                       type="monotone" 
                       dataKey="val1" 
-                      stroke="#1e293b" 
+                      stroke={isDark ? "#38bdf8" : "#2563eb"} 
                       strokeWidth={2.5} 
                       fillOpacity={1} 
-                      fill="url(#curveSlate)" 
+                      fill="url(#curveEquity)" 
                     />
                     
+                    {/* Benchmark Dotted Target Line (No Area Fill to keep graph crisp) */}
                     <Area 
                       type="monotone" 
                       dataKey="val2" 
-                      stroke="#0d9488" 
-                      strokeWidth={2} 
+                      stroke={isDark ? "#2dd4bf" : "#0d9488"} 
+                      strokeWidth={1.75} 
                       strokeDasharray="4 4"
-                      fillOpacity={1} 
-                      fill="url(#curveTeal)" 
+                      fillOpacity={0} 
+                      fill="none" 
                     />
                   </AreaChart>
                 </ResponsiveContainer>
