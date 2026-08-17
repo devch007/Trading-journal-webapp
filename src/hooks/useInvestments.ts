@@ -1,4 +1,6 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { supabase } from '../lib/supabase';
+import { useAuth } from '../contexts/AuthContext';
 
 export interface Holding {
   id: string;
@@ -59,73 +61,73 @@ const DEFAULT_HOLDINGS: Holding[] = [
     exchange: 'NSE',
     type: 'Equity',
     term: 'Long Term',
-    quantity: 20,
-    avgBuyPrice: 2410,
-    currentPrice: 2530,
-    dayChangePercent: 1.45,
+    quantity: 45,
+    avgBuyPrice: 2420,
+    currentPrice: 2895.4,
+    dayChangePercent: 1.15,
     sector: 'Energy',
     marketCap: 'Large Cap',
-    thesis: 'Expanding 5G monetization, retail scale, and new energy green hydrogen projects.',
-    targetPrice: 3100,
-    stopLoss: 2200,
-    holdingDays: 240,
-    dividendYield: 0.45,
-    annualDividend: 200,
-    lastReviewDate: '2026-03-10',
-    nextReviewDate: '2026-09-10',
+    thesis: 'Green hydrogen transition, retail FMCG aggressive expansion, and Jio telecom 5G monetization.',
+    targetPrice: 3400,
+    expectedReturnPercent: 40.5,
+    holdingDays: 310,
+    dividendYield: 0.35,
+    annualDividend: 450,
+    lastReviewDate: '2026-03-15',
+    nextReviewDate: '2026-09-15',
     scores: {
-      overall: 84,
-      fundamentals: 88,
-      valuation: 72,
-      growth: 90,
-      risk: 70,
-      conviction: 92
+      overall: 88,
+      fundamentals: 92,
+      valuation: 76,
+      growth: 89,
+      risk: 85,
+      conviction: 94
     },
     priceHistory: [
-      { date: 'Jan', price: 2320 },
-      { date: 'Feb', price: 2380 },
-      { date: 'Mar', price: 2450 },
-      { date: 'Apr', price: 2410 },
-      { date: 'May', price: 2490 },
-      { date: 'Jun', price: 2530 }
+      { date: 'Jan', price: 2550 },
+      { date: 'Feb', price: 2620 },
+      { date: 'Mar', price: 2710 },
+      { date: 'Apr', price: 2780 },
+      { date: 'May', price: 2840 },
+      { date: 'Jun', price: 2895.4 }
     ]
   },
   {
     id: 'h-2',
     symbol: 'HDFCBANK',
-    name: 'HDFC Bank Ltd.',
+    name: 'HDFC Bank Limited',
     exchange: 'NSE',
     type: 'Equity',
     term: 'Long Term',
-    quantity: 30,
-    avgBuyPrice: 1620,
-    currentPrice: 1695,
-    dayChangePercent: 0.85,
+    quantity: 80,
+    avgBuyPrice: 1540,
+    currentPrice: 1680.2,
+    dayChangePercent: -0.45,
     sector: 'Financials',
     marketCap: 'Large Cap',
-    thesis: 'Merger integration overhang receding, credit deposit ratio stabilizing with premium CASA growth.',
+    thesis: 'Post-merger deposit re-acceleration, strong CASA ratio improvement, NIM expansion in FY27.',
     targetPrice: 2050,
-    stopLoss: 1480,
-    holdingDays: 310,
-    dividendYield: 1.15,
-    annualDividend: 585,
-    lastReviewDate: '2026-02-15',
-    nextReviewDate: '2026-08-15',
+    expectedReturnPercent: 33.1,
+    holdingDays: 240,
+    dividendYield: 1.18,
+    annualDividend: 1560,
+    lastReviewDate: '2026-04-10',
+    nextReviewDate: '2026-10-10',
     scores: {
-      overall: 86,
-      fundamentals: 92,
-      valuation: 85,
-      growth: 82,
-      risk: 85,
-      conviction: 94
+      overall: 85,
+      fundamentals: 94,
+      valuation: 82,
+      growth: 78,
+      risk: 88,
+      conviction: 90
     },
     priceHistory: [
-      { date: 'Jan', price: 1580 },
-      { date: 'Feb', price: 1610 },
-      { date: 'Mar', price: 1640 },
-      { date: 'Apr', price: 1620 },
-      { date: 'May', price: 1665 },
-      { date: 'Jun', price: 1695 }
+      { date: 'Jan', price: 1520 },
+      { date: 'Feb', price: 1560 },
+      { date: 'Mar', price: 1605 },
+      { date: 'Apr', price: 1640 },
+      { date: 'May', price: 1690 },
+      { date: 'Jun', price: 1680.2 }
     ]
   },
   {
@@ -135,18 +137,18 @@ const DEFAULT_HOLDINGS: Holding[] = [
     exchange: 'NSE',
     type: 'Equity',
     term: 'Long Term',
-    quantity: 15,
-    avgBuyPrice: 3580,
+    quantity: 25,
+    avgBuyPrice: 3550,
     currentPrice: 3820,
-    dayChangePercent: -0.32,
+    dayChangePercent: 0.85,
     sector: 'IT',
     marketCap: 'Large Cap',
-    thesis: 'Leading enterprise GenAI deal pipeline and resilient operating margins above 26%.',
+    thesis: 'Generative AI client transformation deals, strong dividend yield and high ROCE cash generation.',
     targetPrice: 4400,
-    stopLoss: 3350,
-    holdingDays: 195,
-    dividendYield: 2.1,
-    annualDividend: 1100,
+    expectedReturnPercent: 23.9,
+    holdingDays: 180,
+    dividendYield: 1.75,
+    annualDividend: 1850,
     lastReviewDate: '2026-04-01',
     nextReviewDate: '2026-10-01',
     scores: {
@@ -248,21 +250,21 @@ const DEFAULT_HOLDINGS: Holding[] = [
     dayChangePercent: 3.4,
     sector: 'Others',
     marketCap: 'Mid Cap',
-    thesis: 'EMS & semiconductor OSAT testing capex tailwinds with multi-year order backlog.',
-    targetPrice: 5100,
+    thesis: 'Semiconductor OSAT plant approval & aggressive electronics manufacturing order inflows.',
+    targetPrice: 5200,
     stopLoss: 3950,
-    expectedReturnPercent: 21.4,
-    riskReward: '1:3.6',
-    holdingDays: 28,
+    expectedReturnPercent: 23.8,
+    riskReward: '1:4.0',
+    holdingDays: 22,
     lastReviewDate: '2026-05-20',
-    nextReviewDate: '2026-06-25',
+    nextReviewDate: '2026-06-20',
     scores: {
-      overall: 78,
+      overall: 79,
       fundamentals: 80,
-      valuation: 62,
+      valuation: 65,
       growth: 96,
-      risk: 60,
-      conviction: 85
+      risk: 62,
+      conviction: 84
     },
     priceHistory: [
       { date: 'W1', price: 4180 },
@@ -274,24 +276,34 @@ const DEFAULT_HOLDINGS: Holding[] = [
 ];
 
 const DEFAULT_WATCHLIST: WatchlistItem[] = [
-  { id: 'w-1', symbol: 'INFY', name: 'Infosys Ltd.', price: 1580, changePercent: -0.42, targetPrice: 1850, sector: 'IT' },
-  { id: 'w-2', symbol: 'LT', name: 'Larsen & Toubro Ltd.', price: 3620, changePercent: 0.85, targetPrice: 4200, sector: 'Infrastructure' },
-  { id: 'w-3', symbol: 'ICICIBANK', name: 'ICICI Bank Ltd.', price: 1145, changePercent: 1.2, targetPrice: 1320, sector: 'Financials' },
-  { id: 'w-4', symbol: 'TITAN', name: 'Titan Company Ltd.', price: 3410, changePercent: -0.65, targetPrice: 3900, sector: 'Consumer' }
+  { id: 'w-1', symbol: 'INFY', name: 'Infosys Ltd.', price: 1480, changePercent: 1.2, targetPrice: 1700, sector: 'IT' },
+  { id: 'w-2', symbol: 'ICICIBANK', name: 'ICICI Bank Ltd.', price: 1120, changePercent: -0.3, targetPrice: 1350, sector: 'Financials' },
+  { id: 'w-3', symbol: 'LT', name: 'Larsen & Toubro', price: 3580, changePercent: 0.8, targetPrice: 4100, sector: 'Energy' },
+  { id: 'w-4', symbol: 'ZOMATO', name: 'Zomato Ltd.', price: 185, changePercent: 4.1, targetPrice: 240, sector: 'Consumer' }
 ];
 
 export function useInvestments() {
+  const { user } = useAuth();
+  
   const [holdings, setHoldings] = useState<Holding[]>(() => {
+    if (typeof window === 'undefined') return DEFAULT_HOLDINGS;
     const saved = localStorage.getItem('tradex_investments');
     return saved ? JSON.parse(saved) : DEFAULT_HOLDINGS;
   });
 
   const [watchlist, setWatchlist] = useState<WatchlistItem[]>(() => {
+    if (typeof window === 'undefined') return DEFAULT_WATCHLIST;
     const saved = localStorage.getItem('tradex_investment_watchlist');
     return saved ? JSON.parse(saved) : DEFAULT_WATCHLIST;
   });
 
   const [wealthGoal, setWealthGoal] = useState<WealthGoal>(() => {
+    if (typeof window === 'undefined') return {
+      targetAmount: 2500000,
+      targetYear: 2030,
+      title: 'Financial Independence & Freedom Milestone',
+      monthlySip: 18500
+    };
     const saved = localStorage.getItem('tradex_wealth_goal');
     return saved ? JSON.parse(saved) : {
       targetAmount: 2500000,
@@ -301,6 +313,51 @@ export function useInvestments() {
     };
   });
 
+  // Sync from Supabase DB on user authentication
+  useEffect(() => {
+    if (!user) return;
+
+    const fetchDbHoldings = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('investments')
+          .select('*')
+          .eq('user_id', user.id);
+
+        if (!error && data && data.length > 0) {
+          const mapped: Holding[] = data.map(d => ({
+            id: d.id,
+            symbol: d.symbol,
+            name: d.name,
+            exchange: d.exchange || 'NSE',
+            type: d.type || 'Equity',
+            term: d.term || 'Long Term',
+            quantity: Number(d.quantity) || 1,
+            avgBuyPrice: Number(d.avg_buy_price) || 0,
+            currentPrice: Number(d.current_price) || 0,
+            dayChangePercent: Number(d.day_change_percent) || 0,
+            sector: d.sector || 'Others',
+            marketCap: d.market_cap || 'Large Cap',
+            thesis: d.thesis,
+            targetPrice: d.target_price ? Number(d.target_price) : undefined,
+            stopLoss: d.stop_loss ? Number(d.stop_loss) : undefined,
+            expectedReturnPercent: d.expected_return_percent ? Number(d.expected_return_percent) : undefined,
+            riskReward: d.risk_reward,
+            holdingDays: d.holding_days ? Number(d.holding_days) : undefined,
+            scores: d.scores,
+            priceHistory: d.price_history
+          }));
+          setHoldings(mapped);
+        }
+      } catch (err) {
+        // Table not created yet or offline, fallback to localStorage
+      }
+    };
+
+    fetchDbHoldings();
+  }, [user]);
+
+  // Persist locally
   useEffect(() => {
     localStorage.setItem('tradex_investments', JSON.stringify(holdings));
   }, [holdings]);
@@ -313,20 +370,73 @@ export function useInvestments() {
     localStorage.setItem('tradex_wealth_goal', JSON.stringify(wealthGoal));
   }, [wealthGoal]);
 
-  const addHolding = (holding: Omit<Holding, 'id'>) => {
+  const addHolding = async (holding: Omit<Holding, 'id'>) => {
+    const newId = 'h-' + Date.now();
     const newHolding: Holding = {
       ...holding,
-      id: 'h-' + Date.now()
+      id: newId
     };
     setHoldings(prev => [newHolding, ...prev]);
+
+    // Save to Supabase if logged in
+    if (user) {
+      try {
+        await supabase.from('investments').insert({
+          user_id: user.id,
+          symbol: holding.symbol,
+          name: holding.name,
+          exchange: holding.exchange,
+          type: holding.type,
+          term: holding.term,
+          quantity: holding.quantity,
+          avg_buy_price: holding.avgBuyPrice,
+          current_price: holding.currentPrice,
+          day_change_percent: holding.dayChangePercent,
+          sector: holding.sector,
+          market_cap: holding.marketCap,
+          thesis: holding.thesis,
+          target_price: holding.targetPrice,
+          stop_loss: holding.stopLoss,
+          scores: holding.scores,
+          price_history: holding.priceHistory
+        });
+      } catch (e) {
+        // Continue
+      }
+    }
   };
 
-  const updateHolding = (id: string, updates: Partial<Holding>) => {
+  const updateHolding = async (id: string, updates: Partial<Holding>) => {
     setHoldings(prev => prev.map(h => h.id === id ? { ...h, ...updates } : h));
+
+    if (user) {
+      try {
+        const payload: any = {};
+        if (updates.currentPrice !== undefined) payload.current_price = updates.currentPrice;
+        if (updates.dayChangePercent !== undefined) payload.day_change_percent = updates.dayChangePercent;
+        if (updates.thesis !== undefined) payload.thesis = updates.thesis;
+        if (updates.quantity !== undefined) payload.quantity = updates.quantity;
+        if (updates.avgBuyPrice !== undefined) payload.avg_buy_price = updates.avgBuyPrice;
+        if (updates.targetPrice !== undefined) payload.target_price = updates.targetPrice;
+        if (updates.stopLoss !== undefined) payload.stop_loss = updates.stopLoss;
+
+        await supabase.from('investments').update(payload).eq('id', id);
+      } catch (e) {
+        // Continue
+      }
+    }
   };
 
-  const deleteHolding = (id: string) => {
+  const deleteHolding = async (id: string) => {
     setHoldings(prev => prev.filter(h => h.id !== id));
+
+    if (user) {
+      try {
+        await supabase.from('investments').delete().eq('id', id);
+      } catch (e) {
+        // Continue
+      }
+    }
   };
 
   const addToWatchlist = (item: Omit<WatchlistItem, 'id'>) => {
