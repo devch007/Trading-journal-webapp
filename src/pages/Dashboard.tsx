@@ -174,12 +174,11 @@ export function Dashboard() {
 
   // Key metrics calculated dynamically from user trades for the selected account
   const stats = useMemo(() => {
-    const initialCap = selectedAccount?.initialCapital || 100000;
-    const currentEquity = selectedAccount?.currentEquity || initialCap;
+    const initialCap = selectedAccount?.initialCapital || 1000;
     
     if (!trades.length) {
       return {
-        balance: currentEquity,
+        balance: initialCap,
         totalProfit: 0,
         avgGrowing: 0,
         winRate: 0,
@@ -220,7 +219,7 @@ export function Dashboard() {
       .sort((a, b) => b.pnl - a.pnl);
 
     return {
-      balance: currentEquity + totalPnl,
+      balance: initialCap + totalPnl,
       totalProfit: totalPnl,
       avgGrowing: ((totalPnl / initialCap) * 100) / Math.max(1, trades.length),
       winRate,
@@ -384,8 +383,8 @@ export function Dashboard() {
     let running = initialBalance;
     let baseline = initialBalance;
 
-    // Calculate baseline up to active range (0.4% ambitious target growth per trade)
-    const TARGET_RATE = 0.004; // 0.4% per trade (10% target over 25 trades)
+    // Calculate baseline up to active range (0.12% steady realistic target growth per trade)
+    const TARGET_RATE = 0.0012; // 0.12% per trade
     const startIndex = allSorted.indexOf(activeTrades[0]);
     for (let i = 0; i < startIndex; i++) {
       running += Number(allSorted[i].pnl) || 0;
