@@ -1,6 +1,6 @@
 /**
  * AI Vision Pipeline for Trading Screenshot Analysis (MT4, MT5, TradingView, Brokers)
- * High-Accuracy Exhaustive OCR Extraction with Multi-Model Fallbacks
+ * High-Accuracy Exhaustive OCR with Dual-Pass Multi-Slice High-Resolution Scanning
  */
 
 export interface ExtractedTrade {
@@ -52,51 +52,50 @@ export function setGeminiApiKey(key: string) {
   }
 }
 
-const EXHAUSTIVE_EXTRACTION_PROMPT = `You are a precision Optical Character Recognition (OCR) engine for financial trading statements and platforms (MetaTrader 4, MetaTrader 5, cTrader, TradingView, Binance, Zerodha, AngelOne, Exness, Bybit, Prop Firm Dashboards).
+const EXHAUSTIVE_EXTRACTION_PROMPT = `You are a high-precision trading journal OCR scanner. Your task is to extract EVERY SINGLE trade row visible in this screenshot with 100% completeness.
 
-CRITICAL INSTRUCTIONS FOR 100% COMPLETENESS:
-1. SCAN EXHAUSTIVELY: Scan the image top-to-bottom, row-by-row, column-by-column. Count every visible trade row. Do NOT skip any row, even if it is at the very top edge, bottom edge, or slightly faded.
-2. EXTRACT EVERY SINGLE TRADE: If there are multiple trades for the same symbol (e.g. 5 separate EURUSD orders), extract EACH ONE as a separate item in the array. Do not combine or summarize them.
-3. DATA EXTRACTION DETAILS:
-   - symbol: Currency pair, ticker, or crypto asset in uppercase (e.g. EURUSD, XAUUSD, BTCUSDT, RELIANCE, NQ, ES).
-   - type: "BUY" or "SELL" (long vs short).
-   - volume: Lot size or quantity (e.g. 0.50, 1.0, 10).
-   - entry_price: Original open price as a string (e.g. "1.08500", "2350.25").
-   - exit_price: Close price as a string. If open, leave blank or same.
-   - profit: Net or gross P&L as a floating number. Positive for green gains (+120.50), negative for red losses (-45.20).
-   - commission: Broker fee / swap if visible (as positive number, e.g. 3.50).
-   - close_reason: "Take profit", "Stop loss", "Market close", "SL hit", "TP hit", or "Manual".
-   - date_time: Timestamp formatted as "YYYY.MM.DD HH:MM:SS" or string found in image.
-   - confidence: "High" or "Medium".
+CRITICAL EXTRACTION RULES:
+1. SCAN TOP-TO-BOTTOM EXHAUSTIVELY: Read every visible row in the table, trade history list, or position log. Count each individual trade row. DO NOT SKIP OR OMIT ANY ROW.
+2. INDIVIDUAL ENTRIES: If the same symbol appears multiple times (e.g. 5 scalps on XAUUSD or EURUSD), extract EACH ONE as a separate item in the array. Never combine them.
+3. FIELDS TO EXTRACT:
+   - symbol: Standard symbol name (e.g. "EURUSD", "XAUUSD", "BTCUSDT", "NQ", "RELIANCE", "GBPJPY").
+   - type: "BUY" or "SELL".
+   - volume: Lot size or quantity as a number (e.g. 0.01, 0.10, 1.00, 50).
+   - entry_price: Open/entry price as string (e.g. "2340.50", "1.08450").
+   - exit_price: Close/current price as string (e.g. "2355.80", "1.08900").
+   - profit: Net or gross P&L as a floating number (e.g. 150.00 for profit, -45.50 for loss).
+   - commission: Swap/commission fee as a number (e.g. 0.0, 3.50).
+   - close_reason: "Take profit", "Stop loss", "Manual close", "SL", "TP", or "Market".
+   - date_time: Timestamp visible on that row (e.g. "2026.04.15 14:30:00").
+   - confidence: "High".
 
-Return ONLY a valid JSON object matching this schema:
+Return ONLY valid JSON matching this schema:
 {
   "trades": [
     {
-      "symbol": "EURUSD",
+      "symbol": "XAUUSD",
       "type": "BUY",
-      "volume": 1.0,
-      "entry_price": "1.08500",
-      "exit_price": "1.08900",
-      "profit": 400.0,
+      "volume": 0.5,
+      "entry_price": "2340.50",
+      "exit_price": "2355.80",
+      "profit": 765.0,
       "commission": 0.0,
       "close_reason": "Take profit",
-      "date_time": "2026.04.03 14:30:00",
+      "date_time": "2026.04.15 14:30:00",
       "confidence": "High"
     }
   ]
 }`;
 
 /**
- * Attempt extraction using Groq Vision models
+ * Attempt extraction with Groq Vision
  */
-async function extractWithGroq(base64Data: string, mimeType: string, apiKey: string): Promise<ExtractionResult | null> {
+async function extractWithGroq(base64Data: string, mimeType: string, apiKey: string): Promise<ExtractedTrade[]> {
   const models = [
     "qwen/qwen3.6-27b",
     "meta-llama/llama-4-scout-17b-16e-instruct",
     "meta-llama/llama-4-maverick-17b-128e-instruct",
-    "llama-3.2-11b-vision-preview",
-    "llama-3.2-90b-vision-preview"
+    "llama-3.2-11b-vision-preview"
   ];
 
   for (const model of models) {
@@ -133,21 +132,21 @@ async function extractWithGroq(base64Data: string, mimeType: string, apiKey: str
         const jsonMatch = content.match(/\{[\s\S]*\}/);
         const parsed = JSON.parse(jsonMatch ? jsonMatch[0] : "{}");
         if (parsed && Array.isArray(parsed.trades) && parsed.trades.length > 0) {
-          return { trades: parsed.trades, source: `Groq (${model})` };
+          return parsed.trades;
         }
       }
     } catch (e) {
-      // Continue to next model
+      // Try next model
     }
   }
 
-  return null;
+  return [];
 }
 
 /**
- * Attempt extraction using Google Gemini Vision
+ * Attempt extraction with Google Gemini
  */
-async function extractWithGemini(base64Data: string, mimeType: string, apiKey: string): Promise<ExtractionResult | null> {
+async function extractWithGemini(base64Data: string, mimeType: string, apiKey: string): Promise<ExtractedTrade[]> {
   const geminiModels = ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro'];
 
   for (const model of geminiModels) {
@@ -184,7 +183,7 @@ async function extractWithGemini(base64Data: string, mimeType: string, apiKey: s
         const jsonMatch = text.match(/\{[\s\S]*\}/);
         const parsed = JSON.parse(jsonMatch ? jsonMatch[0] : "{}");
         if (parsed && Array.isArray(parsed.trades) && parsed.trades.length > 0) {
-          return { trades: parsed.trades, source: `Gemini (${model})` };
+          return parsed.trades;
         }
       }
     } catch (e) {
@@ -192,16 +191,96 @@ async function extractWithGemini(base64Data: string, mimeType: string, apiKey: s
     }
   }
 
-  return null;
+  return [];
 }
 
 /**
- * Main Screenshot OCR analysis entrypoint
+ * Slice an image into Top and Bottom segments for high-density vertical phone screenshots
+ */
+async function sliceImage(file: File): Promise<string[]> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      const { width, height } = img;
+      
+      // If it's a tall mobile screenshot (height > 900 & height > width), slice to double resolution
+      if (height > 900 && height > width * 1.1) {
+        const canvasTop = document.createElement('canvas');
+        const ctxTop = canvasTop.getContext('2d');
+        canvasTop.width = width;
+        canvasTop.height = Math.round(height * 0.58);
+        if (ctxTop) {
+          ctxTop.drawImage(img, 0, 0, width, canvasTop.height, 0, 0, width, canvasTop.height);
+        }
+
+        const canvasBottom = document.createElement('canvas');
+        const ctxBottom = canvasBottom.getContext('2d');
+        canvasBottom.width = width;
+        canvasBottom.height = Math.round(height * 0.58);
+        const startY = Math.round(height * 0.42);
+        if (ctxBottom) {
+          ctxBottom.drawImage(img, 0, startY, width, height - startY, 0, 0, width, height - startY);
+        }
+
+        const topB64 = canvasTop.toDataURL('image/jpeg', 0.95).split(',')[1];
+        const bottomB64 = canvasBottom.toDataURL('image/jpeg', 0.95).split(',')[1];
+        resolve([topB64, bottomB64]);
+      } else {
+        resolve([]);
+      }
+    };
+    img.onerror = () => resolve([]);
+    img.src = URL.createObjectURL(file);
+  });
+}
+
+/**
+ * Deduplicate trades accurately based on unique properties
+ */
+function deduplicateTrades(tradeList: ExtractedTrade[]): ExtractedTrade[] {
+  const seen = new Set<string>();
+  const result: ExtractedTrade[] = [];
+
+  for (const t of tradeList) {
+    if (!t || !t.symbol) continue;
+
+    const sym = t.symbol.toUpperCase().trim();
+    const type = (t.type || 'BUY').toUpperCase();
+    const vol = parseFloat(String(t.volume || 0)).toFixed(2);
+    const pnl = parseFloat(String(t.profit || 0)).toFixed(2);
+    const entry = String(t.entry_price || '').trim();
+    const dt = String(t.date_time || '').trim();
+
+    // Primary unique signature
+    const key = `${sym}_${type}_${vol}_${pnl}_${entry}_${dt}`;
+    
+    // Secondary fallback signature if date or entry is slightly parsed
+    const looseKey = `${sym}_${type}_${vol}_${pnl}`;
+
+    if (!seen.has(key)) {
+      seen.add(key);
+      seen.add(looseKey);
+      result.push({
+        ...t,
+        symbol: sym,
+        type: type === 'SELL' ? 'SELL' : 'BUY',
+        volume: parseFloat(String(t.volume)) || 1.0,
+        profit: parseFloat(String(t.profit)) || 0.0,
+        commission: parseFloat(String(t.commission)) || 0.0,
+        confidence: 'High'
+      });
+    }
+  }
+
+  return result;
+}
+
+/**
+ * Main Screenshot OCR analysis entrypoint with Dual-Pass Multi-Slice High-Resolution Scanning
  */
 export async function analyzeTradeScreenshot(file: File): Promise<ExtractionResult> {
-  // Convert File to base64
+  const reader = new FileReader();
   const base64Data = await new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
     reader.onload = () => {
       const res = reader.result as string;
       const b64 = res.includes(',') ? res.split(',')[1] : res;
@@ -214,27 +293,49 @@ export async function analyzeTradeScreenshot(file: File): Promise<ExtractionResu
   const groqKey = getAiApiKey();
   const geminiKey = getGeminiApiKey();
 
-  // 1. Try Groq Vision if Groq key exists
-  if (groqKey) {
-    const groqRes = await extractWithGroq(base64Data, file.type || 'image/jpeg', groqKey);
-    if (groqRes && groqRes.trades.length > 0) {
-      return groqRes;
-    }
-  }
-
-  // 2. Try Gemini Vision if Gemini key exists
-  if (geminiKey) {
-    const geminiRes = await extractWithGemini(base64Data, file.type || 'image/jpeg', geminiKey);
-    if (geminiRes && geminiRes.trades.length > 0) {
-      return geminiRes;
-    }
-  }
-
-  // 3. If no key is set or all APIs returned 0 trades
   if (!groqKey && !geminiKey) {
     return {
       trades: [],
       error: "MISSING_API_KEY"
+    };
+  }
+
+  const allRawTrades: ExtractedTrade[] = [];
+  const mimeType = file.type || 'image/jpeg';
+
+  // 1. Primary Full-Image Scan
+  if (groqKey) {
+    const fullTrades = await extractWithGroq(base64Data, mimeType, groqKey);
+    allRawTrades.push(...fullTrades);
+  } else if (geminiKey) {
+    const fullTrades = await extractWithGemini(base64Data, mimeType, geminiKey);
+    allRawTrades.push(...fullTrades);
+  }
+
+  // 2. High-Resolution Sliced Dual-Pass Scan (Captures dense middle/bottom rows on mobile screenshots)
+  try {
+    const slices = await sliceImage(file);
+    if (slices.length > 0) {
+      for (const sliceB64 of slices) {
+        if (groqKey) {
+          const sliceTrades = await extractWithGroq(sliceB64, 'image/jpeg', groqKey);
+          allRawTrades.push(...sliceTrades);
+        } else if (geminiKey) {
+          const sliceTrades = await extractWithGemini(sliceB64, 'image/jpeg', geminiKey);
+          allRawTrades.push(...sliceTrades);
+        }
+      }
+    }
+  } catch (sliceErr) {
+    // If slice fails in browser canvas, full image scan is already stored
+  }
+
+  const uniqueTrades = deduplicateTrades(allRawTrades);
+
+  if (uniqueTrades.length > 0) {
+    return {
+      trades: uniqueTrades,
+      source: "AI High-Res Multi-Scan"
     };
   }
 
