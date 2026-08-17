@@ -1,6 +1,6 @@
 /**
  * AI Vision Pipeline for Trading Screenshot Analysis (MT4, MT5, TradingView, Brokers)
- * Multi-model fallback: Groq Vision (Qwen/Llama4) -> Google Gemini -> Smart Parser
+ * High-Accuracy Exhaustive OCR Extraction with Multi-Model Fallbacks
  */
 
 export interface ExtractedTrade {
@@ -52,17 +52,32 @@ export function setGeminiApiKey(key: string) {
   }
 }
 
-const EXTRACTION_PROMPT = `You are an expert trading journal OCR assistant. Analyze this trade execution screenshot (from MetaTrader 4/5, TradingView, cTrader, Binance, Zerodha, Exness, or Broker statements) and extract all closed or open trade executions.
+const EXHAUSTIVE_EXTRACTION_PROMPT = `You are a precision Optical Character Recognition (OCR) engine for financial trading statements and platforms (MetaTrader 4, MetaTrader 5, cTrader, TradingView, Binance, Zerodha, AngelOne, Exness, Bybit, Prop Firm Dashboards).
 
-Return ONLY a JSON object with this exact structure:
+CRITICAL INSTRUCTIONS FOR 100% COMPLETENESS:
+1. SCAN EXHAUSTIVELY: Scan the image top-to-bottom, row-by-row, column-by-column. Count every visible trade row. Do NOT skip any row, even if it is at the very top edge, bottom edge, or slightly faded.
+2. EXTRACT EVERY SINGLE TRADE: If there are multiple trades for the same symbol (e.g. 5 separate EURUSD orders), extract EACH ONE as a separate item in the array. Do not combine or summarize them.
+3. DATA EXTRACTION DETAILS:
+   - symbol: Currency pair, ticker, or crypto asset in uppercase (e.g. EURUSD, XAUUSD, BTCUSDT, RELIANCE, NQ, ES).
+   - type: "BUY" or "SELL" (long vs short).
+   - volume: Lot size or quantity (e.g. 0.50, 1.0, 10).
+   - entry_price: Original open price as a string (e.g. "1.08500", "2350.25").
+   - exit_price: Close price as a string. If open, leave blank or same.
+   - profit: Net or gross P&L as a floating number. Positive for green gains (+120.50), negative for red losses (-45.20).
+   - commission: Broker fee / swap if visible (as positive number, e.g. 3.50).
+   - close_reason: "Take profit", "Stop loss", "Market close", "SL hit", "TP hit", or "Manual".
+   - date_time: Timestamp formatted as "YYYY.MM.DD HH:MM:SS" or string found in image.
+   - confidence: "High" or "Medium".
+
+Return ONLY a valid JSON object matching this schema:
 {
   "trades": [
     {
       "symbol": "EURUSD",
       "type": "BUY",
       "volume": 1.0,
-      "entry_price": "1.0850",
-      "exit_price": "1.0890",
+      "entry_price": "1.08500",
+      "exit_price": "1.08900",
       "profit": 400.0,
       "commission": 0.0,
       "close_reason": "Take profit",
@@ -70,9 +85,7 @@ Return ONLY a JSON object with this exact structure:
       "confidence": "High"
     }
   ]
-}
-
-If profit is negative, provide a negative number (e.g. -150.50). If symbol is crypto (BTCUSDT), forex (EURUSD, XAUUSD), or stock (RELIANCE, AAPL), normalize standard uppercase symbols.`;
+}`;
 
 /**
  * Attempt extraction using Groq Vision models
@@ -100,7 +113,7 @@ async function extractWithGroq(base64Data: string, mimeType: string, apiKey: str
             {
               role: "user",
               content: [
-                { type: "text", text: EXTRACTION_PROMPT },
+                { type: "text", text: EXHAUSTIVE_EXTRACTION_PROMPT },
                 {
                   type: "image_url",
                   image_url: { url: `data:${mimeType};base64,${base64Data}` }
@@ -108,7 +121,8 @@ async function extractWithGroq(base64Data: string, mimeType: string, apiKey: str
               ]
             }
           ],
-          temperature: 0.1,
+          temperature: 0.0,
+          max_tokens: 4096,
           response_format: { type: "json_object" }
         })
       });
@@ -146,7 +160,7 @@ async function extractWithGemini(base64Data: string, mimeType: string, apiKey: s
           contents: [
             {
               parts: [
-                { text: EXTRACTION_PROMPT },
+                { text: EXHAUSTIVE_EXTRACTION_PROMPT },
                 {
                   inline_data: {
                     mime_type: mimeType,
@@ -158,7 +172,8 @@ async function extractWithGemini(base64Data: string, mimeType: string, apiKey: s
           ],
           generationConfig: {
             response_mime_type: "application/json",
-            temperature: 0.1
+            temperature: 0.0,
+            maxOutputTokens: 8192
           }
         })
       });
