@@ -46,11 +46,11 @@ export function SmartEmptyState({
       </div>
 
       {(actionLabel || secondaryActionLabel) && (
-        <div className="flex flex-wrap items-center justify-center gap-2 pt-1 z-10">
+        <div className="flex flex-wrap items-center justify-center gap-2.5 pt-1 z-10">
           {actionLabel && (
             <button
               onClick={onAction}
-              className="px-4 py-2 rounded-xl bg-[#111827] dark:bg-white text-white dark:text-gray-900 text-xs font-semibold shadow-xs hover:bg-gray-800 dark:hover:bg-gray-100 transition-all flex items-center gap-1.5 cursor-pointer"
+              className="btn-primary text-xs"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>{actionLabel}</span>
@@ -60,7 +60,7 @@ export function SmartEmptyState({
           {secondaryActionLabel && (
             <button
               onClick={onSecondaryAction}
-              className="px-3.5 py-2 rounded-xl bg-gray-50 dark:bg-neutral-800 border border-gray-200/80 dark:border-neutral-700 text-gray-700 dark:text-gray-300 text-xs font-semibold hover:bg-gray-100 dark:hover:bg-neutral-700 transition-all flex items-center gap-1.5 cursor-pointer"
+              className="btn-secondary text-xs"
             >
               <Upload className="w-3.5 h-3.5" />
               <span>{secondaryActionLabel}</span>

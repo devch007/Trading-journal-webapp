@@ -171,28 +171,28 @@ export function TradingCalendarHeatmap({ trades, selectedAccountId }: TradingCal
         </div>
 
         {/* Month Selector Controls */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <button
             onClick={resetToLatest}
-            className="px-3 py-1.5 rounded-xl text-xs font-semibold text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-neutral-800 border border-gray-200/80 dark:border-neutral-700 transition-colors"
+            className="btn-secondary py-1.5 px-3 text-xs"
           >
             Today
           </button>
           
-          <div className="flex items-center bg-gray-50 dark:bg-neutral-800/80 rounded-xl border border-gray-200/80 dark:border-neutral-700 p-0.5">
+          <div className="segment-pill-container">
             <button
               onClick={prevMonth}
-              className="p-1.5 hover:bg-white dark:hover:bg-neutral-700 rounded-lg text-gray-600 dark:text-gray-300 transition-colors"
+              className="p-1 hover:bg-white dark:hover:bg-neutral-700 rounded-lg text-gray-600 dark:text-gray-300 transition-colors"
               title="Previous Month"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
-            <span className="px-3 text-xs font-bold text-gray-900 dark:text-white min-w-[110px] text-center select-none">
+            <span className="px-2.5 text-xs font-bold text-gray-900 dark:text-white min-w-[100px] text-center select-none">
               {format(currentMonth, 'MMMM yyyy')}
             </span>
             <button
               onClick={nextMonth}
-              className="p-1.5 hover:bg-white dark:hover:bg-neutral-700 rounded-lg text-gray-600 dark:text-gray-300 transition-colors"
+              className="p-1 hover:bg-white dark:hover:bg-neutral-700 rounded-lg text-gray-600 dark:text-gray-300 transition-colors"
               title="Next Month"
             >
               <ChevronRight className="w-4 h-4" />

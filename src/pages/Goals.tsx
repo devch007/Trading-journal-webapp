@@ -615,23 +615,15 @@ export function Goals() {
       <div className="p-6 md:p-8 space-y-7 max-w-[1600px] w-full mx-auto">
         {/* Tab switcher + Summary bar */}
         <div className="flex flex-col gap-4">
-          <div className="flex p-1 self-start bg-white dark:bg-[#16181f] border border-gray-200/80 dark:border-neutral-800/80 rounded-2xl shadow-2xs">
+          <div className="segment-pill-container self-start">
             {(['Day', 'Week', 'Month'] as Timeframe[]).map(tab => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={cn(
-                  'relative px-6 py-2 text-xs font-semibold rounded-xl transition-all z-10',
-                  activeTab === tab ? 'text-white dark:text-gray-900' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-                )}
+                className={`segment-pill-btn px-6 py-2 ${
+                  activeTab === tab ? 'segment-pill-btn-active' : ''
+                }`}
               >
-                {activeTab === tab && (
-                  <motion.div
-                    layoutId="goalsTab"
-                    className="absolute inset-0 bg-[#111827] dark:bg-white rounded-xl -z-10 shadow-xs"
-                    transition={{ type: "spring", stiffness: 350, damping: 30 }}
-                  />
-                )}
                 {tab}
               </button>
             ))}

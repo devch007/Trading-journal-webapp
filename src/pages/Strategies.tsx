@@ -229,9 +229,9 @@ export function Strategies() {
         actionButton={
           <button 
             onClick={() => { setEditTarget(undefined); setShowForm(true); }}
-            className="flex items-center gap-2 bg-[#111827] dark:bg-white text-white dark:text-gray-900 px-5 py-2.5 rounded-2xl font-semibold text-xs transition-all shadow-xs hover:bg-black dark:hover:bg-gray-100 group"
+            className="btn-primary"
           >
-            <Plus className="w-4 h-4 group-hover:scale-110 transition-transform" />
+            <Plus className="w-4 h-4" />
             <span>New Strategy</span>
           </button>
         }

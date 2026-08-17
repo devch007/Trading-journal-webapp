@@ -188,17 +188,14 @@ export function Journal() {
           </div>
 
           {/* Segmented Filter Pills */}
-          <div className="bg-white dark:bg-[#16181f] p-1 rounded-2xl border border-gray-200/80 dark:border-neutral-800/80 shadow-2xs flex items-center gap-1">
+          <div className="segment-pill-container w-full">
             {(["All", "Journaled", "Pending"] as const).map(tab => (
               <button 
                 key={tab} 
                 onClick={() => setActiveTab(tab)}
-                className={cn(
-                  "flex-1 py-1.5 rounded-xl text-xs font-semibold transition-all",
-                  activeTab === tab 
-                    ? "bg-[#111827] dark:bg-white text-white dark:text-gray-900 shadow-xs" 
-                    : "text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-neutral-800"
-                )}
+                className={`segment-pill-btn flex-1 ${
+                  activeTab === tab ? 'segment-pill-btn-active' : ''
+                }`}
               >
                 {tab}
               </button>

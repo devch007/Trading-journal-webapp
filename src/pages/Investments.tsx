@@ -240,12 +240,12 @@ export function Investments() {
             {/* Term Horizon Toggle, Sync & Add Button */}
             <div className="flex flex-wrap items-center gap-2.5">
               {/* All / Short Term / Long Term Toggle */}
-              <div className="bg-white dark:bg-[#16181f] p-1 rounded-2xl border border-gray-200/80 dark:border-neutral-800 shadow-2xs flex items-center gap-1">
+              <div className="segment-pill-container">
                 {(['All', 'Short Term', 'Long Term'] as const).map(t => (
                   <button
                     key={t}
                     onClick={() => setTermFilter(t)}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${termFilter === t ? 'bg-[#111827] dark:bg-white text-white dark:text-gray-900 shadow-xs' : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'}`}
+                    className={`segment-pill-btn ${termFilter === t ? 'segment-pill-btn-active' : ''}`}
                   >
                     {t}
                   </button>
@@ -257,7 +257,7 @@ export function Investments() {
                 onClick={handleSyncPrices}
                 disabled={isSyncing}
                 title="Sync live quotes from dev.indianapi.in"
-                className="px-3 py-2 bg-white dark:bg-[#16181f] hover:bg-gray-50 dark:hover:bg-neutral-800 border border-gray-200/80 dark:border-neutral-800 rounded-2xl text-xs font-semibold text-gray-700 dark:text-gray-200 shadow-2xs transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-60"
+                className="btn-secondary"
               >
                 <RefreshCw className={`w-3.5 h-3.5 text-blue-500 ${isSyncing ? 'animate-spin' : ''}`} />
                 <span className="hidden sm:inline">{isSyncing ? 'Syncing...' : 'Sync Live'}</span>
@@ -267,16 +267,16 @@ export function Investments() {
               <button
                 onClick={() => setIsApiKeyModalOpen(true)}
                 title="Configure dev.indianapi.in API Key"
-                className="p-2 bg-white dark:bg-[#16181f] hover:bg-gray-50 dark:hover:bg-neutral-800 border border-gray-200/80 dark:border-neutral-800 rounded-2xl text-xs font-semibold text-gray-700 dark:text-gray-200 shadow-2xs transition-all flex items-center gap-1 cursor-pointer"
+                className="btn-icon"
               >
-                <Key className="w-3.5 h-3.5 text-amber-500" />
+                <Key className="w-4 h-4 text-amber-500" />
               </button>
 
               <button
                 onClick={() => setIsAddModalOpen(true)}
-                className="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl text-xs font-bold shadow-sm transition-all flex items-center gap-1.5 cursor-pointer"
+                className="btn-primary"
               >
-                <Plus className="w-3.5 h-3.5" />
+                <Plus className="w-4 h-4" />
                 <span>Add Holding</span>
               </button>
             </div>
@@ -599,12 +599,12 @@ export function Investments() {
               </div>
 
               {/* Segmented Tabs */}
-              <div className="grid grid-cols-3 gap-1 p-1 bg-gray-50 dark:bg-neutral-800/70 rounded-xl border border-gray-200/80 dark:border-neutral-700">
+              <div className="segment-pill-container w-full justify-between">
                 {(['Asset Class', 'Sector', 'Market Cap'] as const).map(tab => (
                   <button
                     key={tab}
                     onClick={() => setAllocationTab(tab)}
-                    className={`py-1.5 rounded-lg text-[10px] font-bold transition-all ${allocationTab === tab ? 'bg-white dark:bg-[#16181f] text-gray-900 dark:text-white shadow-2xs' : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'}`}
+                    className={`segment-pill-btn flex-1 ${allocationTab === tab ? 'segment-pill-btn-active' : ''}`}
                   >
                     {tab}
                   </button>

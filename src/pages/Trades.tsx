@@ -451,7 +451,7 @@ export function Trades() {
                 <select
                   value={filterSymbol}
                   onChange={(e) => setFilterSymbol(e.target.value)}
-                  className="appearance-none bg-gray-50 dark:bg-neutral-800/60 hover:bg-gray-100 dark:hover:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-xl pl-3 pr-8 py-2 text-xs font-medium text-gray-700 dark:text-gray-300 cursor-pointer transition-colors focus:outline-none shadow-2xs"
+                  className="appearance-none btn-secondary pl-3 pr-8 py-2 text-xs cursor-pointer focus:outline-none"
                 >
                   <option value="ALL">All Pairs</option>
                   {uniqueSymbols.map(sym => (
@@ -466,7 +466,7 @@ export function Trades() {
                 <select
                   value={filterAction}
                   onChange={(e) => setFilterAction(e.target.value)}
-                  className="appearance-none bg-gray-50 dark:bg-neutral-800/60 hover:bg-gray-100 dark:hover:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-xl pl-3 pr-8 py-2 text-xs font-medium text-gray-700 dark:text-gray-300 cursor-pointer transition-colors focus:outline-none shadow-2xs"
+                  className="appearance-none btn-secondary pl-3 pr-8 py-2 text-xs cursor-pointer focus:outline-none"
                 >
                   <option value="ALL">Any Action</option>
                   <option value="BUY">Buy</option>
@@ -480,7 +480,7 @@ export function Trades() {
                 <select
                   value={filterStrategy}
                   onChange={(e) => setFilterStrategy(e.target.value)}
-                  className="appearance-none bg-gray-50 dark:bg-neutral-800/60 hover:bg-gray-100 dark:hover:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-xl pl-3 pr-8 py-2 text-xs font-medium text-gray-700 dark:text-gray-300 cursor-pointer transition-colors focus:outline-none shadow-2xs"
+                  className="appearance-none btn-secondary pl-3 pr-8 py-2 text-xs cursor-pointer focus:outline-none"
                 >
                   <option value="ALL">All Strategies</option>
                   {uniqueStrategies.map(strategy => (
@@ -495,7 +495,7 @@ export function Trades() {
                 <select
                   value={filterRange}
                   onChange={(e) => setFilterRange(e.target.value)}
-                  className="appearance-none bg-gray-50 dark:bg-neutral-800/60 hover:bg-gray-100 dark:hover:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-xl pl-3 pr-8 py-2 text-xs font-medium text-gray-700 dark:text-gray-300 cursor-pointer transition-colors focus:outline-none shadow-2xs"
+                  className="appearance-none btn-secondary pl-3 pr-8 py-2 text-xs cursor-pointer focus:outline-none"
                 >
                   <option value="7D">Last 7 Days</option>
                   <option value="30D">Last 30 Days</option>
@@ -504,6 +504,18 @@ export function Trades() {
                 </select>
                 <Calendar className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
               </div>
+
+              {/* Log Trade Button */}
+              <button
+                onClick={() => {
+                  setEditingTrade(null);
+                  setIsTradeModalOpen(true);
+                }}
+                className="btn-primary"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Log Trade</span>
+              </button>
             </div>
           </div>
           

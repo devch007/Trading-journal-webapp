@@ -247,6 +247,179 @@
     border-color: rgba(255, 255, 255, 0.14);
   }
 
+  /* ── TradeX Luxury Button & Segmented Control System ── */
+
+  /* Primary Blue Button (+ Add folder / Action style) */
+  .btn-primary {
+    background-color: #1a73e8;
+    background-image: linear-gradient(180deg, #2b7de9 0%, #1a73e8 100%);
+    color: #ffffff;
+    border: 1px solid #1765cc;
+    border-radius: 0.75rem;
+    padding: 0.5rem 1rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.375rem;
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.3), 0 1px 3px rgba(26, 115, 232, 0.35);
+    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+  }
+  .btn-primary:hover {
+    background-color: #1557b0;
+    background-image: linear-gradient(180deg, #226edb 0%, #1557b0 100%);
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.35), 0 2px 8px rgba(26, 115, 232, 0.45);
+    transform: translateY(-0.5px);
+  }
+  .btn-primary:active {
+    transform: translateY(0.5px);
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2);
+  }
+  .btn-primary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+
+  /* Secondary / White Outline Button (Upload style) */
+  .btn-secondary {
+    background-color: #ffffff;
+    color: #111827;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.75rem;
+    padding: 0.5rem 1rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.375rem;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+  }
+  .dark .btn-secondary {
+    background-color: #16181f;
+    color: #f3f4f6;
+    border-color: #262626;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  }
+  .btn-secondary:hover {
+    background-color: #f9fafb;
+    border-color: #d1d5db;
+    transform: translateY(-0.5px);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.06);
+  }
+  .dark .btn-secondary:hover {
+    background-color: #1f222b;
+    border-color: #383b47;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  }
+  .btn-secondary:active {
+    transform: translateY(0.5px);
+  }
+  .btn-secondary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  /* Icon Button (Refresh / Key / Action icon style) */
+  .btn-icon {
+    background-color: #ffffff;
+    color: #4b5563;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.75rem;
+    padding: 0.5rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+    user-select: none;
+  }
+  .dark .btn-icon {
+    background-color: #16181f;
+    color: #9ca3af;
+    border-color: #262626;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  }
+  .btn-icon:hover {
+    background-color: #f9fafb;
+    border-color: #d1d5db;
+    color: #111827;
+    transform: translateY(-0.5px);
+  }
+  .dark .btn-icon:hover {
+    background-color: #1f222b;
+    border-color: #383b47;
+    color: #ffffff;
+  }
+  .btn-icon:active {
+    transform: translateY(0.5px);
+  }
+
+  /* Segmented Control Pill Container (Image 1 style) */
+  .segment-pill-container {
+    background-color: #f3f4f6;
+    padding: 0.25rem;
+    border-radius: 0.875rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    border: 1px solid rgba(0, 0, 0, 0.04);
+    user-select: none;
+  }
+  .dark .segment-pill-container {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+  .segment-pill-btn {
+    padding: 0.375rem 0.875rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    border-radius: 0.625rem;
+    color: #6b7280;
+    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+    border: 1px solid transparent;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    white-space: nowrap;
+  }
+  .dark .segment-pill-btn {
+    color: #9ca3af;
+  }
+  .segment-pill-btn:hover {
+    color: #111827;
+  }
+  .dark .segment-pill-btn:hover {
+    color: #ffffff;
+  }
+  .segment-pill-btn-active {
+    background-color: #ffffff;
+    color: #111827 !important;
+    font-weight: 600;
+    border-color: rgba(0, 0, 0, 0.05);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 1px rgba(0, 0, 0, 0.04);
+  }
+  .dark .segment-pill-btn-active {
+    background-color: #1c1e26;
+    color: #ffffff !important;
+    border-color: rgba(255, 255, 255, 0.12);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+  }
+
   .no-scrollbar::-webkit-scrollbar { display: none; }
   .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 

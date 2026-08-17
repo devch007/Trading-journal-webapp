@@ -727,15 +727,13 @@ export function Dashboard() {
                   <p className="text-xs font-normal text-gray-400 mt-0.5">Realized Cumulative Equity vs Initial Capital Benchmark</p>
                 </div>
 
-                <div className="flex items-center gap-1 self-start sm:self-auto bg-gray-50 dark:bg-neutral-800/60 p-1 rounded-2xl border border-gray-200/60 dark:border-neutral-700/60">
+                <div className="segment-pill-container self-start sm:self-auto">
                   {(['1D', '1W', '1M', 'ALL'] as const).map((t) => (
                     <button
                       key={t}
                       onClick={() => setTimeframe(t)}
-                      className={`px-3 py-1 text-xs font-semibold rounded-xl transition-all ${
-                        timeframe === t 
-                          ? 'bg-[#111827] dark:bg-white text-white dark:text-gray-900 shadow-xs' 
-                          : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-white/60 dark:hover:bg-neutral-700/40'
+                      className={`segment-pill-btn ${
+                        timeframe === t ? 'segment-pill-btn-active' : ''
                       }`}
                     >
                       {t}
@@ -966,10 +964,10 @@ export function Dashboard() {
               </div>
 
               {/* Action Buttons: Log Trade & Import Trades */}
-              <div className="grid grid-cols-2 gap-3 pt-1">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
                 <button
                   onClick={() => setIsTradeModalOpen(true)}
-                  className="w-full py-3 px-4 rounded-2xl bg-[#111827] dark:bg-white text-white dark:text-gray-900 text-xs font-semibold flex items-center justify-center gap-2 hover:bg-black dark:hover:bg-gray-100 transition-all shadow-xs group"
+                  className="btn-primary py-2.5 px-4 text-xs font-semibold group w-full"
                 >
                   <Plus className="w-4 h-4 group-hover:scale-110 transition-transform" />
                   <span>Log Trade</span>
@@ -978,7 +976,7 @@ export function Dashboard() {
                 <button
                   onClick={handleImportClick}
                   disabled={isExtracting}
-                  className="w-full py-3 px-4 rounded-2xl bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 text-gray-800 dark:text-gray-200 text-xs font-semibold flex items-center justify-center gap-2 hover:bg-gray-50 dark:hover:bg-neutral-750 transition-all shadow-2xs group"
+                  className="btn-secondary py-2.5 px-4 text-xs font-semibold group w-full"
                 >
                   {isExtracting ? (
                     <Loader2 className="w-4 h-4 animate-spin text-gray-500" />

@@ -123,6 +123,20 @@ export function Accounts() {
         initialData={editingAccount}
       />
 
+      <TopBar 
+        title="Accounts & Challenges" 
+        subtitle="Manage and monitor funded, challenge, and personal accounts"
+        actionButton={
+          <button
+            onClick={() => { setEditingAccount(null); setIsModalOpen(true); }}
+            className="btn-primary"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Add Account</span>
+          </button>
+        }
+      />
+
       <div className="p-6 md:p-8 space-y-7 max-w-[1600px] w-full mx-auto">
         {/* Active Accounts Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
