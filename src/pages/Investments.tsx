@@ -42,9 +42,11 @@ import { motion } from 'motion/react';
 import { 
   getIndianApiKey, 
   setIndianApiKey, 
-  fetchIndianStockQuote 
+  fetchIndianStockQuote,
+  getLastPortfolioSyncTime,
+  setLastPortfolioSyncTime 
 } from '../lib/indianApi';
-import { RefreshCw, Key, Check } from 'lucide-react';
+import { RefreshCw, Key, Check, Clock, CheckCircle2 } from 'lucide-react';
 
 export function Investments() {
   const { 
@@ -72,20 +74,44 @@ export function Investments() {
   const [tempApiKey, setTempApiKey] = useState(apiKey);
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncStatus, setSyncStatus] = useState<string | null>(null);
+  const [lastSyncTime, setLastSyncTime] = useState<number | null>(getLastPortfolioSyncTime());
+  const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
+  const [isTestingKey, setIsTestingKey] = useState(false);
 
-  const handleSaveApiKey = () => {
-    setIndianApiKey(tempApiKey);
-    setApiKeyState(tempApiKey);
-    setIsApiKeyModalOpen(false);
-  };
+  // Hourly Auto-Sync: Runs at most once every hour
+  React.useEffect(() => {
+    const checkHourlySync = async () => {
+      const key = getIndianApiKey();
+      if (!key || holdings.length === 0) return;
 
-  const handleSyncPrices = async () => {
+      const lastSync = getLastPortfolioSyncTime();
+      const ONE_HOUR = 60 * 60 * 1000;
+      
+      // If never synced or last sync was > 1 hour ago, fetch fresh quotes
+      if (!lastSync || (Date.now() - lastSync > ONE_HOUR)) {
+        await executeSync(false);
+      }
+    };
+
+    checkHourlySync();
+    const interval = setInterval(checkHourlySync, 60 * 1000); // Check boundary each minute
+    return () => clearInterval(interval);
+  }, [holdings.length]);
+
+  const executeSync = async (force: boolean) => {
+    const key = getIndianApiKey();
+    if (!key) {
+      setIsApiKeyModalOpen(true);
+      return;
+    }
+
     setIsSyncing(true);
-    setSyncStatus('Connecting to dev.indianapi.in...');
+    setSyncStatus(force ? 'Fetching live quotes from dev.indianapi.in...' : 'Hourly refresh active...');
     let updatedCount = 0;
+    
     for (const h of holdings) {
       try {
-        const quote = await fetchIndianStockQuote(h.symbol);
+        const quote = await fetchIndianStockQuote(h.symbol, force);
         if (quote && quote.currentPrice > 0) {
           updateHolding(h.id, {
             currentPrice: quote.currentPrice,
@@ -97,9 +123,61 @@ export function Investments() {
         // continue
       }
     }
+
+    const now = Date.now();
+    setLastPortfolioSyncTime(now);
+    setLastSyncTime(now);
     setIsSyncing(false);
-    setSyncStatus(updatedCount > 0 ? `Synced ${updatedCount} live prices from IndianAPI` : 'Sync complete');
-    setTimeout(() => setSyncStatus(null), 4000);
+    
+    if (updatedCount > 0) {
+      setSyncStatus(`Updated ${updatedCount} holdings with live prices (Cached for 1 hour)`);
+    } else {
+      setSyncStatus('Holdings are up-to-date with 1-hour cache.');
+    }
+    setTimeout(() => setSyncStatus(null), 5000);
+  };
+
+  const handleSyncPrices = () => {
+    executeSync(true);
+  };
+
+  const handleSaveApiKey = () => {
+    setIndianApiKey(tempApiKey);
+    setApiKeyState(tempApiKey);
+    setTestResult(null);
+    setIsApiKeyModalOpen(false);
+    // Trigger initial sync with new key
+    if (tempApiKey.trim()) {
+      setTimeout(() => executeSync(true), 300);
+    }
+  };
+
+  const handleTestKey = async () => {
+    if (!tempApiKey.trim()) return;
+    setIsTestingKey(true);
+    setTestResult(null);
+    try {
+      setIndianApiKey(tempApiKey);
+      const quote = await fetchIndianStockQuote('RELIANCE', true);
+      if (quote && quote.currentPrice > 0) {
+        setTestResult({
+          success: true,
+          message: `Connected! Live quote for RELIANCE: ₹${quote.currentPrice.toLocaleString('en-IN')}`
+        });
+      } else {
+        setTestResult({
+          success: false,
+          message: 'Could not fetch live quote. Check your API key on dev.indianapi.in.'
+        });
+      }
+    } catch (err: any) {
+      setTestResult({
+        success: false,
+        message: err.message || 'Connection failed'
+      });
+    } finally {
+      setIsTestingKey(false);
+    }
   };
 
   // Filtered holdings based on term & search
@@ -235,6 +313,14 @@ export function Investments() {
               <h2 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-white tracking-tight font-headline mt-1">
                 Portfolio Snapshot
               </h2>
+              {lastSyncTime && (
+                <p className="text-[11px] text-gray-400 font-medium flex items-center gap-1.5 mt-0.5">
+                  <Clock className="w-3 h-3 text-blue-500" />
+                  <span>
+                    Last updated {new Date(lastSyncTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} • 1-hour live refresh active
+                  </span>
+                </p>
+              )}
             </div>
 
             {/* Term Horizon Toggle, Sync & Add Button */}
@@ -738,26 +824,56 @@ export function Investments() {
                 placeholder="Paste your X-API-Key here..."
                 value={tempApiKey}
                 onChange={e => setTempApiKey(e.target.value)}
-                className="w-full bg-gray-50 dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-xl px-3.5 py-2.5 text-xs text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="w-full bg-gray-50 dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-xl px-3.5 py-2.5 text-xs text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono"
               />
               <p className="text-[10px] text-gray-400">
-                Get your developer API key from <a href="https://indianapi.in" target="_blank" rel="noreferrer" className="text-blue-500 underline">indianapi.in</a> for live quotes & indices.
+                Get your developer API key from <a href="https://indianapi.in" target="_blank" rel="noreferrer" className="text-blue-500 underline">indianapi.in</a>. Data is rate-limited and cached for 1 hour to save API quota.
               </p>
             </div>
 
-            <div className="flex justify-end gap-2 pt-2">
+            {/* Test Connection Feedback */}
+            {testResult && (
+              <div className={`p-3 rounded-2xl text-xs flex items-center gap-2 ${
+                testResult.success 
+                  ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/50' 
+                  : 'bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800/50'
+              }`}>
+                {testResult.success ? (
+                  <Check className="w-4 h-4 shrink-0 text-emerald-500" />
+                ) : (
+                  <AlertCircle className="w-4 h-4 shrink-0 text-rose-500" />
+                )}
+                <span>{testResult.message}</span>
+              </div>
+            )}
+
+            <div className="flex items-center justify-between gap-2 pt-2">
               <button
-                onClick={() => setIsApiKeyModalOpen(false)}
-                className="px-3.5 py-2 rounded-xl text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-neutral-800"
+                type="button"
+                onClick={handleTestKey}
+                disabled={isTestingKey || !tempApiKey.trim()}
+                className="btn-secondary text-xs"
               >
-                Cancel
+                {isTestingKey ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : null}
+                <span>{isTestingKey ? 'Testing...' : 'Test Connection'}</span>
               </button>
-              <button
-                onClick={handleSaveApiKey}
-                className="px-4 py-2 rounded-xl text-xs font-bold bg-[#111827] dark:bg-white text-white dark:text-gray-900 shadow-xs hover:bg-gray-800 dark:hover:bg-gray-100"
-              >
-                Save Key
-              </button>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsApiKeyModalOpen(false)}
+                  className="btn-secondary text-xs"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSaveApiKey}
+                  className="btn-primary text-xs"
+                >
+                  Save & Sync
+                </button>
+              </div>
             </div>
           </div>
         </div>

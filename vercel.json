@@ -1,6 +1,10 @@
 {
   "rewrites": [
     {
+      "source": "/api/indianapi/(.*)",
+      "destination": "https://dev.indianapi.in/$1"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
