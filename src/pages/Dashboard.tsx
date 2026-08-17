@@ -55,6 +55,14 @@ import { useAccountContext } from "../contexts/AccountContext";
 import { getTradeDate, normalizeImportedDateTime } from "../lib/timeUtils";
 import { useRuleViolations } from "../hooks/useRuleViolations";
 import { motion, AnimatePresence } from "motion/react";
+import { 
+  analyzeTradeScreenshot, 
+  getAiApiKey, 
+  setAiApiKey, 
+  getGeminiApiKey, 
+  setGeminiApiKey 
+} from "../lib/aiVision";
+import { Key } from "lucide-react";
 
 // Custom Tooltip with Geist typography and tabular numbers
 const TradeXChartTooltip = ({ active, payload }: any) => {
@@ -154,6 +162,9 @@ export function Dashboard() {
   const [isExtracting, setIsExtracting] = useState(false);
   const [extractionError, setExtractionError] = useState<string | null>(null);
   const [extractedData, setExtractedData] = useState<{ trades: any[] } | null>(null);
+  const [isAiConfigOpen, setIsAiConfigOpen] = useState(false);
+  const [tempAiKey, setTempAiKey] = useState(getAiApiKey());
+  const [tempGeminiKey, setTempGeminiKey] = useState(getGeminiApiKey());
 
   // Filter trades by selected account
   const trades = useMemo(() => {
@@ -491,62 +502,34 @@ export function Dashboard() {
     setExtractionError(null);
 
     try {
-      const reader = new FileReader();
-      const base64Promise = new Promise<string>((resolve, reject) => {
-        reader.onload = () => {
-          const base64String = (reader.result as string).split(',')[1];
-          resolve(base64String);
-        };
-        reader.onerror = reject;
-      });
-      reader.readAsDataURL(file);
-      const base64Data = await base64Promise;
+      const result = await analyzeTradeScreenshot(file);
 
-      const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${import.meta.env.VITE_GROQ_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "meta-llama/llama-4-scout-17b-16e-instruct",
-          messages: [
-            {
-              role: "user",
-              content: [
-                {
-                  type: "text",
-                  text: `Extract closed trades from screenshot in JSON format: {"trades": [{"symbol":"EURUSD","type":"BUY","volume":1.0,"entry_price":"1.0850","exit_price":"1.0890","profit":400,"commission":0,"close_reason":"Take profit","date_time":"2026.04.03 14:30:00","confidence":"High"}]}`
-                },
-                {
-                  type: "image_url",
-                  image_url: { url: `data:${file.type};base64,${base64Data}` }
-                }
-              ]
-            }
-          ],
-          temperature: 0.1
-        })
-      });
+      if (result.error === "MISSING_API_KEY") {
+        setIsAiConfigOpen(true);
+        setExtractionError("Groq or Gemini API key required for OCR. Click here to configure.");
+        return;
+      }
 
-      if (!response.ok) throw new Error("Screenshot analysis failed");
-      const result = await response.json();
-      const content = result.choices?.[0]?.message?.content || "{}";
-      const jsonMatch = content.match(/\{[\s\S]*\}/);
-      const data = JSON.parse(jsonMatch ? jsonMatch[0] : "{}");
-      
-      if (data.trades && data.trades.length > 0) {
-        setExtractedData(data);
+      if (result.trades && result.trades.length > 0) {
+        setExtractedData({ trades: result.trades });
         setIsImportModalOpen(true);
+        setExtractionError(null);
       } else {
-        setExtractionError("Could not detect trades");
+        setExtractionError("Could not detect trades in image. Click to verify your AI key or try another screenshot.");
       }
     } catch (error: any) {
-      setExtractionError(error.message || "Failed to parse API response");
+      setExtractionError(error.message || "Failed to parse screenshot");
     } finally {
       setIsExtracting(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
     }
+  };
+
+  const handleSaveAiKeys = () => {
+    setAiApiKey(tempAiKey);
+    setGeminiApiKey(tempGeminiKey);
+    setIsAiConfigOpen(false);
+    setExtractionError(null);
   };
 
   // Recent executions list
@@ -988,9 +971,15 @@ export function Dashboard() {
               </div>
 
               {extractionError && (
-                <div className="flex items-center gap-1.5 text-xs text-rose-600 bg-rose-50 dark:bg-rose-950/40 p-2.5 rounded-xl border border-rose-200 dark:border-rose-900/40 font-normal">
-                  <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-                  <span>{extractionError}</span>
+                <div 
+                  onClick={() => setIsAiConfigOpen(true)}
+                  className="flex items-center justify-between gap-1.5 text-xs text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 p-3 rounded-2xl border border-rose-200 dark:border-rose-900/50 font-normal cursor-pointer hover:bg-rose-100/60 dark:hover:bg-rose-900/30 transition-all"
+                >
+                  <div className="flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4 shrink-0 text-rose-500" />
+                    <span>{extractionError}</span>
+                  </div>
+                  <span className="text-[11px] font-semibold underline shrink-0">Configure</span>
                 </div>
               )}
             </div>
@@ -1160,6 +1149,91 @@ export function Dashboard() {
         </div>
 
       </div>
+
+      {/* AI OCR API Key Configuration Modal */}
+      {isAiConfigOpen && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm cursor-pointer"
+          onClick={() => setIsAiConfigOpen(false)}
+        >
+          <div 
+            className="bg-white dark:bg-[#16181f] border border-gray-200 dark:border-neutral-800 rounded-3xl w-full max-w-md p-6 shadow-2xl space-y-4 cursor-default"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="p-2 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400">
+                  <Sparkles className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-gray-900 dark:text-white">
+                    AI Screenshot OCR Setup
+                  </h3>
+                  <p className="text-xs text-gray-400">Extract trades from MetaTrader / Brokers</p>
+                </div>
+              </div>
+              <button 
+                type="button"
+                onClick={() => setIsAiConfigOpen(false)} 
+                className="p-1.5 text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-neutral-800 rounded-lg cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs font-semibold text-gray-700 dark:text-gray-300 block mb-1">
+                  Groq API Key (Recommended & Fast)
+                </label>
+                <input
+                  type="text"
+                  placeholder="gsk_..."
+                  value={tempAiKey}
+                  onChange={e => setTempAiKey(e.target.value)}
+                  className="w-full bg-gray-50 dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-xl px-3.5 py-2 text-xs text-gray-900 dark:text-white font-mono focus:outline-none focus:ring-1 focus:ring-blue-500"
+                />
+                <p className="text-[10px] text-gray-400 mt-1">
+                  Get a free key from <a href="https://console.groq.com/keys" target="_blank" rel="noreferrer" className="text-blue-500 underline">console.groq.com/keys</a>
+                </p>
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-gray-700 dark:text-gray-300 block mb-1">
+                  Google Gemini API Key (Alternative)
+                </label>
+                <input
+                  type="text"
+                  placeholder="AIza..."
+                  value={tempGeminiKey}
+                  onChange={e => setTempGeminiKey(e.target.value)}
+                  className="w-full bg-gray-50 dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-xl px-3.5 py-2 text-xs text-gray-900 dark:text-white font-mono focus:outline-none focus:ring-1 focus:ring-blue-500"
+                />
+                <p className="text-[10px] text-gray-400 mt-1">
+                  Get a free key from <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer" className="text-blue-500 underline">aistudio.google.com</a>
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setIsAiConfigOpen(false)}
+                className="btn-secondary text-xs"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveAiKeys}
+                className="btn-primary text-xs"
+              >
+                Save & Continue
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
