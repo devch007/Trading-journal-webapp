@@ -384,11 +384,12 @@ export function Dashboard() {
     let running = initialBalance;
     let baseline = initialBalance;
 
-    // Calculate baseline up to active range
+    // Calculate baseline up to active range (0.4% ambitious target growth per trade)
+    const TARGET_RATE = 0.004; // 0.4% per trade (10% target over 25 trades)
     const startIndex = allSorted.indexOf(activeTrades[0]);
     for (let i = 0; i < startIndex; i++) {
       running += Number(allSorted[i].pnl) || 0;
-      baseline += initialBalance * 0.0005;
+      baseline += initialBalance * TARGET_RATE;
     }
 
     const startEquity = running;
@@ -396,7 +397,7 @@ export function Dashboard() {
     const points = activeTrades.map((t, index) => {
       const pnl = Number(t.pnl) || 0;
       running += pnl;
-      baseline += initialBalance * 0.0005;
+      baseline += initialBalance * TARGET_RATE;
       const d = getTradeDate(t.date);
 
       const dayStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
