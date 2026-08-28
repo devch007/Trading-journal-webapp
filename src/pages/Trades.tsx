@@ -302,10 +302,10 @@ export function Trades() {
         actionButton={
           <button 
             onClick={handleOpenNewTrade}
-            className="flex items-center gap-2 bg-[#111827] dark:bg-white text-white dark:text-gray-900 px-5 py-2.5 rounded-2xl font-semibold text-xs transition-all shadow-xs hover:bg-black dark:hover:bg-gray-100 group"
+            className="flex items-center gap-1.5 sm:gap-2 bg-[#111827] dark:bg-white text-white dark:text-gray-900 px-3.5 sm:px-5 py-2 sm:py-2.5 rounded-2xl font-semibold text-xs transition-all shadow-xs hover:bg-black dark:hover:bg-gray-100 group"
           >
             <Plus className="w-4 h-4 group-hover:scale-110 transition-transform" />
-            <span>Log Trade</span>
+            <span className="hidden sm:inline">Log Trade</span>
           </button>
         }
       />
@@ -361,10 +361,10 @@ export function Trades() {
               ) : (
                 <button 
                   onClick={() => setIsTagging(true)}
-                  className="flex items-center gap-2 px-3.5 py-2 hover:bg-gray-100 dark:hover:bg-neutral-800 rounded-xl text-gray-700 dark:text-gray-300 transition-colors text-xs font-semibold"
+                  className="flex items-center gap-2 p-2 sm:px-3.5 sm:py-2 hover:bg-gray-100 dark:hover:bg-neutral-800 rounded-xl text-gray-700 dark:text-gray-300 transition-colors text-xs font-semibold"
                 >
                   <Tag className="w-4 h-4 text-blue-500" />
-                  <span>Tag</span>
+                  <span className="hidden sm:inline">Tag</span>
                 </button>
               )}
 
@@ -395,29 +395,29 @@ export function Trades() {
               ) : (
                 <button 
                   onClick={() => setIsCommissioning(true)}
-                  className="flex items-center gap-2 px-3.5 py-2 hover:bg-gray-100 dark:hover:bg-neutral-800 rounded-xl text-gray-700 dark:text-gray-300 transition-colors text-xs font-semibold"
+                  className="flex items-center gap-2 p-2 sm:px-3.5 sm:py-2 hover:bg-gray-100 dark:hover:bg-neutral-800 rounded-xl text-gray-700 dark:text-gray-300 transition-colors text-xs font-semibold"
                 >
                   <span className="text-blue-500 font-bold">$</span>
-                  <span>Commission</span>
+                  <span className="hidden sm:inline">Commission</span>
                 </button>
               )}
 
               {selectedTradeIds.length > 1 && (
                 <button 
                   onClick={handleBulkClub}
-                  className="flex items-center gap-2 px-3.5 py-2 hover:bg-amber-50 dark:hover:bg-amber-950/40 rounded-xl text-amber-600 dark:text-amber-400 transition-colors text-xs font-semibold"
+                  className="flex items-center gap-2 p-2 sm:px-3.5 sm:py-2 hover:bg-amber-50 dark:hover:bg-amber-950/40 rounded-xl text-amber-600 dark:text-amber-400 transition-colors text-xs font-semibold"
                 >
                   <Layers className="w-4 h-4" />
-                  <span>Club</span>
+                  <span className="hidden sm:inline">Club</span>
                 </button>
               )}
 
               <button 
                 onClick={handleBulkDelete}
-                className="flex items-center gap-2 px-3.5 py-2 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-xl text-rose-600 dark:text-rose-400 transition-colors text-xs font-semibold"
+                className="flex items-center gap-2 p-2 sm:px-3.5 sm:py-2 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-xl text-rose-600 dark:text-rose-400 transition-colors text-xs font-semibold"
               >
                 <Trash2 className="w-4 h-4" />
-                <span>Delete</span>
+                <span className="hidden sm:inline">Delete</span>
               </button>
 
               <button 
@@ -431,10 +431,10 @@ export function Trades() {
         )}
       </AnimatePresence>
       
-      <div className="p-6 md:p-8 space-y-7 max-w-[1600px] w-full mx-auto">
+      <div className="p-3.5 sm:p-6 md:p-8 space-y-5 sm:space-y-7 max-w-[1600px] w-full mx-auto">
         
         {/* Main Trades Table Card */}
-        <div className="bg-white dark:bg-[#16181f] rounded-3xl p-6 md:p-7 border border-gray-200/80 dark:border-neutral-800/80 shadow-2xs flex flex-col gap-6">
+        <div className="bg-white dark:bg-[#16181f] rounded-3xl p-4 sm:p-6 md:p-7 border border-gray-200/80 dark:border-neutral-800/80 shadow-2xs flex flex-col gap-5 sm:gap-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
@@ -514,7 +514,7 @@ export function Trades() {
                 className="btn-primary"
               >
                 <Plus className="w-4 h-4" />
-                <span>Log Trade</span>
+                <span className="hidden sm:inline">Log Trade</span>
               </button>
             </div>
           </div>

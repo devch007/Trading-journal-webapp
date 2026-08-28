@@ -232,7 +232,7 @@ export function Strategies() {
             className="btn-primary"
           >
             <Plus className="w-4 h-4" />
-            <span>New Strategy</span>
+            <span className="hidden sm:inline">New Strategy</span>
           </button>
         }
       />

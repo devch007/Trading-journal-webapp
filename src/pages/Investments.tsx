@@ -46,7 +46,7 @@ import {
   getLastPortfolioSyncTime,
   setLastPortfolioSyncTime 
 } from '../lib/indianApi';
-import { RefreshCw, Key, Check, Clock, CheckCircle2 } from 'lucide-react';
+import { RefreshCw, Key, Check, Clock } from 'lucide-react';
 
 export function Investments() {
   const { 

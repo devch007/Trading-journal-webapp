@@ -4,8 +4,10 @@ import { TopBar } from "../lib/TopBar";
 import { TradeModal } from "../components/TradeModal";
 import { ImportTradesModal } from "../components/ImportTradesModal";
 import { TradingCalendarHeatmap } from "../components/TradingCalendarHeatmap";
+import { GoalHeatmap, DailyHeatmapData, DailyGoalStatus } from "../components/GoalHeatmap";
 import { DashboardSkeleton } from "../components/ui/Skeleton";
 import { SmartEmptyState } from "../components/ui/SmartEmptyState";
+import { startOfDay, startOfMonth } from "date-fns";
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -28,7 +30,6 @@ import {
   CircleDot,
   Building2,
   DollarSign,
-  PieChart,
   Layers,
   Sparkles,
   Target,
@@ -357,8 +358,8 @@ export function Dashboard() {
 
     if (!trades.length) {
       return [
-        { date: 'Start', val1: initialBalance, val2: initialBalance, pnl: 0, dateLabel: 'Account Opening' },
-        { date: 'Now', val1: initialBalance, val2: initialBalance, pnl: 0, dateLabel: 'No Trades Yet' },
+        { id: 'fallback-start', index: 0, date: 'Start', time: '', val1: initialBalance, val2: initialBalance, pnl: 0, dateLabel: 'Account Opening' },
+        { id: 'fallback-now', index: 1, date: 'Now', time: '', val1: initialBalance, val2: initialBalance, pnl: 0, dateLabel: 'No Trades Yet' },
       ];
     }
 
@@ -556,6 +557,110 @@ export function Dashboard() {
     return [];
   }, [trades]);
 
+  // Macro Discipline Heatmap Data (Last 3 Months)
+  const macroHeatmapData = useMemo<DailyHeatmapData[]>(() => {
+    const days: Date[] = [];
+    const now = new Date();
+    const start = startOfMonth(now);
+    start.setMonth(start.getMonth() - 2); // Current and previous 2 months
+    const end = new Date(now.getFullYear(), now.getMonth() + 1, 0); // End of current month
+    
+    const diffTime = Math.abs(end.getTime() - start.getTime());
+    const daysInPeriod = Math.round(diffTime / (1000 * 60 * 60 * 24)) + 1;
+    
+    for (let i = 0; i < daysInPeriod; i++) {
+      const d = new Date(start);
+      d.setDate(d.getDate() + i);
+      days.push(d);
+    }
+
+    const accountRules = selectedAccount?.rules?.filter(r => r.enabled) || [];
+    const equity = selectedAccount?.currentEquity || selectedAccount?.initialCapital || 100000;
+
+    return days.map(day => {
+      const dayStart = startOfDay(day);
+      const dayEnd = new Date(dayStart);
+      dayEnd.setHours(23, 59, 59, 999);
+      
+      const dayT = trades.filter(t => {
+        const d = getTradeDate(t.date);
+        return d >= dayStart && d <= dayEnd;
+      });
+
+      const pnl = dayT.reduce((s, t) => s + (Number(t.pnl) || 0), 0);
+      const tCount = dayT.length;
+      const active = tCount > 0;
+      
+      const goalStatuses: DailyGoalStatus[] = [];
+
+      // Default targets
+      if (active) {
+        goalStatuses.push({
+          id: 'pnl',
+          label: 'Daily Profit Target (+$300)',
+          status: pnl >= 300 ? 'achieved' : pnl > 0 ? 'in-progress' : 'breached'
+        });
+        goalStatuses.push({
+          id: 'loss',
+          label: 'Max Daily Loss Limit (-$200)',
+          status: pnl >= -200 ? 'achieved' : 'breached'
+        });
+      }
+
+      // Add account custom rules
+      for (const rule of accountRules) {
+        let ruleStatus: DailyGoalStatus['status'] = 'not-started';
+        if (active) {
+          switch (rule.type) {
+            case 'max_trades_per_day':
+              ruleStatus = tCount > rule.value ? 'breached' : tCount === rule.value ? 'in-progress' : 'achieved';
+              break;
+            case 'max_loss_per_trade': {
+              const worstTrade = dayT.reduce((w, t) => Math.min(w, t.pnl || 0), 0);
+              ruleStatus = Math.abs(worstTrade) > rule.value ? 'breached' : 'achieved';
+              break;
+            }
+            case 'daily_loss_limit': {
+              const loss = Math.abs(Math.min(0, pnl));
+              if (rule.unit === '%') {
+                const lossPct = equity > 0 ? (loss / equity) * 100 : 0;
+                ruleStatus = lossPct > rule.value ? 'breached' : lossPct >= rule.value * 0.8 ? 'in-progress' : 'achieved';
+              } else {
+                ruleStatus = loss > rule.value ? 'breached' : 'achieved';
+              }
+              break;
+            }
+            case 'custom': {
+              if (rule.unit === 'trades') {
+                ruleStatus = tCount > rule.value ? 'breached' : 'achieved';
+              } else if (rule.unit === '$') {
+                const totalLoss = Math.abs(Math.min(0, pnl));
+                ruleStatus = totalLoss > rule.value ? 'breached' : 'achieved';
+              } else {
+                const lossPct = equity > 0 ? (Math.abs(Math.min(0, pnl)) / equity) * 100 : 0;
+                ruleStatus = lossPct > rule.value ? 'breached' : 'achieved';
+              }
+              break;
+            }
+          }
+        }
+        goalStatuses.push({ id: `rule-${rule.id}`, label: `⛡ ${rule.name}`, status: ruleStatus });
+      }
+
+      const passedGoals = goalStatuses.filter(g => g.status === 'achieved').length;
+      const breachedAny = goalStatuses.some(g => g.status === 'breached');
+      const score = active && goalStatuses.length > 0 ? passedGoals / goalStatuses.length : (active ? (pnl >= 0 ? 1 : 0) : 0);
+      
+      return {
+        date: day,
+        active,
+        breachedLimits: active && (breachedAny || pnl < -200),
+        score,
+        goals: goalStatuses
+      };
+    });
+  }, [trades, selectedAccount]);
+
   return (
     <div className="flex flex-col min-h-full font-normal">
       <TopBar />
@@ -582,7 +687,7 @@ export function Dashboard() {
         onChange={handleFileChange}
       />
 
-      <div className="p-6 md:p-8 space-y-7 max-w-[1600px] w-full mx-auto">
+      <div className="p-3.5 sm:p-6 md:p-8 space-y-5 sm:space-y-7 max-w-[1600px] w-full mx-auto">
         
         {/* Rule Violation Notifications */}
         <AnimatePresence>
@@ -746,9 +851,9 @@ export function Dashboard() {
                       axisLine={false} 
                       minTickGap={35}
                       tickFormatter={(idx) => {
-                        const pt = equityChartData.find(p => p.index === idx);
-                        if (!pt) return '';
-                        const ptIdx = equityChartData.indexOf(pt);
+                        const ptIdx = equityChartData.findIndex(p => p.index === idx);
+                        if (ptIdx === -1) return '';
+                        const pt = equityChartData[ptIdx];
                         const prevPt = ptIdx > 0 ? equityChartData[ptIdx - 1] : null;
                         if (!prevPt || prevPt.date !== pt.date) {
                           return pt.date;
@@ -803,6 +908,9 @@ export function Dashboard() {
             {/* Trading Calendar Heatmap */}
             <TradingCalendarHeatmap trades={trades} selectedAccountId={selectedAccountId} />
 
+            {/* Macro Discipline Heatmap (3-Month Target & Rule Adherence) */}
+            <GoalHeatmap data={macroHeatmapData} mode="month" />
+
             {/* Recent Executions History Table */}
             <div className="bg-white dark:bg-[#16181f] rounded-3xl p-6 md:p-7 border border-gray-200/80 dark:border-neutral-800/80 shadow-2xs">
               <div className="flex items-center justify-between mb-5">
@@ -826,17 +934,17 @@ export function Dashboard() {
                 <table className="w-full text-left">
                   <thead>
                     <tr className="text-[11px] font-medium text-gray-400 dark:text-gray-500 border-b border-gray-100 dark:border-neutral-800/80">
-                      <th className="pb-3 font-medium">Description ⇅</th>
-                      <th className="pb-3 font-medium">Date ⇅</th>
-                      <th className="pb-3 font-medium">Result P&L ⇅</th>
-                      <th className="pb-3 font-medium text-right">Status ⇅</th>
+                      <th className="pb-3 font-medium whitespace-nowrap">Description ⇅</th>
+                      <th className="pb-3 font-medium whitespace-nowrap">Date ⇅</th>
+                      <th className="pb-3 font-medium whitespace-nowrap">Result P&L ⇅</th>
+                      <th className="pb-3 font-medium text-right whitespace-nowrap">Status ⇅</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-50 dark:divide-neutral-800/40 text-xs">
                     {recentExecutions.length > 0 ? (
                       recentExecutions.map((tx) => (
                         <tr key={tx.id} onClick={() => navigate('/trades')} className="hover:bg-gray-50/50 dark:hover:bg-neutral-800/30 transition-colors group cursor-pointer">
-                          <td className="py-3.5">
+                          <td className="py-3.5 whitespace-nowrap">
                             <div className="flex items-center gap-3">
                               <span className={`w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold ${tx.iconColor}`}>
                                 {tx.iconText}
@@ -846,13 +954,13 @@ export function Dashboard() {
                               </span>
                             </div>
                           </td>
-                          <td className="py-3.5 text-gray-400 dark:text-gray-500 font-normal">
+                          <td className="py-3.5 text-gray-400 dark:text-gray-500 font-normal whitespace-nowrap">
                             {tx.date}
                           </td>
-                          <td className={`py-3.5 font-bold tabular-nums ${tx.amount.startsWith('+') ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-500'}`}>
+                          <td className={`py-3.5 font-bold tabular-nums whitespace-nowrap ${tx.amount.startsWith('+') ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-500'}`}>
                             {tx.amount}
                           </td>
-                          <td className="py-3.5 text-right">
+                          <td className="py-3.5 text-right whitespace-nowrap">
                             <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium ${tx.statusColor}`}>
                               <span className={`w-1.5 h-1.5 rounded-full ${tx.statusDot}`}></span>
                               <span>{tx.status}</span>

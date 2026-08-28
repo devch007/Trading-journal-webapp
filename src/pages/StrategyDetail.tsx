@@ -164,7 +164,7 @@ export function StrategyDetail() {
               className="flex items-center gap-2 px-5 py-2.5 rounded-2xl text-xs font-semibold text-white dark:text-gray-900 bg-[#111827] dark:bg-white shadow-xs hover:bg-black dark:hover:bg-gray-100"
             >
               <Edit className="w-3.5 h-3.5" />
-              <span>Edit Strategy</span>
+              <span className="hidden sm:inline">Edit Strategy</span>
             </button>
           </div>
         }

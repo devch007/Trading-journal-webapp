@@ -111,7 +111,7 @@ export function Accounts() {
             className="btn-primary"
           >
             <Plus className="w-4 h-4" />
-            <span>Add Account</span>
+            <span className="hidden sm:inline">Add Account</span>
           </button>
         }
       />

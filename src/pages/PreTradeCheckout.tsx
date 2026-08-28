@@ -126,15 +126,16 @@ export function PreTradeCheckout() {
               className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-neutral-800 hover:bg-gray-200 rounded-2xl transition-all shadow-2xs"
             >
               <RotateCcw className="w-3.5 h-3.5" />
-              <span>Reset</span>
+              <span className="hidden sm:inline">Reset</span>
             </button>
             <button 
               onClick={handleSaveToJournal} 
               disabled={totalScore < 7 || !isAllChecked} 
-              className="flex items-center gap-1.5 px-5 py-2 text-xs font-semibold text-white dark:text-gray-900 bg-[#111827] dark:bg-white disabled:opacity-40 rounded-2xl transition-all shadow-xs hover:bg-black dark:hover:bg-gray-100"
+              className="flex items-center gap-1.5 px-4 sm:px-5 py-2 text-xs font-semibold text-white dark:text-gray-900 bg-[#111827] dark:bg-white disabled:opacity-40 rounded-2xl transition-all shadow-xs hover:bg-black dark:hover:bg-gray-100"
             >
               <Save className="w-3.5 h-3.5" />
-              <span>Approve & Journal</span>
+              <span className="hidden sm:inline">Approve & Journal</span>
+              <span className="sm:hidden">Journal</span>
             </button>
           </div>
         }
