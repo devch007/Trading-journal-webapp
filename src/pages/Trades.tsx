@@ -445,9 +445,9 @@ export function Trades() {
               </p>
             </div>
 
-            <div className="flex items-center gap-2.5 flex-wrap">
+            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 sm:flex-wrap">
               {/* Symbol Filter */}
-              <div className="relative">
+              <div className="relative shrink-0">
                 <select
                   value={filterSymbol}
                   onChange={(e) => setFilterSymbol(e.target.value)}
@@ -462,7 +462,7 @@ export function Trades() {
               </div>
 
               {/* Action Filter */}
-              <div className="relative">
+              <div className="relative shrink-0">
                 <select
                   value={filterAction}
                   onChange={(e) => setFilterAction(e.target.value)}
@@ -476,7 +476,7 @@ export function Trades() {
               </div>
 
               {/* Strategy Filter */}
-              <div className="relative">
+              <div className="relative shrink-0">
                 <select
                   value={filterStrategy}
                   onChange={(e) => setFilterStrategy(e.target.value)}
@@ -491,7 +491,7 @@ export function Trades() {
               </div>
 
               {/* Date Range Filter */}
-              <div className="relative">
+              <div className="relative shrink-0">
                 <select
                   value={filterRange}
                   onChange={(e) => setFilterRange(e.target.value)}
@@ -511,7 +511,7 @@ export function Trades() {
                   setEditingTrade(null);
                   setIsTradeModalOpen(true);
                 }}
-                className="btn-primary"
+                className="btn-primary shrink-0"
               >
                 <Plus className="w-4 h-4" />
                 <span className="hidden sm:inline">Log Trade</span>
@@ -519,7 +519,118 @@ export function Trades() {
             </div>
           </div>
           
-          <div className="overflow-x-auto">
+          {/* Mobile Cards View (md:hidden) */}
+          <div className="md:hidden flex flex-col gap-3">
+            {loading ? (
+              Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="p-4 rounded-2xl bg-gray-50/70 dark:bg-neutral-800/40 border border-gray-100 dark:border-neutral-800 space-y-3">
+                  <div className="flex justify-between items-center">
+                    <Skeleton className="w-24 h-5 rounded" />
+                    <Skeleton className="w-16 h-5 rounded" />
+                  </div>
+                  <Skeleton className="w-full h-10 rounded" />
+                </div>
+              ))
+            ) : (trades || []).length === 0 ? (
+              <SmartEmptyState 
+                title="No trades found matching current filter"
+                description="Try resetting your filters or log a new execution for this account."
+                actionLabel="Log New Trade (N)"
+                onAction={() => { setEditingTrade(null); setIsTradeModalOpen(true); }}
+                className="border-none shadow-none bg-transparent"
+              />
+            ) : (
+              (trades || []).map((trade, index) => {
+                const isSelected = selectedTradeIds.includes(trade.id);
+                const isPos = trade.isPositive || Number(trade.pnl) >= 0;
+                return (
+                  <div
+                    key={trade.id}
+                    onClick={() => handleOpenEditTrade(trade)}
+                    className={`p-4 rounded-2xl border transition-all flex flex-col gap-3 cursor-pointer ${
+                      isSelected 
+                        ? 'bg-blue-50/80 dark:bg-blue-950/30 border-blue-300 dark:border-blue-700/60 shadow-xs' 
+                        : 'bg-gray-50/50 dark:bg-neutral-900/30 border-gray-100 dark:border-neutral-800/60 hover:bg-gray-50 dark:hover:bg-neutral-800/40'
+                    }`}
+                  >
+                    {/* Top Row: Checkbox, #, Symbol, Action Pill, P&L */}
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <button
+                          onClick={(e) => toggleSelectTrade(trade.id, e)}
+                          className="p-1 -ml-1 hover:bg-gray-200 dark:hover:bg-neutral-700 rounded-lg transition-colors"
+                        >
+                          {isSelected ? (
+                            <CheckSquare className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                          ) : (
+                            <Square className="w-4 h-4 text-gray-300 dark:text-gray-600" />
+                          )}
+                        </button>
+                        <span className="text-xs font-bold text-gray-400 tabular-nums">#{trades.length - index}</span>
+                        <span className="text-sm font-bold text-gray-900 dark:text-white truncate">{trade.symbol}</span>
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                          trade.action === 'BUY' 
+                            ? 'bg-emerald-100/80 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300' 
+                            : 'bg-rose-100/80 dark:bg-rose-900/60 text-rose-700 dark:text-rose-300'
+                        }`}>
+                          {trade.action}
+                        </span>
+                      </div>
+
+                      <div className={`text-sm font-extrabold tabular-nums tracking-tight px-2 py-0.5 rounded-lg ${
+                        isPos 
+                          ? 'text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50' 
+                          : 'text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/50'
+                      }`}>
+                        {formatCurrency(trade.pnl)}
+                      </div>
+                    </div>
+
+                    {/* Middle details row: Entry, Exit, Volume, Confidence */}
+                    <div className="grid grid-cols-3 gap-2 pt-2 border-t border-gray-100 dark:border-neutral-800/60 text-xs">
+                      <div>
+                        <span className="text-[10px] text-gray-400 font-medium block">Entry / Exit</span>
+                        <span className="text-[11px] font-semibold text-gray-700 dark:text-gray-300 tabular-nums truncate block">
+                          {trade.entry || '—'} ➔ {trade.exit || '—'}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-gray-400 font-medium block">Size</span>
+                        <span className="text-[11px] font-semibold text-gray-700 dark:text-gray-300 tabular-nums block">
+                          {trade.size || '1.0 Lot'}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-gray-400 font-medium block">Date</span>
+                        <span className="text-[11px] font-semibold text-gray-700 dark:text-gray-300 tabular-nums truncate block">
+                          {getTradeDate(trade.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Bottom tag / strategy badges if present */}
+                    {(trade.strategy || (trade.tags && trade.tags.length > 0)) && (
+                      <div className="flex items-center gap-1.5 flex-wrap pt-1 border-t border-gray-100 dark:border-neutral-800/40">
+                        {trade.strategy && (
+                          <span className="px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 text-[10px] font-semibold">
+                            {trade.strategy}
+                          </span>
+                        )}
+                        {trade.tags && Array.isArray(trade.tags) && trade.tags.map((tag: string) => (
+                          <span key={tag} className="px-2 py-0.5 rounded-md bg-gray-100 dark:bg-neutral-800 text-gray-600 dark:text-gray-400 text-[10px]">
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })
+            )}
+          </div>
+
+          {/* Desktop Table View (hidden md:block) */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-left">
               <thead>
                 <tr className="text-[11px] font-semibold text-gray-400 dark:text-gray-500 border-b border-gray-100 dark:border-neutral-800">
