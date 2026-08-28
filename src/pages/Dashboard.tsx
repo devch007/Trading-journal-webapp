@@ -557,12 +557,11 @@ export function Dashboard() {
     return [];
   }, [trades]);
 
-  // Macro Discipline Heatmap Data (Last 3 Months)
+  // Macro Discipline Heatmap Data (Current 1 Month)
   const macroHeatmapData = useMemo<DailyHeatmapData[]>(() => {
     const days: Date[] = [];
     const now = new Date();
     const start = startOfMonth(now);
-    start.setMonth(start.getMonth() - 2); // Current and previous 2 months
     const end = new Date(now.getFullYear(), now.getMonth() + 1, 0); // End of current month
     
     const diffTime = Math.abs(end.getTime() - start.getTime());
