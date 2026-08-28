@@ -536,21 +536,28 @@ export function Dashboard() {
   // Recent executions list
   const recentExecutions = useMemo(() => {
     if (trades.length > 0) {
-      return trades.slice(0, 4).map((t, idx) => {
+      return trades.slice(0, 5).map((t, idx) => {
         const isPos = t.isPositive || Number(t.pnl) >= 0;
         const d = t.date || t.createdAt ? getTradeDate(t.date || t.createdAt) : new Date();
         const dateStr = d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+        const pnlNum = Number(t.pnl) || 0;
 
         return {
           id: t.id || idx,
-          description: `${t.action || 'BUY'} ${t.symbol || 'EURUSD'} ${t.size || '1.0 Lot'}`,
+          symbol: t.symbol || 'EURUSD',
+          action: t.action || 'BUY',
+          size: t.size || '1.0 Lot',
+          strategy: t.strategy || (Array.isArray(t.tags) ? t.tags[0] : t.tag) || '',
           date: dateStr,
-          amount: isPos ? `+$${Math.abs(Number(t.pnl) || 0).toFixed(2)}` : `-$${Math.abs(Number(t.pnl) || 0).toFixed(2)}`,
-          status: isPos ? 'Success' : (idx === 0 ? 'Pending' : 'Stopped Out'),
-          statusColor: isPos ? 'text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40' : (idx === 0 ? 'text-amber-600 bg-amber-50 dark:bg-amber-950/40' : 'text-rose-600 bg-rose-50 dark:bg-rose-950/40'),
-          statusDot: isPos ? 'bg-emerald-500' : (idx === 0 ? 'bg-amber-500' : 'bg-rose-500'),
-          iconColor: t.symbol?.includes('XAU') ? 'bg-amber-100 text-amber-600 dark:bg-amber-950/50' : (t.symbol?.includes('EUR') ? 'bg-teal-100 text-teal-600 dark:bg-teal-950/50' : 'bg-neutral-100 text-neutral-800 dark:bg-neutral-800 dark:text-neutral-200'),
-          iconText: t.action === 'SELL' ? 'SELL' : 'BUY'
+          rawDate: d,
+          pnl: pnlNum,
+          amount: isPos ? `+$${Math.abs(pnlNum).toFixed(2)}` : `-$${Math.abs(pnlNum).toFixed(2)}`,
+          status: isPos ? 'Success' : (pnlNum === 0 ? 'Break Even' : 'Stopped Out'),
+          statusColor: isPos 
+            ? 'text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200/60 dark:border-emerald-800/40' 
+            : 'text-rose-700 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 border-rose-200/60 dark:border-rose-800/40',
+          statusDot: isPos ? 'bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.8)]' : 'bg-rose-500 shadow-[0_0_6px_rgba(244,63,94,0.8)]',
+          isPos
         };
       });
     }
@@ -910,73 +917,104 @@ export function Dashboard() {
             {/* Macro Discipline Heatmap (3-Month Target & Rule Adherence) */}
             <GoalHeatmap data={macroHeatmapData} mode="month" />
 
-            {/* Recent Executions History Table */}
-            <div className="bg-white dark:bg-[#16181f] rounded-3xl p-6 md:p-7 border border-gray-200/80 dark:border-neutral-800/80 shadow-2xs">
-              <div className="flex items-center justify-between mb-5">
+            {/* Recent Executions History List */}
+            <div className="bg-white dark:bg-[#16181f] rounded-3xl p-4 sm:p-6 md:p-7 border border-gray-200/80 dark:border-neutral-800/80 shadow-2xs space-y-4">
+              <div className="flex items-center justify-between">
                 <div>
-                  {/* Card heading -> 600 weight */}
-                  <h3 className="text-base font-semibold text-gray-900 dark:text-white">
+                  <div className="flex items-center gap-2">
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[11px] font-semibold">
+                      ★ Order Stream
+                    </span>
+                  </div>
+                  <h3 className="text-base sm:text-xl font-bold text-gray-900 dark:text-white tracking-tight mt-1">
                     Recent Executions
                   </h3>
-                  <p className="text-xs font-normal text-gray-400 mt-0.5">Latest journal entries and platform syncs</p>
+                  <p className="text-xs text-gray-400 mt-0.5">Latest journal entries & platform syncs</p>
                 </div>
                 <button 
                   onClick={() => navigate('/trades')}
-                  className="flex items-center gap-1 text-xs font-medium text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors"
+                  className="flex items-center gap-1 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 bg-blue-50/60 dark:bg-blue-950/30 border border-blue-200/50 dark:border-blue-800/40 px-3 py-1.5 rounded-xl transition-all shadow-2xs group cursor-pointer"
                 >
-                  <span>See All</span>
-                  <ArrowUpRight className="w-3.5 h-3.5" />
+                  <span>See All ({trades.length})</span>
+                  <ArrowUpRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
                 </button>
               </div>
 
-              <div className="overflow-x-auto">
-                <table className="w-full text-left">
-                  <thead>
-                    <tr className="text-[11px] font-medium text-gray-400 dark:text-gray-500 border-b border-gray-100 dark:border-neutral-800/80">
-                      <th className="pb-3 font-medium whitespace-nowrap">Description ⇅</th>
-                      <th className="pb-3 font-medium whitespace-nowrap">Date ⇅</th>
-                      <th className="pb-3 font-medium whitespace-nowrap">Result P&L ⇅</th>
-                      <th className="pb-3 font-medium text-right whitespace-nowrap">Status ⇅</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-50 dark:divide-neutral-800/40 text-xs">
-                    {recentExecutions.length > 0 ? (
-                      recentExecutions.map((tx) => (
-                        <tr key={tx.id} onClick={() => navigate('/trades')} className="hover:bg-gray-50/50 dark:hover:bg-neutral-800/30 transition-colors group cursor-pointer">
-                          <td className="py-3.5 whitespace-nowrap">
-                            <div className="flex items-center gap-3">
-                              <span className={`w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold ${tx.iconColor}`}>
-                                {tx.iconText}
-                              </span>
-                              <span className="font-medium text-gray-900 dark:text-white">
-                                {tx.description}
-                              </span>
-                            </div>
-                          </td>
-                          <td className="py-3.5 text-gray-400 dark:text-gray-500 font-normal whitespace-nowrap">
-                            {tx.date}
-                          </td>
-                          <td className={`py-3.5 font-bold tabular-nums whitespace-nowrap ${tx.amount.startsWith('+') ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-500'}`}>
-                            {tx.amount}
-                          </td>
-                          <td className="py-3.5 text-right whitespace-nowrap">
-                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium ${tx.statusColor}`}>
-                              <span className={`w-1.5 h-1.5 rounded-full ${tx.statusDot}`}></span>
-                              <span>{tx.status}</span>
+              {recentExecutions.length > 0 ? (
+                <div className="divide-y divide-gray-100 dark:divide-neutral-800/60">
+                  {recentExecutions.map((tx) => (
+                    <div
+                      key={tx.id}
+                      onClick={() => navigate('/trades')}
+                      className="py-3 sm:py-3.5 px-2 sm:px-3 -mx-2 sm:-mx-3 rounded-2xl hover:bg-gray-50/80 dark:hover:bg-neutral-800/40 transition-all flex items-center justify-between gap-3 group cursor-pointer"
+                    >
+                      {/* Left: Action Icon + Symbol & Details */}
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 border transition-transform group-hover:scale-105 ${
+                          tx.action === 'BUY'
+                            ? 'bg-blue-50/80 dark:bg-blue-950/40 border-blue-200/60 dark:border-blue-800/40 text-blue-600 dark:text-blue-400'
+                            : 'bg-amber-50/80 dark:bg-amber-950/40 border-amber-200/60 dark:border-amber-800/40 text-amber-600 dark:text-amber-400'
+                        }`}>
+                          {tx.action === 'BUY' ? (
+                            <ArrowUpRight className="w-5 h-5" />
+                          ) : (
+                            <ArrowDownRight className="w-5 h-5" />
+                          )}
+                        </div>
+
+                        <div className="flex flex-col min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-bold text-xs sm:text-sm text-gray-900 dark:text-white truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                              {tx.symbol}
                             </span>
-                          </td>
-                        </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td colSpan={4} className="py-8 text-center text-gray-400 font-normal">
-                          No trade executions logged for this account yet.
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
+                            <span className={`text-[10px] font-bold px-1.5 py-0.2 rounded-md uppercase tracking-wider ${
+                              tx.action === 'BUY' 
+                                ? 'bg-blue-100/80 dark:bg-blue-900/60 text-blue-700 dark:text-blue-300' 
+                                : 'bg-amber-100/80 dark:bg-amber-900/60 text-amber-700 dark:text-amber-300'
+                            }`}>
+                              {tx.action}
+                            </span>
+                            <span className="text-[10px] font-mono text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-neutral-800 px-1.5 py-0.2 rounded">
+                              {tx.size}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center gap-2 text-[11px] text-gray-400 dark:text-gray-500 mt-0.5">
+                            <span>{tx.date}</span>
+                            {tx.strategy && (
+                              <>
+                                <span>•</span>
+                                <span className="text-gray-500 dark:text-gray-400 font-medium truncate max-w-[120px]">
+                                  {tx.strategy}
+                                </span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Right: P&L Result & Status Pill */}
+                      <div className="flex flex-col items-end shrink-0 gap-1">
+                        <span className={`text-xs sm:text-sm font-black tabular-nums tracking-tight ${
+                          tx.isPos 
+                            ? 'text-emerald-600 dark:text-emerald-400' 
+                            : 'text-rose-500 dark:text-rose-400'
+                        }`}>
+                          {tx.amount}
+                        </span>
+                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border ${tx.statusColor}`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${tx.statusDot}`}></span>
+                          <span>{tx.status}</span>
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="py-8 text-center text-xs text-gray-400 border border-dashed border-gray-200 dark:border-neutral-800 rounded-2xl">
+                  No trade executions logged for this account yet.
+                </div>
+              )}
             </div>
 
           </div>
