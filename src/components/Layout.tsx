@@ -36,8 +36,8 @@ export function Layout() {
         setIsMobileOpen={setIsMobileOpen}
       />
       
-      <main className="flex-1 flex flex-col h-full overflow-hidden relative z-10 w-full min-w-0">
-        <div className="flex-1 overflow-y-auto no-scrollbar pb-16">
+      <main className="flex-1 flex flex-col h-full overflow-hidden relative z-10 w-full max-w-full min-w-0">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden no-scrollbar pb-16 w-full max-w-full min-w-0">
           <Outlet />
         </div>
       </main>

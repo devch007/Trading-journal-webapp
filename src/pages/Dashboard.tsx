@@ -668,7 +668,7 @@ export function Dashboard() {
   }, [trades, selectedAccount]);
 
   return (
-    <div className="flex flex-col min-h-full font-normal">
+    <div className="flex flex-col min-h-full font-normal overflow-x-hidden w-full max-w-full min-w-0">
       <TopBar />
 
       <TradeModal 
@@ -693,7 +693,7 @@ export function Dashboard() {
         onChange={handleFileChange}
       />
 
-      <div className="p-3.5 sm:p-6 md:p-8 space-y-5 sm:space-y-7 max-w-[1600px] w-full mx-auto">
+      <div className="p-3.5 sm:p-6 md:p-8 space-y-5 sm:space-y-7 max-w-[1600px] w-full mx-auto min-w-0 overflow-x-hidden">
         
         {/* Rule Violation Notifications */}
         <AnimatePresence>

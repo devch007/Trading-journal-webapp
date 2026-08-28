@@ -147,11 +147,11 @@ export const GoalHeatmap: React.FC<GoalHeatmapProps> = ({ data, mode }) => {
     const adherencePct = activeDays.length > 0 ? Math.round((perfectDays / activeDays.length) * 100) : 100;
 
     return (
-      <div className="bg-white dark:bg-[#16181f] rounded-3xl p-4 sm:p-6 md:p-7 border border-gray-200/80 dark:border-neutral-800/80 shadow-2xs flex flex-col gap-6 relative overflow-hidden">
+      <div className="bg-white dark:bg-[#16181f] rounded-3xl p-3.5 sm:p-6 md:p-7 border border-gray-200/80 dark:border-neutral-800/80 shadow-2xs flex flex-col gap-4 sm:gap-6 relative overflow-hidden w-full max-w-full min-w-0">
         <div className="absolute top-0 right-0 w-72 h-72 bg-emerald-500/5 rounded-full blur-[70px] pointer-events-none" />
         
         {/* Header with Title & Month */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 z-10">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 z-10 w-full min-w-0">
           <div>
             <div className="flex items-center gap-2">
               <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[11px] font-semibold">
@@ -165,7 +165,7 @@ export const GoalHeatmap: React.FC<GoalHeatmapProps> = ({ data, mode }) => {
             <p className="text-xs text-gray-400 mt-0.5">Evaluation of your strict compliance with daily rules & profit targets</p>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 self-start sm:self-auto">
             <span className="text-xs font-bold text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-neutral-800/80 px-3 py-1.5 rounded-xl border border-gray-200/60 dark:border-neutral-700/60">
               {monthLabel}
             </span>
@@ -173,53 +173,53 @@ export const GoalHeatmap: React.FC<GoalHeatmapProps> = ({ data, mode }) => {
         </div>
 
         {/* 3 Metric Summary Strip */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 z-10">
-          <div className="p-3.5 rounded-2xl bg-gray-50/70 dark:bg-neutral-800/40 border border-gray-100 dark:border-neutral-800 flex items-center justify-between">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3 z-10 w-full min-w-0">
+          <div className="p-3 sm:p-3.5 rounded-2xl bg-gray-50/70 dark:bg-neutral-800/40 border border-gray-100 dark:border-neutral-800 flex items-center justify-between">
             <div>
-              <span className="text-[11px] font-medium text-gray-400">Adherence Rate</span>
-              <div className="text-lg sm:text-xl font-bold text-emerald-600 dark:text-emerald-400 tabular-nums">
+              <span className="text-[10px] sm:text-[11px] font-medium text-gray-400">Adherence Rate</span>
+              <div className="text-base sm:text-xl font-bold text-emerald-600 dark:text-emerald-400 tabular-nums">
                 {adherencePct}%
               </div>
             </div>
-            <div className="w-9 h-9 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-600 dark:text-emerald-400 font-bold text-xs">
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-600 dark:text-emerald-400 font-bold text-xs">
               🎯
             </div>
           </div>
 
-          <div className="p-3.5 rounded-2xl bg-gray-50/70 dark:bg-neutral-800/40 border border-gray-100 dark:border-neutral-800 flex items-center justify-between">
+          <div className="p-3 sm:p-3.5 rounded-2xl bg-gray-50/70 dark:bg-neutral-800/40 border border-gray-100 dark:border-neutral-800 flex items-center justify-between">
             <div>
-              <span className="text-[11px] font-medium text-gray-400">Disciplined Days</span>
-              <div className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white tabular-nums">
+              <span className="text-[10px] sm:text-[11px] font-medium text-gray-400">Disciplined Days</span>
+              <div className="text-base sm:text-xl font-bold text-gray-900 dark:text-white tabular-nums">
                 {perfectDays} <span className="text-xs text-gray-400 font-normal">/ {activeDays.length} active</span>
               </div>
             </div>
-            <div className="w-9 h-9 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-600 dark:text-blue-400 font-bold text-xs">
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-600 dark:text-blue-400 font-bold text-xs">
               📅
             </div>
           </div>
 
-          <div className="p-3.5 rounded-2xl bg-gray-50/70 dark:bg-neutral-800/40 border border-gray-100 dark:border-neutral-800 flex items-center justify-between">
+          <div className="p-3 sm:p-3.5 rounded-2xl bg-gray-50/70 dark:bg-neutral-800/40 border border-gray-100 dark:border-neutral-800 flex items-center justify-between">
             <div>
-              <span className="text-[11px] font-medium text-gray-400">Rule Breaches</span>
-              <div className={`text-lg sm:text-xl font-bold tabular-nums ${breachedDays === 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-500'}`}>
+              <span className="text-[10px] sm:text-[11px] font-medium text-gray-400">Rule Breaches</span>
+              <div className={`text-base sm:text-xl font-bold tabular-nums ${breachedDays === 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-500'}`}>
                 {breachedDays} <span className="text-xs text-gray-400 font-normal">{breachedDays === 1 ? 'breach' : 'breaches'}</span>
               </div>
             </div>
-            <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold text-xs ${breachedDays === 0 ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 text-rose-500'}`}>
+            <div className={`w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center font-bold text-xs ${breachedDays === 0 ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 text-rose-500'}`}>
               ⚠️
             </div>
           </div>
         </div>
 
         {/* Month Calendar Matrix of Days */}
-        <div className="z-10">
-          <div className="grid grid-cols-7 gap-1.5 sm:gap-2 text-center text-[10px] sm:text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">
+        <div className="z-10 w-full min-w-0">
+          <div className="grid grid-cols-7 gap-1 sm:gap-2 text-center text-[9px] sm:text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1.5 w-full min-w-0">
             {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(day => (
               <div key={day}>{day}</div>
             ))}
           </div>
 
-          <div className="grid grid-cols-7 gap-1.5 sm:gap-2.5">
+          <div className="grid grid-cols-7 gap-1 sm:gap-2.5 w-full min-w-0">
             {monthDays.map((day, i) => {
               let heatClass = 'bg-gray-50/50 dark:bg-neutral-900/40 border-gray-100 dark:border-neutral-800/60 text-gray-400';
               let isCurrent = isSameDay(day.date, new Date());
@@ -246,20 +246,20 @@ export const GoalHeatmap: React.FC<GoalHeatmapProps> = ({ data, mode }) => {
                   key={i}
                   whileHover={{ scale: 1.05, y: -2 }}
                   className={cn(
-                    "min-h-[46px] sm:min-h-[58px] p-1.5 sm:p-2 rounded-xl sm:rounded-2xl border transition-all flex flex-col justify-between relative group cursor-pointer",
-                    isCurrent ? "ring-2 ring-blue-500 ring-offset-2 dark:ring-offset-[#16181f]" : "",
+                    "aspect-square sm:aspect-auto sm:min-h-[58px] p-1 sm:p-2 rounded-lg sm:rounded-2xl border transition-all flex flex-col justify-between relative group cursor-pointer w-full min-w-0 overflow-hidden",
+                    isCurrent ? "ring-2 ring-blue-500 ring-offset-1 sm:ring-offset-2 dark:ring-offset-[#16181f]" : "",
                     heatClass
                   )}
                 >
-                  <div className="flex items-center justify-between w-full">
-                    <span className="text-[10px] sm:text-xs font-bold tabular-nums">
+                  <div className="flex items-center justify-between w-full min-w-0">
+                    <span className="text-[9px] sm:text-xs font-bold tabular-nums leading-none">
                       {format(day.date, 'd')}
                     </span>
                     {icon}
                   </div>
 
                   {day.active && (
-                    <div className="text-[9px] sm:text-[10px] font-semibold truncate leading-none mt-auto">
+                    <div className="hidden sm:block text-[9px] sm:text-[10px] font-semibold truncate leading-none mt-auto">
                       {day.breachedLimits ? (
                         <span className="text-rose-600 dark:text-rose-400 font-bold">Breached</span>
                       ) : day.score === 1 ? (
@@ -288,22 +288,22 @@ export const GoalHeatmap: React.FC<GoalHeatmapProps> = ({ data, mode }) => {
         </div>
 
         {/* Legend Footer */}
-        <div className="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-neutral-800/80 text-xs text-gray-400 flex-wrap gap-3 z-10">
-          <div className="flex items-center gap-3.5 flex-wrap">
+        <div className="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-neutral-800/80 text-xs text-gray-400 flex-wrap gap-2 sm:gap-3.5 z-10 w-full min-w-0">
+          <div className="flex items-center gap-2 sm:gap-3.5 flex-wrap">
             <div className="flex items-center gap-1.5">
-              <span className="w-3 h-3 rounded-[4px] bg-emerald-500/30 border border-emerald-500/60"></span>
+              <span className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-[4px] bg-emerald-500/30 border border-emerald-500/60"></span>
               <span className="text-[10px] sm:text-[11px]">100% On-Plan</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="w-3 h-3 rounded-[4px] bg-amber-500/20 border border-amber-500/40"></span>
+              <span className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-[4px] bg-amber-500/20 border border-amber-500/40"></span>
               <span className="text-[10px] sm:text-[11px]">Partial</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="w-3 h-3 rounded-[4px] bg-rose-500/20 border border-rose-500/50"></span>
+              <span className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-[4px] bg-rose-500/20 border border-rose-500/50"></span>
               <span className="text-[10px] sm:text-[11px]">Rule Breached</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="w-3 h-3 rounded-[4px] bg-gray-100/70 dark:bg-neutral-900/60 border border-gray-200/60 dark:border-neutral-800/60"></span>
+              <span className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-[4px] bg-gray-100/70 dark:bg-neutral-900/60 border border-gray-200/60 dark:border-neutral-800/60"></span>
               <span className="text-[10px] sm:text-[11px]">No Trading</span>
             </div>
           </div>

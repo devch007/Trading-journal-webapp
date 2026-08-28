@@ -36,7 +36,7 @@ export function TopBar({
   }, []);
 
   return (
-    <header className="flex justify-between items-center w-full px-6 py-4 md:px-8 md:py-5 border-b border-[#eaecf0]/80 dark:border-neutral-800/80 bg-white/60 dark:bg-[#0f1015]/60 backdrop-blur-md sticky top-0 z-40">
+    <header className="flex justify-between items-center w-full max-w-full min-w-0 px-3.5 py-3.5 sm:px-6 sm:py-4 md:px-8 md:py-5 border-b border-[#eaecf0]/80 dark:border-neutral-800/80 bg-white/60 dark:bg-[#0f1015]/60 backdrop-blur-md sticky top-0 z-40 overflow-hidden">
       {/* Left: Title */}
       <div className="flex items-center gap-3.5">
         <button 
