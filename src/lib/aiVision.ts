@@ -208,7 +208,14 @@ async function extractWithGroq(base64Data: string, mimeType: string, apiKey: str
  * Attempt extraction with Google Gemini
  */
 async function extractWithGemini(base64Data: string, mimeType: string, apiKey: string): Promise<{ trades: ExtractedTrade[]; error?: string }> {
-  const geminiModels = ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro'];
+  const geminiModels = [
+    'gemini-2.5-flash',
+    'gemini-2.0-flash',
+    'gemini-2.0-flash-exp',
+    'gemini-1.5-flash-latest',
+    'gemini-1.5-flash',
+    'gemini-2.5-pro'
+  ];
   let lastErr = "";
 
   for (const model of geminiModels) {
