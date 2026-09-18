@@ -120,20 +120,47 @@ Return ONLY valid JSON matching this schema:
 }`;
 
 /**
+ * Helper to clean and parse JSON from LLM responses (strips markdown code blocks)
+ */
+function cleanAndParseJson(raw: string): any {
+  if (!raw) return null;
+  let text = raw.trim();
+  // Remove markdown code fences ```json ... ``` or ``` ... ```
+  if (text.startsWith('```')) {
+    text = text.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '');
+  }
+  const match = text.match(/\{[\s\S]*\}/);
+  if (match) {
+    try {
+      return JSON.parse(match[0]);
+    } catch (e) {
+      // Try parsing full text
+    }
+  }
+  try {
+    return JSON.parse(text);
+  } catch (e) {
+    return null;
+  }
+}
+
+/**
  * Attempt extraction with Groq Vision
  */
-async function extractWithGroq(base64Data: string, mimeType: string, apiKey: string): Promise<ExtractedTrade[]> {
+async function extractWithGroq(base64Data: string, mimeType: string, apiKey: string): Promise<{ trades: ExtractedTrade[]; error?: string }> {
   const models = [
     "llama-3.2-11b-vision-preview",
     "llama-3.2-90b-vision-preview"
   ];
+
+  let lastErr = "";
 
   for (const model of models) {
     try {
       const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
         method: "POST",
         headers: {
-          "Authorization": `Bearer ${apiKey}`,
+          "Authorization": `Bearer ${apiKey.trim()}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
@@ -150,7 +177,7 @@ async function extractWithGroq(base64Data: string, mimeType: string, apiKey: str
               ]
             }
           ],
-          temperature: 0.0,
+          temperature: 0.1,
           max_tokens: 4096,
           response_format: { type: "json_object" }
         })
@@ -159,32 +186,34 @@ async function extractWithGroq(base64Data: string, mimeType: string, apiKey: str
       if (response.ok) {
         const result = await response.json();
         const content = result.choices?.[0]?.message?.content || "{}";
-        const jsonMatch = content.match(/\{[\s\S]*\}/);
-        const parsed = JSON.parse(jsonMatch ? jsonMatch[0] : "{}");
+        const parsed = cleanAndParseJson(content);
         if (parsed && Array.isArray(parsed.trades) && parsed.trades.length > 0) {
-          return parsed.trades;
+          return { trades: parsed.trades };
         }
       } else {
-        const errData = await response.text();
-        console.warn(`Groq Vision model ${model} failed (${response.status}):`, errData);
+        const errData = await response.json().catch(() => ({ error: { message: response.statusText } }));
+        lastErr = errData?.error?.message || `Groq HTTP ${response.status}`;
+        console.warn(`Groq Vision model ${model} failed (${response.status}):`, lastErr);
       }
-    } catch (e) {
+    } catch (e: any) {
+      lastErr = e?.message || "Groq network error";
       console.warn(`Groq error on model ${model}:`, e);
     }
   }
 
-  return [];
+  return { trades: [], error: lastErr };
 }
 
 /**
  * Attempt extraction with Google Gemini
  */
-async function extractWithGemini(base64Data: string, mimeType: string, apiKey: string): Promise<ExtractedTrade[]> {
+async function extractWithGemini(base64Data: string, mimeType: string, apiKey: string): Promise<{ trades: ExtractedTrade[]; error?: string }> {
   const geminiModels = ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro'];
+  let lastErr = "";
 
   for (const model of geminiModels) {
     try {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey.trim()}`;
       const response = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -204,7 +233,7 @@ async function extractWithGemini(base64Data: string, mimeType: string, apiKey: s
           ],
           generationConfig: {
             response_mime_type: "application/json",
-            temperature: 0.0,
+            temperature: 0.1,
             maxOutputTokens: 8192
           }
         })
@@ -213,18 +242,22 @@ async function extractWithGemini(base64Data: string, mimeType: string, apiKey: s
       if (response.ok) {
         const result = await response.json();
         const text = result.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
-        const jsonMatch = text.match(/\{[\s\S]*\}/);
-        const parsed = JSON.parse(jsonMatch ? jsonMatch[0] : "{}");
+        const parsed = cleanAndParseJson(text);
         if (parsed && Array.isArray(parsed.trades) && parsed.trades.length > 0) {
-          return parsed.trades;
+          return { trades: parsed.trades };
         }
+      } else {
+        const errData = await response.json().catch(() => ({ error: { message: response.statusText } }));
+        lastErr = errData?.error?.message || `Gemini HTTP ${response.status}`;
+        console.warn(`Gemini Vision model ${model} failed (${response.status}):`, lastErr);
       }
-    } catch (e) {
-      // Continue
+    } catch (e: any) {
+      lastErr = e?.message || "Gemini network error";
+      console.warn(`Gemini error on model ${model}:`, e);
     }
   }
 
-  return [];
+  return { trades: [], error: lastErr };
 }
 
 /**
@@ -339,13 +372,21 @@ export async function analyzeTradeScreenshot(file: File): Promise<ExtractionResu
 
   // 1. Primary Full-Image Scan (Try Groq first, fall back to Gemini if empty or failing)
   if (groqKey) {
-    const fullTrades = await extractWithGroq(base64Data, mimeType, groqKey);
-    allRawTrades.push(...fullTrades);
+    const groqRes = await extractWithGroq(base64Data, mimeType, groqKey);
+    if (groqRes.trades.length > 0) {
+      allRawTrades.push(...groqRes.trades);
+    } else if (groqRes.error) {
+      lastApiError = groqRes.error;
+    }
   }
   
   if (allRawTrades.length === 0 && geminiKey) {
-    const fullTrades = await extractWithGemini(base64Data, mimeType, geminiKey);
-    allRawTrades.push(...fullTrades);
+    const geminiRes = await extractWithGemini(base64Data, mimeType, geminiKey);
+    if (geminiRes.trades.length > 0) {
+      allRawTrades.push(...geminiRes.trades);
+    } else if (geminiRes.error) {
+      lastApiError = geminiRes.error;
+    }
   }
 
   // 2. High-Resolution Sliced Dual-Pass Scan (Captures dense middle/bottom rows on mobile screenshots)
@@ -354,12 +395,12 @@ export async function analyzeTradeScreenshot(file: File): Promise<ExtractionResu
     if (slices.length > 0) {
       for (const sliceB64 of slices) {
         if (groqKey) {
-          const sliceTrades = await extractWithGroq(sliceB64, 'image/jpeg', groqKey);
-          allRawTrades.push(...sliceTrades);
+          const sliceRes = await extractWithGroq(sliceB64, 'image/jpeg', groqKey);
+          if (sliceRes.trades.length > 0) allRawTrades.push(...sliceRes.trades);
         }
         if (geminiKey) {
-          const sliceTrades = await extractWithGemini(sliceB64, 'image/jpeg', geminiKey);
-          allRawTrades.push(...sliceTrades);
+          const sliceRes = await extractWithGemini(sliceB64, 'image/jpeg', geminiKey);
+          if (sliceRes.trades.length > 0) allRawTrades.push(...sliceRes.trades);
         }
       }
     }
@@ -378,6 +419,6 @@ export async function analyzeTradeScreenshot(file: File): Promise<ExtractionResu
 
   return {
     trades: [],
-    error: lastApiError || "NO_TRADES_DETECTED"
+    error: lastApiError ? `API Error: ${lastApiError}` : "NO_TRADES_DETECTED"
   };
 }

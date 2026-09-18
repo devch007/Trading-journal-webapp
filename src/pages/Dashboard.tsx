@@ -516,7 +516,7 @@ export function Dashboard() {
         setIsImportModalOpen(true);
         setExtractionError(null);
       } else {
-        setExtractionError("Could not detect trades in image. Click to verify your AI key or try another screenshot.");
+        setExtractionError(result.error || "Could not detect trades in image. Click to verify your AI key or try another screenshot.");
       }
     } catch (error: any) {
       setExtractionError(error.message || "Failed to parse screenshot");
