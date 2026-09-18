@@ -205,16 +205,13 @@ async function extractWithGroq(base64Data: string, mimeType: string, apiKey: str
 }
 
 /**
- * Attempt extraction with Google Gemini
+ * Attempt extraction with Google Gemini (Ultra-fast flash models first)
  */
 async function extractWithGemini(base64Data: string, mimeType: string, apiKey: string): Promise<{ trades: ExtractedTrade[]; error?: string }> {
   const geminiModels = [
     'gemini-2.5-flash',
     'gemini-2.0-flash',
-    'gemini-2.0-flash-exp',
-    'gemini-1.5-flash-latest',
-    'gemini-1.5-flash',
-    'gemini-2.5-pro'
+    'gemini-1.5-flash'
   ];
   let lastErr = "";
 
@@ -241,7 +238,7 @@ async function extractWithGemini(base64Data: string, mimeType: string, apiKey: s
           generationConfig: {
             response_mime_type: "application/json",
             temperature: 0.1,
-            maxOutputTokens: 8192
+            maxOutputTokens: 4096
           }
         })
       });
@@ -268,88 +265,7 @@ async function extractWithGemini(base64Data: string, mimeType: string, apiKey: s
 }
 
 /**
- * Slice an image into Top and Bottom segments for high-density vertical phone screenshots
- */
-async function sliceImage(file: File): Promise<string[]> {
-  return new Promise((resolve) => {
-    const img = new Image();
-    img.onload = () => {
-      const { width, height } = img;
-      
-      // If it's a tall mobile screenshot (height > 900 & height > width), slice to double resolution
-      if (height > 900 && height > width * 1.1) {
-        const canvasTop = document.createElement('canvas');
-        const ctxTop = canvasTop.getContext('2d');
-        canvasTop.width = width;
-        canvasTop.height = Math.round(height * 0.58);
-        if (ctxTop) {
-          ctxTop.drawImage(img, 0, 0, width, canvasTop.height, 0, 0, width, canvasTop.height);
-        }
-
-        const canvasBottom = document.createElement('canvas');
-        const ctxBottom = canvasBottom.getContext('2d');
-        canvasBottom.width = width;
-        canvasBottom.height = Math.round(height * 0.58);
-        const startY = Math.round(height * 0.42);
-        if (ctxBottom) {
-          ctxBottom.drawImage(img, 0, startY, width, height - startY, 0, 0, width, height - startY);
-        }
-
-        const topB64 = canvasTop.toDataURL('image/jpeg', 0.95).split(',')[1];
-        const bottomB64 = canvasBottom.toDataURL('image/jpeg', 0.95).split(',')[1];
-        resolve([topB64, bottomB64]);
-      } else {
-        resolve([]);
-      }
-    };
-    img.onerror = () => resolve([]);
-    img.src = URL.createObjectURL(file);
-  });
-}
-
-/**
- * Deduplicate trades accurately based on unique properties
- */
-function deduplicateTrades(tradeList: ExtractedTrade[]): ExtractedTrade[] {
-  const seen = new Set<string>();
-  const result: ExtractedTrade[] = [];
-
-  for (const t of tradeList) {
-    if (!t || !t.symbol) continue;
-
-    const sym = t.symbol.toUpperCase().trim();
-    const type = (t.type || 'BUY').toUpperCase();
-    const vol = parseFloat(String(t.volume || 0)).toFixed(2);
-    const pnl = parseFloat(String(t.profit || 0)).toFixed(2);
-    const entry = String(t.entry_price || '').trim();
-    const dt = String(t.date_time || '').trim();
-
-    // Primary unique signature
-    const key = `${sym}_${type}_${vol}_${pnl}_${entry}_${dt}`;
-    
-    // Secondary fallback signature if date or entry is slightly parsed
-    const looseKey = `${sym}_${type}_${vol}_${pnl}`;
-
-    if (!seen.has(key)) {
-      seen.add(key);
-      seen.add(looseKey);
-      result.push({
-        ...t,
-        symbol: sym,
-        type: type === 'SELL' ? 'SELL' : 'BUY',
-        volume: parseFloat(String(t.volume)) || 1.0,
-        profit: parseFloat(String(t.profit)) || 0.0,
-        commission: parseFloat(String(t.commission)) || 0.0,
-        confidence: 'High'
-      });
-    }
-  }
-
-  return result;
-}
-
-/**
- * Main Screenshot OCR analysis entrypoint with Dual-Pass Multi-Slice High-Resolution Scanning
+ * Main Screenshot OCR analysis entrypoint - Fast Single-Pass with Slicing Fallback
  */
 export async function analyzeTradeScreenshot(file: File): Promise<ExtractionResult> {
   const reader = new FileReader();
@@ -377,7 +293,7 @@ export async function analyzeTradeScreenshot(file: File): Promise<ExtractionResu
   const allRawTrades: ExtractedTrade[] = [];
   const mimeType = file.type || 'image/jpeg';
 
-  // 1. Primary Full-Image Scan (Try Groq first, fall back to Gemini if empty or failing)
+  // 1. Primary Full-Image Fast Scan (Try fastest available provider)
   if (groqKey) {
     const groqRes = await extractWithGroq(base64Data, mimeType, groqKey);
     if (groqRes.trades.length > 0) {
@@ -396,23 +312,24 @@ export async function analyzeTradeScreenshot(file: File): Promise<ExtractionResu
     }
   }
 
-  // 2. High-Resolution Sliced Dual-Pass Scan (Captures dense middle/bottom rows on mobile screenshots)
-  try {
-    const slices = await sliceImage(file);
-    if (slices.length > 0) {
-      for (const sliceB64 of slices) {
-        if (groqKey) {
-          const sliceRes = await extractWithGroq(sliceB64, 'image/jpeg', groqKey);
-          if (sliceRes.trades.length > 0) allRawTrades.push(...sliceRes.trades);
-        }
-        if (geminiKey) {
-          const sliceRes = await extractWithGemini(sliceB64, 'image/jpeg', geminiKey);
-          if (sliceRes.trades.length > 0) allRawTrades.push(...sliceRes.trades);
+  // 2. ONLY slice if 0 trades were found on the full scan (prevents doubling/tripling latency)
+  if (allRawTrades.length === 0) {
+    try {
+      const slices = await sliceImage(file);
+      if (slices.length > 0) {
+        for (const sliceB64 of slices) {
+          if (groqKey) {
+            const sliceRes = await extractWithGroq(sliceB64, 'image/jpeg', groqKey);
+            if (sliceRes.trades.length > 0) allRawTrades.push(...sliceRes.trades);
+          } else if (geminiKey) {
+            const sliceRes = await extractWithGemini(sliceB64, 'image/jpeg', geminiKey);
+            if (sliceRes.trades.length > 0) allRawTrades.push(...sliceRes.trades);
+          }
         }
       }
+    } catch (sliceErr) {
+      // Ignore slice errors
     }
-  } catch (sliceErr) {
-    // If slice fails in browser canvas, full image scan is already stored
   }
 
   const uniqueTrades = deduplicateTrades(allRawTrades);
@@ -420,7 +337,7 @@ export async function analyzeTradeScreenshot(file: File): Promise<ExtractionResu
   if (uniqueTrades.length > 0) {
     return {
       trades: uniqueTrades,
-      source: "AI High-Res Multi-Scan"
+      source: "AI Vision Scan"
     };
   }
 
