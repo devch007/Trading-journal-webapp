@@ -52,22 +52,56 @@ export function setGeminiApiKey(key: string) {
   }
 }
 
-const EXHAUSTIVE_EXTRACTION_PROMPT = `You are a high-precision trading journal OCR scanner. Your task is to extract EVERY SINGLE trade row visible in this screenshot with 100% completeness.
+const EXHAUSTIVE_EXTRACTION_PROMPT = `You are a specialized trading journal OCR engine engineered to read mobile MetaTrader 4 / MetaTrader 5 (MT4/MT5) trade history lists and broker order logs.
 
-CRITICAL EXTRACTION RULES:
-1. SCAN TOP-TO-BOTTOM EXHAUSTIVELY: Read every visible row in the table, trade history list, or position log. Count each individual trade row. DO NOT SKIP OR OMIT ANY ROW.
-2. INDIVIDUAL ENTRIES: If the same symbol appears multiple times (e.g. 5 scalps on XAUUSD or EURUSD), extract EACH ONE as a separate item in the array. Never combine them.
-3. FIELDS TO EXTRACT:
-   - symbol: Standard symbol name (e.g. "EURUSD", "XAUUSD", "BTCUSDT", "NQ", "RELIANCE", "GBPJPY").
-   - type: "BUY" or "SELL".
-   - volume: Lot size or quantity as a number (e.g. 0.01, 0.10, 1.00, 50).
-   - entry_price: Open/entry price as string (e.g. "2340.50", "1.08450").
-   - exit_price: Close/current price as string (e.g. "2355.80", "1.08900").
-   - profit: Net or gross P&L as a floating number (e.g. 150.00 for profit, -45.50 for loss).
-   - commission: Swap/commission fee as a number (e.g. 0.0, 3.50).
-   - close_reason: "Take profit", "Stop loss", "Manual close", "SL", "TP", or "Market".
-   - date_time: Timestamp visible on that row (e.g. "2026.04.15 14:30:00").
-   - confidence: "High".
+SCREENSHOT FORMAT BREAKDOWN (e.g. MetaTrader Mobile History Tab):
+Each trade entry consists of 2 lines:
+Line 1: [SYMBOL] [buy/sell] [LOT_SIZE] ...................... [PROFIT/LOSS] (in blue if positive, red if negative with '-')
+Line 2: [ENTRY_PRICE] -> [EXIT_PRICE] .................... [TIMESTAMP: YYYY.MM.DD HH:MM:SS]
+
+EXAMPLE DECODING:
+Example row:
+"XAUUSD buy 0.02                          25.50"
+"4278.30 -> 4291.05          2026.09.17 06:37:30"
+Maps to:
+- symbol: "XAUUSD"
+- type: "BUY"
+- volume: 0.02
+- profit: 25.50
+- entry_price: "4278.30"
+- exit_price: "4291.05"
+- date_time: "2026.09.17 06:37:30"
+
+Example negative row:
+"XAUUSD buy 0.02                         -27.78"
+"4374.04 -> 4360.15          2026.09.17 16:40:07"
+Maps to:
+- symbol: "XAUUSD"
+- type: "BUY"
+- volume: 0.02
+- profit: -27.78
+- entry_price: "4374.04"
+- exit_price: "4360.15"
+- date_time: "2026.09.17 16:40:07"
+
+Example sell row:
+"XAUUSD sell 0.01                         20.80"
+"4375.77 -> 4354.97          2026.09.17 17:58:25"
+Maps to:
+- symbol: "XAUUSD"
+- type: "SELL"
+- volume: 0.01
+- profit: 20.80
+- entry_price: "4375.77"
+- exit_price: "4354.97"
+- date_time: "2026.09.17 17:58:25"
+
+MANDATORY RULES:
+1. EXTRACT ALL ROWS: Scan sequentially from top to bottom. If there are 6, 10, or 20 trade entries visible in the screenshot, output an object for EVERY single one.
+2. DO NOT SKIP OR COMBINE: Every row is its own execution.
+3. PRESERVE SIGN: If the profit number has a minus sign (or is shown in red), ensure profit is a negative number (e.g. -27.78, -22.46, -0.52). If it's blue/positive, profit is positive.
+4. TYPE: Normalize type to uppercase "BUY" or "SELL".
+5. CLEAN NUMBERS: Volume must be a float (e.g. 0.02, 0.01). Profit must be a float.
 
 Return ONLY valid JSON matching this schema:
 {
@@ -75,13 +109,11 @@ Return ONLY valid JSON matching this schema:
     {
       "symbol": "XAUUSD",
       "type": "BUY",
-      "volume": 0.5,
-      "entry_price": "2340.50",
-      "exit_price": "2355.80",
-      "profit": 765.0,
-      "commission": 0.0,
-      "close_reason": "Take profit",
-      "date_time": "2026.04.15 14:30:00",
+      "volume": 0.02,
+      "entry_price": "4278.30",
+      "exit_price": "4291.05",
+      "profit": 25.50,
+      "date_time": "2026.09.17 06:37:30",
       "confidence": "High"
     }
   ]
@@ -92,10 +124,8 @@ Return ONLY valid JSON matching this schema:
  */
 async function extractWithGroq(base64Data: string, mimeType: string, apiKey: string): Promise<ExtractedTrade[]> {
   const models = [
-    "qwen/qwen3.6-27b",
-    "meta-llama/llama-4-scout-17b-16e-instruct",
-    "meta-llama/llama-4-maverick-17b-128e-instruct",
-    "llama-3.2-11b-vision-preview"
+    "llama-3.2-11b-vision-preview",
+    "llama-3.2-90b-vision-preview"
   ];
 
   for (const model of models) {
@@ -134,9 +164,12 @@ async function extractWithGroq(base64Data: string, mimeType: string, apiKey: str
         if (parsed && Array.isArray(parsed.trades) && parsed.trades.length > 0) {
           return parsed.trades;
         }
+      } else {
+        const errData = await response.text();
+        console.warn(`Groq Vision model ${model} failed (${response.status}):`, errData);
       }
     } catch (e) {
-      // Try next model
+      console.warn(`Groq error on model ${model}:`, e);
     }
   }
 
@@ -300,14 +333,17 @@ export async function analyzeTradeScreenshot(file: File): Promise<ExtractionResu
     };
   }
 
+  let lastApiError = "";
   const allRawTrades: ExtractedTrade[] = [];
   const mimeType = file.type || 'image/jpeg';
 
-  // 1. Primary Full-Image Scan
+  // 1. Primary Full-Image Scan (Try Groq first, fall back to Gemini if empty or failing)
   if (groqKey) {
     const fullTrades = await extractWithGroq(base64Data, mimeType, groqKey);
     allRawTrades.push(...fullTrades);
-  } else if (geminiKey) {
+  }
+  
+  if (allRawTrades.length === 0 && geminiKey) {
     const fullTrades = await extractWithGemini(base64Data, mimeType, geminiKey);
     allRawTrades.push(...fullTrades);
   }
@@ -320,7 +356,8 @@ export async function analyzeTradeScreenshot(file: File): Promise<ExtractionResu
         if (groqKey) {
           const sliceTrades = await extractWithGroq(sliceB64, 'image/jpeg', groqKey);
           allRawTrades.push(...sliceTrades);
-        } else if (geminiKey) {
+        }
+        if (geminiKey) {
           const sliceTrades = await extractWithGemini(sliceB64, 'image/jpeg', geminiKey);
           allRawTrades.push(...sliceTrades);
         }
@@ -341,6 +378,6 @@ export async function analyzeTradeScreenshot(file: File): Promise<ExtractionResu
 
   return {
     trades: [],
-    error: "NO_TRADES_DETECTED"
+    error: lastApiError || "NO_TRADES_DETECTED"
   };
 }
