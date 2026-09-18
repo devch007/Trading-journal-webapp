@@ -58,17 +58,17 @@ export function TradeModal({ isOpen, onClose, onSubmit, trade }: TradeModalProps
     if (trade) {
       setAccountId(trade.accountId || selectedAccountId || (accounts[0]?.id || ""));
       setSelectedDate(parseDateForPicker(trade.date));
-      setSymbol(trade.symbol);
-      setAction(trade.action);
-      setSize(trade.size.replace(" Lot", "").replace(" Lots", ""));
-      setEntry(trade.entry !== undefined ? trade.entry.toString() : "");
-      setExit(trade.exit !== undefined ? trade.exit.toString() : "");
-      setPnl(trade.pnl !== undefined ? trade.pnl.toString() : "");
-      setCommission(trade.commission !== undefined ? trade.commission.toString() : "");
+      setSymbol(trade.symbol || "EURUSD");
+      setAction(trade.action || "BUY");
+      setSize(trade.size ? String(trade.size).replace(" Lot", "").replace(" Lots", "") : "1.00");
+      setEntry(trade.entry != null ? String(trade.entry) : "");
+      setExit(trade.exit != null ? String(trade.exit) : "");
+      setPnl(trade.pnl != null ? String(trade.pnl) : "");
+      setCommission(trade.commission != null ? String(trade.commission) : "");
       setSession(trade.session || "Else");
       setConfidence(trade.confidence || "High");
       setDuration(trade.duration || "");
-      setTags(trade.tags || (trade.tag ? [trade.tag] : []));
+      setTags(Array.isArray(trade.tags) ? trade.tags : (trade.tag ? [trade.tag] : []));
       setStrategy(trade.strategy || "");
     } else {
       setAccountId(selectedAccountId || (accounts[0]?.id || ""));

@@ -35,16 +35,16 @@ export function AccountModal({ isOpen, onClose, onSubmit, initialData }: Account
 
   useEffect(() => {
     if (initialData) {
-      setName(initialData.name);
-      setFirm(initialData.firm);
-      setType(initialData.type);
-      setBadge(initialData.badge);
-      setInitialCapital(initialData.initialCapital.toString());
-      setMaxDrawdown(initialData.maxDrawdown.toString());
-      setDailyDrawdown(initialData.dailyDrawdown.toString());
-      setCommissionForex(initialData.commissionForex !== undefined ? initialData.commissionForex.toString() : "5.0");
-      setCommissionMetals(initialData.commissionMetals !== undefined ? initialData.commissionMetals.toString() : "5.0");
-      setStatus(initialData.status);
+      setName(initialData.name || "");
+      setFirm(initialData.firm || "FTMO");
+      setType(initialData.type || "ACTIVE EVALUATION");
+      setBadge(initialData.badge || "");
+      setInitialCapital(initialData.initialCapital != null ? String(initialData.initialCapital) : "100000");
+      setMaxDrawdown(initialData.maxDrawdown != null ? String(initialData.maxDrawdown) : "5.0");
+      setDailyDrawdown(initialData.dailyDrawdown != null ? String(initialData.dailyDrawdown) : "1.2");
+      setCommissionForex(initialData.commissionForex != null ? String(initialData.commissionForex) : "5.0");
+      setCommissionMetals(initialData.commissionMetals != null ? String(initialData.commissionMetals) : "5.0");
+      setStatus(initialData.status || "ACTIVE");
       setRules(initialData.rules || []);
       setShowRules((initialData.rules || []).length > 0);
     } else {
