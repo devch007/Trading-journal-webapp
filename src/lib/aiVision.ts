@@ -265,6 +265,87 @@ async function extractWithGemini(base64Data: string, mimeType: string, apiKey: s
 }
 
 /**
+ * Slice an image into Top and Bottom segments for high-density vertical phone screenshots
+ */
+async function sliceImage(file: File): Promise<string[]> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      const { width, height } = img;
+      
+      // If it's a tall mobile screenshot (height > 900 & height > width), slice to double resolution
+      if (height > 900 && height > width * 1.1) {
+        const canvasTop = document.createElement('canvas');
+        const ctxTop = canvasTop.getContext('2d');
+        canvasTop.width = width;
+        canvasTop.height = Math.round(height * 0.58);
+        if (ctxTop) {
+          ctxTop.drawImage(img, 0, 0, width, canvasTop.height, 0, 0, width, canvasTop.height);
+        }
+
+        const canvasBottom = document.createElement('canvas');
+        const ctxBottom = canvasBottom.getContext('2d');
+        canvasBottom.width = width;
+        canvasBottom.height = Math.round(height * 0.58);
+        const startY = Math.round(height * 0.42);
+        if (ctxBottom) {
+          ctxBottom.drawImage(img, 0, startY, width, height - startY, 0, 0, width, height - startY);
+        }
+
+        const topB64 = canvasTop.toDataURL('image/jpeg', 0.95).split(',')[1];
+        const bottomB64 = canvasBottom.toDataURL('image/jpeg', 0.95).split(',')[1];
+        resolve([topB64, bottomB64]);
+      } else {
+        resolve([]);
+      }
+    };
+    img.onerror = () => resolve([]);
+    img.src = URL.createObjectURL(file);
+  });
+}
+
+/**
+ * Deduplicate trades accurately based on unique properties
+ */
+function deduplicateTrades(tradeList: ExtractedTrade[]): ExtractedTrade[] {
+  const seen = new Set<string>();
+  const result: ExtractedTrade[] = [];
+
+  for (const t of tradeList) {
+    if (!t || !t.symbol) continue;
+
+    const sym = t.symbol.toUpperCase().trim();
+    const type = (t.type || 'BUY').toUpperCase();
+    const vol = parseFloat(String(t.volume || 0)).toFixed(2);
+    const pnl = parseFloat(String(t.profit || 0)).toFixed(2);
+    const entry = String(t.entry_price || '').trim();
+    const dt = String(t.date_time || '').trim();
+
+    // Primary unique signature
+    const key = `${sym}_${type}_${vol}_${pnl}_${entry}_${dt}`;
+    
+    // Secondary fallback signature if date or entry is slightly parsed
+    const looseKey = `${sym}_${type}_${vol}_${pnl}`;
+
+    if (!seen.has(key)) {
+      seen.add(key);
+      seen.add(looseKey);
+      result.push({
+        ...t,
+        symbol: sym,
+        type: type === 'SELL' ? 'SELL' : 'BUY',
+        volume: parseFloat(String(t.volume)) || 1.0,
+        profit: parseFloat(String(t.profit)) || 0.0,
+        commission: parseFloat(String(t.commission)) || 0.0,
+        confidence: 'High'
+      });
+    }
+  }
+
+  return result;
+}
+
+/**
  * Main Screenshot OCR analysis entrypoint - Fast Single-Pass with Slicing Fallback
  */
 export async function analyzeTradeScreenshot(file: File): Promise<ExtractionResult> {
