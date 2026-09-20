@@ -36,7 +36,14 @@ import {
   Scale,
   BrainCircuit,
   SlidersHorizontal,
-  CheckCircle2
+  CheckCircle2,
+  Copy,
+  Check,
+  Zap,
+  Activity,
+  Award,
+  Flame,
+  TriangleAlert
 } from "lucide-react";
 import { 
   AreaChart, 
@@ -166,6 +173,7 @@ export function Dashboard() {
   const [isAiConfigOpen, setIsAiConfigOpen] = useState(false);
   const [tempAiKey, setTempAiKey] = useState(getAiApiKey());
   const [tempGeminiKey, setTempGeminiKey] = useState(getGeminiApiKey());
+  const [copiedSnapshot, setCopiedSnapshot] = useState(false);
 
   // Filter trades by selected account
   const trades = useMemo(() => {
@@ -177,26 +185,113 @@ export function Dashboard() {
   const stats = useMemo(() => {
     const initialCap = selectedAccount?.initialCapital || 1000;
     
-    if (!trades.length) {
-      return {
-        balance: initialCap,
-        totalProfit: 0,
-        avgGrowing: 0,
-        winRate: 0,
-        profitFactor: 0,
-        bestPair: "N/A",
-        topPairs: []
-      };
-    }
+    // Calculate current month's start
+    const now = new Date();
+    const monthStart = startOfMonth(now);
+    
+    // Monthly trades vs all trades
+    const monthlyTrades = trades.filter(t => {
+      const d = getTradeDate(t);
+      return d >= monthStart;
+    });
+
+    // Use monthly trades if available, otherwise fall back to all trades for realistic display
+    const activePeriodTrades = monthlyTrades.length > 0 ? monthlyTrades : trades;
+    const isShowingCurrentMonth = monthlyTrades.length > 0;
 
     const totalPnl = trades.reduce((sum, trade) => sum + (Number(trade.pnl) || 0), 0);
     const winningTrades = trades.filter(t => t.isPositive || Number(t.pnl) > 0);
     const losingTrades = trades.filter(t => !t.isPositive && Number(t.pnl) < 0);
-    const winRate = (winningTrades.length / trades.length) * 100;
+    const winRate = trades.length > 0 ? (winningTrades.length / trades.length) * 100 : 0;
     
     const grossProfit = winningTrades.reduce((sum, t) => sum + Number(t.pnl || 0), 0);
     const grossLoss = Math.abs(losingTrades.reduce((sum, t) => sum + Number(t.pnl || 0), 0));
     const profitFactor = grossLoss === 0 ? (grossProfit > 0 ? 3.5 : 0.0) : grossProfit / grossLoss;
+
+    // Period snapshot metrics (this month or recent period)
+    const periodPnl = activePeriodTrades.reduce((sum, trade) => sum + (Number(trade.pnl) || 0), 0);
+    const periodWins = activePeriodTrades.filter(t => t.isPositive || Number(t.pnl) > 0);
+    const periodLosses = activePeriodTrades.filter(t => !t.isPositive && Number(t.pnl) < 0);
+    const periodWinRate = activePeriodTrades.length > 0 ? (periodWins.length / activePeriodTrades.length) * 100 : 0;
+    const periodGrossProfit = periodWins.reduce((sum, t) => sum + Number(t.pnl || 0), 0);
+    const periodGrossLoss = Math.abs(periodLosses.reduce((sum, t) => sum + Number(t.pnl || 0), 0));
+    const periodProfitFactor = periodGrossLoss === 0 ? (periodGrossProfit > 0 ? 3.5 : 0.0) : periodGrossProfit / periodGrossLoss;
+
+    // Avg R estimate: avg win pnl / avg loss pnl (or avg return multiple)
+    const avgWinAmount = periodWins.length > 0 ? (periodGrossProfit / periodWins.length) : 0;
+    const avgLossAmount = periodLosses.length > 0 ? (periodGrossLoss / periodLosses.length) : (avgWinAmount || 1);
+    const avgR = activePeriodTrades.length > 0 && avgLossAmount > 0
+      ? (periodPnl / (avgLossAmount * activePeriodTrades.length))
+      : 0;
+
+    // Automated Pattern Discovery / Behavioral Insight
+    let biggestPattern = {
+      headline: "No active behavioral leaks detected.",
+      detail: "Your execution parameters and trading rules are disciplined. Keep following your system.",
+      costText: null as string | null,
+      type: "neutral" as "neutral" | "warning" | "positive"
+    };
+
+    if (activePeriodTrades.length > 0) {
+      // 1. Check for negative session leak
+      const sessionPnls: Record<string, { pnl: number; count: number }> = {};
+      activePeriodTrades.forEach(t => {
+        const sess = t.session || 'Else';
+        if (!sessionPnls[sess]) sessionPnls[sess] = { pnl: 0, count: 0 };
+        sessionPnls[sess].pnl += Number(t.pnl) || 0;
+        sessionPnls[sess].count += 1;
+      });
+
+      const worstSessionEntry = Object.entries(sessionPnls).find(([, d]) => d.pnl < -10 && d.count >= 2);
+
+      // 2. Check for emotional trade leak
+      const emotionalTrades = activePeriodTrades.filter(t => 
+        t.emotions && t.emotions.some(e => ['FOMO', 'Revenge', 'Greedy', 'Anxious', 'Impulsive'].includes(e))
+      );
+      const emotionalLoss = emotionalTrades.reduce((s, t) => s + (Number(t.pnl) < 0 ? Number(t.pnl) : 0), 0);
+
+      // 3. Check for worst instrument leak
+      const losingSymbols = Object.entries(
+        activePeriodTrades.reduce((acc, t) => {
+          acc[t.symbol] = (acc[t.symbol] || 0) + (Number(t.pnl) || 0);
+          return acc;
+        }, {} as Record<string, number>)
+      ).filter(([, pnl]) => pnl < -15).sort((a, b) => a[1] - b[1]);
+
+      if (emotionalTrades.length >= 2 && Math.abs(emotionalLoss) > 20) {
+        const pct = Math.round((emotionalTrades.length / activePeriodTrades.length) * 100);
+        biggestPattern = {
+          headline: `You took ${pct}% of trades under emotional pressure (FOMO / Revenge).`,
+          detail: `Unplanned emotional executions are reducing your portfolio edge.`,
+          costText: `This has cost you approximately -$${Math.abs(Math.round(emotionalLoss))} ${isShowingCurrentMonth ? 'this month' : 'recently'}.`,
+          type: "warning"
+        };
+      } else if (worstSessionEntry) {
+        const [sessName, sData] = worstSessionEntry;
+        const pct = Math.round((sData.count / activePeriodTrades.length) * 100);
+        biggestPattern = {
+          headline: `You are taking ${pct}% of your trades during ${sessName} session hours.`,
+          detail: `Performance in this session shows negative expectancy compared to your core trading hours.`,
+          costText: `This has cost you approximately -$${Math.abs(Math.round(sData.pnl))} ${isShowingCurrentMonth ? 'this month' : 'recently'}.`,
+          type: "warning"
+        };
+      } else if (losingSymbols.length > 0) {
+        const [sym, symPnl] = losingSymbols[0];
+        biggestPattern = {
+          headline: `Underperforming asset: ${sym} is generating recurring drag.`,
+          detail: `Losses on ${sym} are offsetting consistent gains from your high-probability setups.`,
+          costText: `This has cost you approximately -$${Math.abs(Math.round(symPnl))} ${isShowingCurrentMonth ? 'this month' : 'recently'}.`,
+          type: "warning"
+        };
+      } else if (periodWinRate >= 55) {
+        biggestPattern = {
+          headline: `High win rate consistency across top traded setups.`,
+          detail: `Your execution is aligned with your strategy. Consider scaling size gradually on A+ setups.`,
+          costText: `Generated +$${Math.round(periodPnl)} in net edge ${isShowingCurrentMonth ? 'this month' : 'recently'}.`,
+          type: "positive"
+        };
+      }
+    }
 
     // Group pairs for selected account
     const pairStats: Record<string, { pnl: number, wins: number, total: number }> = {};
@@ -226,7 +321,17 @@ export function Dashboard() {
       winRate,
       profitFactor,
       bestPair: sortedPairs[0]?.symbol || "N/A",
-      topPairs: sortedPairs.slice(0, 3)
+      topPairs: sortedPairs.slice(0, 3),
+      // Period / Snapshot details
+      periodPnl,
+      periodWinRate,
+      periodProfitFactor,
+      periodTradeCount: activePeriodTrades.length,
+      periodWinsCount: periodWins.length,
+      periodLossesCount: periodLosses.length,
+      avgR,
+      isShowingCurrentMonth,
+      biggestPattern
     };
   }, [trades, selectedAccount]);
 
@@ -728,75 +833,147 @@ export function Dashboard() {
           {/* ================= LEFT / CENTER AREA (8 COLS) ================= */}
           <div className="lg:col-span-8 flex flex-col gap-7">
             
-            {/* Top Traded Asset Stars Container */}
-            <div className="space-y-4">
-              
-              {/* Header Label Pill & Title */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div className="space-y-1.5">
-                  <div className="flex items-center gap-2">
-                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#111827] dark:bg-white text-white dark:text-gray-900 text-[11px] font-medium">
-                      ★ 3 Top Assets
-                    </span>
-                    <span className="text-xs text-gray-400 dark:text-gray-400 font-medium">
-                      Performance & Win-Rate Leaders
-                    </span>
-                  </div>
-                  {/* Dashboard heading -> 600 weight */}
-                  <h2 className="text-xl md:text-2xl font-semibold text-gray-900 dark:text-white tracking-tight font-headline">
-                    The Top 3 stars of your trading
-                  </h2>
+            {/* Trader Performance Snapshot (Actionable Overview) */}
+            <div className="bg-white dark:bg-[#16181f] rounded-3xl p-6 md:p-7 border border-gray-200/80 dark:border-neutral-800/80 shadow-2xs space-y-6 relative overflow-hidden">
+              {/* Header with Title Pill and Copy/Share Button */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] font-bold tracking-wider uppercase text-gray-500 dark:text-gray-400 font-mono">
+                    YOUR TRADING {stats.isShowingCurrentMonth ? 'THIS MONTH' : 'OVERVIEW'}
+                  </span>
                 </div>
-
-
+                
+                <button
+                  onClick={() => {
+                    const text = `📊 Trading Snapshot (${stats.isShowingCurrentMonth ? 'This Month' : 'Overview'}):\n` +
+                      `• Net P&L: ${stats.periodPnl >= 0 ? '+' : ''}$${stats.periodPnl.toFixed(2)}\n` +
+                      `• Win Rate: ${stats.periodWinRate.toFixed(1)}%\n` +
+                      `• Profit Factor: ${stats.periodProfitFactor.toFixed(2)}\n` +
+                      `• Total Trades: ${stats.periodTradeCount} (${stats.periodWinsCount}W / ${stats.periodLossesCount}L)\n` +
+                      `• Avg R: ${stats.avgR >= 0 ? '+' : ''}${stats.avgR.toFixed(2)}R\n` +
+                      (stats.biggestPattern?.headline ? `\n⚠️ Key Pattern: ${stats.biggestPattern.headline}` : '');
+                    navigator.clipboard.writeText(text);
+                    setCopiedSnapshot(true);
+                    setTimeout(() => setCopiedSnapshot(false), 2000);
+                  }}
+                  className="w-8 h-8 rounded-xl border border-gray-200 dark:border-neutral-800 flex items-center justify-center text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-neutral-800/60 transition-all duration-200"
+                  title="Copy Snapshot summary"
+                >
+                  {copiedSnapshot ? (
+                    <Check className="w-3.5 h-3.5 text-emerald-500" />
+                  ) : (
+                    <Copy className="w-3.5 h-3.5" />
+                  )}
+                </button>
               </div>
 
-              {/* 3 Top Star Cards Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                {stats.topPairs.length > 0 ? (
-                  stats.topPairs.map((pair) => (
-                    <div 
-                      key={pair.symbol}
-                      className="bg-white dark:bg-[#16181f] rounded-3xl p-5 border border-gray-200/80 dark:border-neutral-800/80 shadow-2xs hover:shadow-md transition-all duration-300 flex flex-col justify-between gap-4 group cursor-pointer"
-                      onClick={() => navigate('/trades')}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2.5">
-                          <div className={`w-8 h-8 rounded-full ${pair.iconColor} flex items-center justify-center text-white font-bold text-xs shadow-xs`}>
-                            {pair.icon}
-                          </div>
-                          <span className="text-xs font-semibold text-gray-900 dark:text-white truncate max-w-[110px]">
-                            {pair.symbol}
-                          </span>
-                        </div>
-                        <button className="w-7 h-7 rounded-full border border-gray-200 dark:border-neutral-700 flex items-center justify-center text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white group-hover:border-gray-400 transition-colors">
-                          <ArrowUpRight className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
+              {/* 2-Row Metric Grid */}
+              <div className="grid grid-cols-3 gap-y-5 gap-x-4 sm:gap-x-8 font-mono">
+                {/* Net P&L */}
+                <div>
+                  <div className={`text-xl sm:text-2xl font-bold tracking-tight ${
+                    stats.periodPnl > 0 
+                      ? 'text-emerald-600 dark:text-emerald-400' 
+                      : stats.periodPnl < 0 
+                        ? 'text-rose-600 dark:text-rose-400' 
+                        : 'text-gray-900 dark:text-white'
+                  }`}>
+                    {stats.periodPnl >= 0 ? `+$${stats.periodPnl.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : `-$${Math.abs(stats.periodPnl).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                  </div>
+                  <div className="text-xs text-gray-400 dark:text-gray-400 mt-1 font-sans font-medium">
+                    Net P&amp;L
+                  </div>
+                </div>
 
-                      <div className="space-y-1">
-                        <h3 className="text-xl font-bold tabular-nums text-gray-900 dark:text-white tracking-tight">
-                          {pair.pnl >= 0 ? `+$${pair.pnl.toLocaleString(undefined, { minimumFractionDigits: 2 })}` : `-$${Math.abs(pair.pnl).toLocaleString(undefined, { minimumFractionDigits: 2 })}`}
-                        </h3>
-                        <div className="flex items-center gap-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
-                          <span className="bg-emerald-50 dark:bg-emerald-950/40 px-1.5 py-0.5 rounded-md font-medium tabular-nums">
-                            {pair.gainTag}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <SmartEmptyState 
-                    title="No traded assets for this account yet"
-                    description="Log trades or import an OCR screenshot for this account to automatically calculate top performance stars and asset win-rates."
-                    actionLabel="Log Trade (N)"
-                    onAction={() => setIsTradeModalOpen(true)}
-                    secondaryActionLabel="Import Screenshot"
-                    onSecondaryAction={handleImportClick}
-                    className="col-span-3 py-8"
-                  />
-                )}
+                {/* Win Rate */}
+                <div>
+                  <div className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white tracking-tight">
+                    {stats.periodWinRate.toFixed(1)}%
+                  </div>
+                  <div className="text-xs text-gray-400 dark:text-gray-400 mt-1 font-sans font-medium">
+                    Win Rate
+                  </div>
+                </div>
+
+                {/* Profit Factor */}
+                <div>
+                  <div className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white tracking-tight">
+                    {stats.periodProfitFactor.toFixed(2)}
+                  </div>
+                  <div className="text-xs text-gray-400 dark:text-gray-400 mt-1 font-sans font-medium">
+                    Profit Factor
+                  </div>
+                </div>
+
+                {/* Trades count */}
+                <div>
+                  <div className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white tracking-tight">
+                    {stats.periodTradeCount}
+                  </div>
+                  <div className="text-xs text-gray-400 dark:text-gray-400 mt-1 font-sans font-medium">
+                    Trades
+                  </div>
+                </div>
+
+                {/* W / L */}
+                <div>
+                  <div className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white tracking-tight">
+                    {stats.periodWinsCount}W <span className="text-gray-400 font-normal">/</span> {stats.periodLossesCount}L
+                  </div>
+                  <div className="text-xs text-gray-400 dark:text-gray-400 mt-1 font-sans font-medium">
+                    W/L
+                  </div>
+                </div>
+
+                {/* Avg R */}
+                <div>
+                  <div className={`text-xl sm:text-2xl font-bold tracking-tight ${
+                    stats.avgR > 0 
+                      ? 'text-emerald-600 dark:text-emerald-400' 
+                      : stats.avgR < 0 
+                        ? 'text-rose-600 dark:text-rose-400' 
+                        : 'text-gray-900 dark:text-white'
+                  }`}>
+                    {stats.avgR >= 0 ? `+${stats.avgR.toFixed(1)}R` : `${stats.avgR.toFixed(1)}R`}
+                  </div>
+                  <div className="text-xs text-gray-400 dark:text-gray-400 mt-1 font-sans font-medium">
+                    Avg R
+                  </div>
+                </div>
+              </div>
+
+              {/* Dividing separator */}
+              <div className="border-t border-gray-100 dark:border-neutral-800/80 pt-5">
+                {/* Biggest Pattern Actionable Section */}
+                <div className="space-y-2.5">
+                  <div className="flex items-center gap-1.5 text-xs font-semibold text-gray-700 dark:text-gray-300">
+                    <span className="text-gray-400 dark:text-gray-400 text-sm leading-none">▲</span>
+                    <span className="font-headline tracking-tight">Biggest Pattern</span>
+                  </div>
+
+                  <div className="space-y-1.5 text-sm">
+                    <p className="text-gray-900 dark:text-gray-100 font-medium leading-relaxed">
+                      {stats.biggestPattern?.headline || "Log your trades to discover behavioral edge leaks & patterns."}
+                    </p>
+                    
+                    {stats.biggestPattern?.costText && (
+                      <p className="text-rose-600 dark:text-rose-400 font-medium">
+                        {stats.biggestPattern.costText}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="pt-1">
+                    <button 
+                      onClick={() => navigate('/ai-engine')}
+                      className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors group"
+                    >
+                      <span>[View Analysis</span>
+                      <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                      <span>]</span>
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
                     {/* Portfolio Growth Over Time Curve Chart */}
