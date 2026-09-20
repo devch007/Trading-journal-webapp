@@ -271,7 +271,7 @@ export function AIEngine() {
     }, 1000);
   };
 
-  // Intelligent Local Analytics Engine (Dynamic conversational fallback)
+  // Intelligent Local Analytics Engine (Comprehensive question-aware expert response)
   const generateLocalAnalytics = (query: string, ctx: {
     trades: Trade[];
     winRate: number;
@@ -288,7 +288,37 @@ export function AIEngine() {
     const primaryAssetCount = ctx.bestSymbol ? ctx.bestSymbol[1].count : 0;
     const primaryAssetRate = primaryAssetCount > 0 ? ((primaryAssetWins / primaryAssetCount) * 100).toFixed(1) : ctx.winRate.toFixed(1);
 
-    // 1. Casual Greetings & Acknowledgments
+    // Sorted by date/createdAt descending
+    const sortedTrades = [...ctx.trades].sort((a, b) => {
+      const dateA = new Date(a.date || a.createdAt || 0).getTime();
+      const dateB = new Date(b.date || b.createdAt || 0).getTime();
+      return dateB - dateA;
+    });
+
+    const lastTrade = sortedTrades[0];
+
+    // 1. Last Trade / Recent Trade queries
+    if (q.includes('last trade') || q.includes('recent trade') || q.includes('latest trade') || q.includes('previous trade')) {
+      if (!lastTrade) {
+        return `You don't have any logged trades in this account yet. Add a trade or import your MT4/MT5 history to get a full trade breakdown.`;
+      }
+
+      const pnlSign = Number(lastTrade.pnl) >= 0 ? '+' : '';
+      return `Here is the breakdown of your most recent trade:
+
+• Symbol: ${lastTrade.symbol || 'N/A'} (${(lastTrade.action || 'BUY').toUpperCase()})
+• Result: ${pnlSign}$${Number(lastTrade.pnl || 0).toFixed(2)} (${lastTrade.isPositive ? 'WIN' : 'LOSS'})
+• Entry / Exit: ${lastTrade.entry || 'Market'} → ${lastTrade.exit || 'Market'}
+• Lot Size: ${lastTrade.size || 'Standard'}
+• Strategy: ${lastTrade.strategy || lastTrade.tag || 'Discretionary'}
+• Session: ${lastTrade.session || 'London/NY'}
+
+Coach Feedback: ${lastTrade.isPositive 
+        ? 'Great execution. You followed your entry triggers cleanly without hesitation.' 
+        : 'Controlled risk. Verify whether the exit was based on structural invalidation or premature fear.'}`;
+    }
+
+    // 2. Casual Greetings & Acknowledgments
     if (['hi', 'hello', 'hey', 'yo', 'sup', 'gm', 'good morning', 'good evening'].includes(q)) {
       return `Hey! Trade Pilot Copilot is active and tracking your journal in real-time.
 
@@ -296,26 +326,35 @@ export function AIEngine() {
 • Net Performance: ${ctx.totalPnl >= 0 ? '+' : ''}$${ctx.totalPnl.toFixed(2)} (${ctx.winRate.toFixed(1)}% win rate).
 • Primary Focus: Highest edge on ${primaryAsset}.
 
-What would you like to review? (e.g. "Analyze my mistakes", "How to scale my edge?", or "Best trading session")`;
+What would you like to review? (e.g. "Tell me my last trade", "Analyze my mistakes", "How to scale my edge?")`;
     }
 
-    if (['ok', 'okay', 'got it', 'thanks', 'cool', 'understood', 'sure'].includes(q)) {
-      return `Got it! Ready whenever you want to analyze a setup, check risk management, or review today's entries. Just ask!`;
+    if (['ok', 'okay', 'got it', 'thanks', 'cool', 'understood', 'sure', 'fine'].includes(q)) {
+      return `Understood! I'm monitoring your data in real-time. Whenever you take a trade or want to review your edge, just ask.`;
     }
 
-    if (['why', 'why?', 'how so?', 'explain', 'what do you mean', 'means'].includes(q)) {
-      return `Here is why based on your recorded trading data:
+    if (['what', 'what?', 'what do you mean', 'how', 'how?'].includes(q)) {
+      return `I analyze your entire trading log across 4 key pillars:
 
-1. Trade Sample Size:
-   Your metrics reflect ${ctx.trades.length} logged trades with ${ctx.winRate.toFixed(1)}% win rate.
+1. Execution Quality: Win rate (${ctx.winRate.toFixed(1)}%) across ${ctx.trades.length} trades.
+2. Risk/Reward Ratio: Average win ($${ctx.avgWin.toFixed(2)}) vs average loss ($${ctx.avgLoss.toFixed(2)}).
+3. Asset Allocation: Primary profitability centered on ${primaryAsset}.
+4. Psychology Leaks: Identifying revenge trades and premature exits.
 
-2. Risk & Reward Asymmetry:
-   Your average win is $${ctx.avgWin.toFixed(2)} compared to an average loss of $${ctx.avgLoss.toFixed(2)} (R:R Ratio: ${ctx.rrRatio}).
+Ask me about your "last trade", "biggest mistake", or "best trading session" for a deep dive.`;
+    }
 
-3. Asset Concentration:
-   Your gains are heavily centered on ${primaryAsset} with $${(ctx.bestSymbol?.[1]?.pnl || ctx.totalPnl).toFixed(2)} net profit.
+    if (['why', 'why?', 'how so?', 'explain', 'means'].includes(q)) {
+      return `Here is the mathematical reasoning behind your account state:
 
-Would you like a breakdown of your losing setups or your best session entry times?`;
+1. Win Rate vs Loss Size:
+   Your win rate is ${ctx.winRate.toFixed(1)}%, with an average win of $${ctx.avgWin.toFixed(2)} and an average loss of $${ctx.avgLoss.toFixed(2)}.
+
+2. Asset Concentration:
+   Your primary edge is on ${primaryAsset} with $${(ctx.bestSymbol?.[1]?.pnl || ctx.totalPnl).toFixed(2)} net profit, while other assets show higher variance.
+
+3. Next Growth Step:
+   Eliminate off-plan trades on secondary pairs and strictly take setups where your R:R is at least 1:1.5.`;
     }
 
     if (q.includes('scale') || q.includes('edge') || q.includes('grow')) {
@@ -358,7 +397,7 @@ Would you like a breakdown of your losing setups or your best session entry time
 • Rule of Thumb: Focus your daily energy into 1-2 prime setups rather than spreading trades across the entire day.`;
     }
 
-    // Default intelligent analysis
+    // Default intelligent summary
     return `Analysis based on your ${ctx.trades.length} logged executions:
 
 • Account Health: Net P&L stands at ${ctx.totalPnl >= 0 ? '+' : ''}$${ctx.totalPnl.toFixed(2)} with an overall ${ctx.winRate.toFixed(1)}% win rate.
