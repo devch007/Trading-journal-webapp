@@ -1571,11 +1571,11 @@ export function Dashboard() {
                         outerRadius={64}
                         paddingAngle={orderBiasStats.totalCount > 1 ? 4 : 0}
                         dataKey="value"
-                        stroke={isDark ? "#16181f" : "#ffffff"}
-                        strokeWidth={3}
+                        stroke="none"
+                        strokeWidth={0}
                       >
                         {orderBiasStats.chartData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
+                          <Cell key={`cell-${index}`} fill={entry.color} stroke="none" strokeWidth={0} />
                         ))}
                       </Pie>
                     </PieChart>
@@ -1678,8 +1678,8 @@ export function Dashboard() {
                         outerRadius={64}
                         paddingAngle={sessionStats.totalTrades > 1 ? 3 : 0}
                         dataKey="value"
-                        stroke={isDark ? "#16181f" : "#ffffff"}
-                        strokeWidth={3}
+                        stroke="none"
+                        strokeWidth={0}
                         onMouseEnter={(_, index) => {
                           const entry = sessionStats.chartData[index];
                           if (entry && entry.name !== 'None') setHoveredSession(entry.name);
@@ -1692,12 +1692,15 @@ export function Dashboard() {
                             <Cell 
                               key={`session-cell-${index}`} 
                               fill={entry.color} 
+                              stroke="none"
+                              strokeWidth={0}
                               style={{
                                 transform: isHovered ? 'scale(1.08)' : 'scale(1)',
                                 transformOrigin: 'center center',
                                 transition: 'transform 0.25s ease-out, filter 0.25s ease-out',
                                 filter: isHovered ? 'drop-shadow(0px 0px 8px rgba(59,130,246,0.5))' : 'none',
-                                cursor: 'pointer'
+                                cursor: 'pointer',
+                                outline: 'none'
                               }}
                             />
                           );
