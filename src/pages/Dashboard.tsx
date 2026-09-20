@@ -174,6 +174,7 @@ export function Dashboard() {
   const [tempAiKey, setTempAiKey] = useState(getAiApiKey());
   const [tempGeminiKey, setTempGeminiKey] = useState(getGeminiApiKey());
   const [copiedSnapshot, setCopiedSnapshot] = useState(false);
+  const [hoveredSession, setHoveredSession] = useState<string | null>(null);
 
   // Filter trades by selected account
   const trades = useMemo(() => {
@@ -1681,39 +1682,82 @@ export function Dashboard() {
                         dataKey="value"
                         stroke={isDark ? "#16181f" : "#ffffff"}
                         strokeWidth={3}
+                        onMouseEnter={(_, index) => {
+                          const entry = sessionStats.chartData[index];
+                          if (entry && entry.name !== 'None') setHoveredSession(entry.name);
+                        }}
+                        onMouseLeave={() => setHoveredSession(null)}
                       >
-                        {sessionStats.chartData.map((entry, index) => (
-                          <Cell key={`session-cell-${index}`} fill={entry.color} />
-                        ))}
+                        {sessionStats.chartData.map((entry, index) => {
+                          const isHovered = hoveredSession === entry.name;
+                          return (
+                            <Cell 
+                              key={`session-cell-${index}`} 
+                              fill={entry.color} 
+                              style={{
+                                transform: isHovered ? 'scale(1.08)' : 'scale(1)',
+                                transformOrigin: 'center center',
+                                transition: 'transform 0.25s ease-out, filter 0.25s ease-out',
+                                filter: isHovered ? 'drop-shadow(0px 0px 8px rgba(59,130,246,0.5))' : 'none',
+                                cursor: 'pointer'
+                              }}
+                            />
+                          );
+                        })}
                       </Pie>
                     </PieChart>
                   </ResponsiveContainer>
                 </div>
 
                 {/* Center Badge inside Circle */}
-                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center">
-                  <span className="text-xl font-black tabular-nums text-gray-900 dark:text-white tracking-tight">
-                    {sessionStats.totalTrades}
-                  </span>
-                  <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">
-                    Sessions
-                  </span>
+                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center transition-all duration-300">
+                  {hoveredSession && sessionStats.list.find(s => s.name === hoveredSession) ? (
+                    (() => {
+                      const activeSess = sessionStats.list.find(s => s.name === hoveredSession)!;
+                      return (
+                        <>
+                          <span className="text-sm font-extrabold tabular-nums tracking-tight text-gray-900 dark:text-white truncate max-w-[80px]">
+                            {activeSess.name === 'New York' ? 'NY' : activeSess.name === 'Out of Session' ? 'Out' : activeSess.name}
+                          </span>
+                          <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400">
+                            {activeSess.count} trades
+                          </span>
+                        </>
+                      );
+                    })()
+                  ) : (
+                    <>
+                      <span className="text-xl font-black tabular-nums text-gray-900 dark:text-white tracking-tight">
+                        {sessionStats.totalTrades}
+                      </span>
+                      <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">
+                        Sessions
+                      </span>
+                    </>
+                  )}
                 </div>
               </div>
 
-              {/* Session Grid Cards (2x2 Neat Layout) */}
+              {/* Session Grid Cards (2x2 Neat Layout with smooth zoom hover) */}
               <div className="grid grid-cols-2 gap-2.5 pt-1">
                 {sessionStats.list.map((sess) => {
+                  const isHovered = hoveredSession === sess.name;
                   return (
                     <div 
                       key={sess.name}
                       onClick={() => navigate('/trades')}
-                      className="p-3 rounded-2xl bg-[#f8f9fb] dark:bg-neutral-800/40 border border-gray-100 dark:border-neutral-800/80 hover:border-blue-300 dark:hover:border-blue-800/60 transition-all cursor-pointer group"
+                      onMouseEnter={() => setHoveredSession(sess.name)}
+                      onMouseLeave={() => setHoveredSession(null)}
+                      className={`p-3 rounded-2xl bg-[#f8f9fb] dark:bg-neutral-800/40 border transition-all duration-300 cursor-pointer group transform ${
+                        isHovered 
+                          ? 'scale-[1.04] shadow-md border-blue-400 dark:border-blue-500 bg-white dark:bg-neutral-800 ring-2 ring-blue-500/20' 
+                          : 'border-gray-100 dark:border-neutral-800/80 hover:border-blue-300 dark:hover:border-blue-800/60'
+                      }`}
                     >
                       <div className="flex items-center justify-between mb-1">
                         <div className="flex items-center gap-1.5 min-w-0">
-                          <span className={`w-2 h-2 rounded-full ${sess.dotColor} shrink-0`}></span>
-                          <span className="text-xs font-bold text-gray-900 dark:text-white truncate">
+                          <span className={`w-2 h-2 rounded-full ${sess.dotColor} shrink-0 transition-transform duration-300 ${isHovered ? 'scale-125' : ''}`}></span>
+                          <span className={`text-xs font-bold truncate transition-colors duration-200 ${isHovered ? 'text-blue-600 dark:text-blue-400' : 'text-gray-900 dark:text-white'}`}>
                             {sess.name === 'New York' ? 'NY' : sess.name === 'Out of Session' ? 'Out of Sess' : sess.name}
                           </span>
                         </div>
