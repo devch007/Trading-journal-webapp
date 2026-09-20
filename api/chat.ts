@@ -86,8 +86,38 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     if (!reply) {
+      // 3. Fallback to Pollinations Free AI Text Router (100% free open-access, no keys needed)
+      try {
+        const lastUser = [...messages].reverse().find(m => m.role === 'user')?.content || 'Analyze my trading';
+        const sysMsg = messages.find(m => m.role === 'system')?.content || '';
+        
+        const pollRes = await fetch('https://text.pollinations.ai/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            messages: [
+              { role: 'system', content: sysMsg },
+              ...messages.slice(-6).filter(m => m.role !== 'system'),
+            ],
+            model: 'openai',
+            seed: 42,
+          })
+        });
+
+        if (pollRes.ok) {
+          const pollText = await pollRes.text();
+          if (pollText && pollText.trim().length > 5) {
+            reply = pollText.trim();
+          }
+        }
+      } catch (pollErr) {
+        console.warn('Free text router fallback error:', pollErr);
+      }
+    }
+
+    if (!reply) {
       return res.status(500).json({
-        error: 'No active LLM provider responded. Please check your Groq API key.',
+        error: 'No active LLM provider responded. Please click AI Keys at the top right to paste your free Groq API key.',
       });
     }
 

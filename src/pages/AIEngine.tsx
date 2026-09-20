@@ -271,7 +271,7 @@ export function AIEngine() {
     }, 1000);
   };
 
-  // Intelligent Local Analytics Engine (Comprehensive question-aware expert response)
+  // Intelligent Conversational Coach Engine (Comprehensive & Dynamic Local Fallback)
   const generateLocalAnalytics = (query: string, ctx: {
     trades: Trade[];
     winRate: number;
@@ -282,7 +282,7 @@ export function AIEngine() {
     bestSymbol: [string, { pnl: number; count: number; wins: number }] | null;
     worstSymbol: [string, { pnl: number; count: number; wins: number }] | null;
   }) => {
-    const q = query.toLowerCase().trim();
+    const q = query.toLowerCase().trim().replace(/[^a-z0-9\s?]/g, '');
     const primaryAsset = ctx.bestSymbol ? ctx.bestSymbol[0] : (ctx.trades[0]?.symbol || 'XAUUSD');
     const primaryAssetWins = ctx.bestSymbol ? ctx.bestSymbol[1].wins : 0;
     const primaryAssetCount = ctx.bestSymbol ? ctx.bestSymbol[1].count : 0;
@@ -296,113 +296,122 @@ export function AIEngine() {
     });
 
     const lastTrade = sortedTrades[0];
+    const prevTrade = sortedTrades[1];
+
+    // Check for confusion / complaints / repetition questions
+    if (q.includes('repeat') || q.includes('same') || q.includes('again') || q.includes('stuck') || q.includes('fix') || q.includes('not working') || q.includes('bug')) {
+      return `I hear you loud and clear! I'm your Trade Pilot Copilot. I'm connected to your real journal with all ${ctx.trades.length} trades loaded. 
+
+Here is what I'm actively tracking on your desk:
+• **Account PnL:** ${ctx.totalPnl >= 0 ? '+' : ''}$${ctx.totalPnl.toFixed(2)} across ${ctx.trades.length} trades (${ctx.winRate.toFixed(1)}% win rate)
+• **Main Money-Maker:** ${primaryAsset} with $${(ctx.bestSymbol?.[1]?.pnl || ctx.totalPnl).toFixed(2)} in profit.
+• **Last Trade:** ${lastTrade ? `${lastTrade.symbol} (${(lastTrade.action || 'BUY').toUpperCase()}) → ${Number(lastTrade.pnl) >= 0 ? '+' : ''}$${Number(lastTrade.pnl || 0).toFixed(2)}` : 'None logged yet'}
+
+Tell me specifically what you want to audit: your **last trade**, your **losing streak**, your **win rate**, or **advice on scaling**?`;
+    }
+
+    // Single punctuation / super short queries like "?", "??", "whatt", "yo"
+    if (q === '?' || q === '??' || q === 'what' || q === 'whatt' || q === 'wut' || q === 'huh') {
+      return `I'm right here with your trading journal open! 
+
+You currently have **${ctx.trades.length} logged trades** with a net P&L of **${ctx.totalPnl >= 0 ? '+' : ''}$${ctx.totalPnl.toFixed(2)}** (${ctx.winRate.toFixed(1)}% win rate).
+
+What do you want to break down right now?
+1. Type **"last trade"** to see your most recent execution details.
+2. Type **"risk"** to analyze your stop loss and drawdown.
+3. Type **"scale"** to learn how to increase lot sizes safely.
+4. Or ask me any question about your setups!`;
+    }
 
     // 1. Last Trade / Recent Trade queries
-    if (q.includes('last trade') || q.includes('recent trade') || q.includes('latest trade') || q.includes('previous trade')) {
+    if (q.includes('last trade') || q.includes('recent trade') || q.includes('latest trade') || q.includes('previous trade') || q.includes('last execution')) {
       if (!lastTrade) {
         return `You don't have any logged trades in this account yet. Add a trade or import your MT4/MT5 history to get a full trade breakdown.`;
       }
 
       const pnlSign = Number(lastTrade.pnl) >= 0 ? '+' : '';
-      return `Here is the breakdown of your most recent trade:
+      return `Here is your most recent trade breakdown:
 
-• Symbol: ${lastTrade.symbol || 'N/A'} (${(lastTrade.action || 'BUY').toUpperCase()})
-• Result: ${pnlSign}$${Number(lastTrade.pnl || 0).toFixed(2)} (${lastTrade.isPositive ? 'WIN' : 'LOSS'})
-• Entry / Exit: ${lastTrade.entry || 'Market'} → ${lastTrade.exit || 'Market'}
-• Lot Size: ${lastTrade.size || 'Standard'}
-• Strategy: ${lastTrade.strategy || lastTrade.tag || 'Discretionary'}
-• Session: ${lastTrade.session || 'London/NY'}
+• **Symbol & Direction:** ${lastTrade.symbol || 'XAUUSD'} • ${(lastTrade.action || 'BUY').toUpperCase()}
+• **Outcome:** ${pnlSign}$${Number(lastTrade.pnl || 0).toFixed(2)} (${lastTrade.isPositive ? '✅ WIN' : '❌ LOSS'})
+• **Execution:** Entry: ${lastTrade.entry || 'Market'} → Exit: ${lastTrade.exit || 'Market'}
+• **Size:** ${lastTrade.size || '0.01'} lots
+• **Strategy Tag:** ${lastTrade.strategy || lastTrade.tag || 'Discretionary setup'}
+• **Session:** ${lastTrade.session || 'London/NY overlap'}
 
-Coach Feedback: ${lastTrade.isPositive 
-        ? 'Great execution. You followed your entry triggers cleanly without hesitation.' 
-        : 'Controlled risk. Verify whether the exit was based on structural invalidation or premature fear.'}`;
+**Coach Takeaway:** ${lastTrade.isPositive 
+        ? 'Solid trade execution. You trusted your setup and extracted profit cleanly. Keep that exact patience for the next trigger.' 
+        : 'Take note of whether this loss was within normal edge variance or an emotional early exit. Stick to your risk plan!'}`;
     }
 
     // 2. Casual Greetings & Acknowledgments
-    if (['hi', 'hello', 'hey', 'yo', 'sup', 'gm', 'good morning', 'good evening'].includes(q)) {
-      return `Hey! Trade Pilot Copilot is active and tracking your journal in real-time.
+    if (['hi', 'hello', 'hey', 'yo', 'sup', 'gm', 'good morning', 'good evening', 'brother', 'bro'].some(g => q === g || q.startsWith(g + ' '))) {
+      return `Hey man! Your Trade Pilot Copilot is loaded and watching your journal in real-time.
 
-• Tracked Volume: ${ctx.trades.length} executions logged.
-• Net Performance: ${ctx.totalPnl >= 0 ? '+' : ''}$${ctx.totalPnl.toFixed(2)} (${ctx.winRate.toFixed(1)}% win rate).
-• Primary Focus: Highest edge on ${primaryAsset}.
+• **Tracked:** ${ctx.trades.length} executions logged
+• **PnL:** ${ctx.totalPnl >= 0 ? '+' : ''}$${ctx.totalPnl.toFixed(2)} (${ctx.winRate.toFixed(1)}% win rate)
+• **Top Edge:** ${primaryAsset} (${primaryAssetRate}% win rate)
 
-What would you like to review? (e.g. "Tell me my last trade", "Analyze my mistakes", "How to scale my edge?")`;
+What are we reviewing today? Your recent trades, risk management, or a specific setup?`;
     }
 
-    if (['ok', 'okay', 'got it', 'thanks', 'cool', 'understood', 'sure', 'fine'].includes(q)) {
-      return `Understood! I'm monitoring your data in real-time. Whenever you take a trade or want to review your edge, just ask.`;
+    if (['ok', 'okay', 'got it', 'thanks', 'thank you', 'cool', 'understood', 'sure', 'nice'].some(g => q === g || q.startsWith(g + ' '))) {
+      return `Anytime! I'm right here monitoring your stats in the background. Keep your risk locked in on the next setup. Let me know whenever you want to dissect a trade.`;
     }
 
-    if (['what', 'what?', 'what do you mean', 'how', 'how?'].includes(q)) {
-      return `I analyze your entire trading log across 4 key pillars:
+    if (q.includes('why') || q.includes('explain') || q.includes('reason')) {
+      return `Here is the direct analysis behind your current performance:
 
-1. Execution Quality: Win rate (${ctx.winRate.toFixed(1)}%) across ${ctx.trades.length} trades.
-2. Risk/Reward Ratio: Average win ($${ctx.avgWin.toFixed(2)}) vs average loss ($${ctx.avgLoss.toFixed(2)}).
-3. Asset Allocation: Primary profitability centered on ${primaryAsset}.
-4. Psychology Leaks: Identifying revenge trades and premature exits.
-
-Ask me about your "last trade", "biggest mistake", or "best trading session" for a deep dive.`;
+1. **Win Rate vs Reward:** Your win rate is **${ctx.winRate.toFixed(1)}%**, with an average win of **$${ctx.avgWin.toFixed(2)}** and average loss of **$${ctx.avgLoss.toFixed(2)}** (R:R ${ctx.rrRatio}).
+2. **Asset Concentration:** You generate your most consistent results on **${primaryAsset}** ($${(ctx.bestSymbol?.[1]?.pnl || ctx.totalPnl).toFixed(2)} net). Secondary pairs tend to bleed profit.
+3. **The Solution:** Focus 80% of your capital on your highest conviction setups on ${primaryAsset} and enforce a 1:1.5 minimum R:R on every entry.`;
     }
 
-    if (['why', 'why?', 'how so?', 'explain', 'means'].includes(q)) {
-      return `Here is the mathematical reasoning behind your account state:
+    if (q.includes('scale') || q.includes('edge') || q.includes('grow') || q.includes('increase lot') || q.includes('improve')) {
+      return `Here is your step-by-step scaling blueprint based on your real data:
 
-1. Win Rate vs Loss Size:
-   Your win rate is ${ctx.winRate.toFixed(1)}%, with an average win of $${ctx.avgWin.toFixed(2)} and an average loss of $${ctx.avgLoss.toFixed(2)}.
-
-2. Asset Concentration:
-   Your primary edge is on ${primaryAsset} with $${(ctx.bestSymbol?.[1]?.pnl || ctx.totalPnl).toFixed(2)} net profit, while other assets show higher variance.
-
-3. Next Growth Step:
-   Eliminate off-plan trades on secondary pairs and strictly take setups where your R:R is at least 1:1.5.`;
+1. **Stick to Your Core Weapon (${primaryAsset}):**
+   Your win rate is **${primaryAssetRate}%** on ${primaryAsset}. Don't dilute focus with 5 different instruments.
+2. **Gradual Lot Sizing:**
+   Keep size constant (e.g. 0.01-0.02) for blocks of 10 disciplined trades before stepping up.
+3. **Protect the Average Loss:**
+   Your current average loss is **$${ctx.avgLoss.toFixed(2)}**. Never let a single bad trade exceed 1.5x of this amount.
+4. **Move Stops to Breakeven at 1R:**
+   Once price moves 1:1 in your favor, secure your capital to eliminate full-loss trades.`;
     }
 
-    if (q.includes('scale') || q.includes('edge') || q.includes('grow')) {
-      return `Here is how you can systematically scale your current trading edge:
+    if (q.includes('xau') || q.includes('gold') || q.includes('asset') || q.includes('symbol') || q.includes('eur') || q.includes('gbp')) {
+      return `Asset Performance Breakdown:
 
-1. Double Down on Your Prime Asset (${primaryAsset}):
-   You currently have a strong ${primaryAssetRate}% win rate on ${primaryAsset}. Concentrate your highest-conviction entries where your data proves an edge.
-
-2. Structured Position Scaling:
-   Increment lot sizes gradually (e.g. 0.02 → 0.03) only after 5 consecutive trades that fully respect your pre-trade checklist.
-
-3. Enforce 1:2 Minimum Risk-to-Reward:
-   With an average win of $${ctx.avgWin.toFixed(2)} vs average loss of $${ctx.avgLoss.toFixed(2)}, lock in partial profits at 1:1.5 R:R and move stop-loss to breakeven.
-
-4. Eliminate Underperforming Leaks:
-   ${ctx.worstSymbol && ctx.worstSymbol[1].pnl < 0 ? `Cut down executions on ${ctx.worstSymbol[0]} (currently at -$${Math.abs(ctx.worstSymbol[1].pnl).toFixed(2)}) until backtested.` : 'Maintain strict daily loss limits to protect compounding.'}`;
+• **Dominant Symbol:** **${primaryAsset}** represents your core profitability with **+$${(ctx.bestSymbol?.[1]?.pnl || ctx.totalPnl).toFixed(2)}** across **${primaryAssetCount} executions**.
+• **Win Consistency:** **${primaryAssetRate}%** win rate on ${primaryAsset} proves your technical bias works best here.
+• **Action:** Stick to high-volume sessions (London open & NY open) when trading Gold for clean structure.`;
     }
 
-    if (q.includes('xau') || q.includes('gold') || q.includes('eur') || q.includes('symbol')) {
-      return `Performance deep-dive for your asset allocation:
+    if (q.includes('risk') || q.includes('lose') || q.includes('loss') || q.includes('drawdown') || q.includes('streak') || q.includes('mistake')) {
+      return `Risk & Psychology Diagnostics:
 
-• Dominant Volume: ${primaryAsset} makes up the majority of your profitable executions with $${(ctx.bestSymbol?.[1]?.pnl || ctx.totalPnl).toFixed(2)} in net gains.
-• Win Rate Consistency: ${primaryAssetRate}% win consistency confirms your entry triggers and session timing align well with market volatility.
-• Execution Recommendation: Continue taking trend-continuation pullbacks during the London/NY session overlap for optimal liquidity.`;
+• **Average Win vs Loss:** +$${ctx.avgWin.toFixed(2)} win / -$${ctx.avgLoss.toFixed(2)} loss.
+• **Drawdown Rule:** If you take 2 consecutive losses in one session, close the charts for 30 minutes to prevent revenge trading.
+• **Execution Discipline:** Always place your stop-loss at market invalidation levels before clicking buy/sell.`;
     }
 
-    if (q.includes('lose') || q.includes('loss') || q.includes('mistake') || q.includes('drawdown')) {
-      return `Diagnostic review of your recent drawdowns:
+    if (q.includes('time') || q.includes('session') || q.includes('when') || q.includes('hour')) {
+      return `Best Trading Session & Timing:
 
-• Average Loss Sizing: Your average loss is currently $${ctx.avgLoss.toFixed(2)}. Ensure stops are placed at structural invalidation levels rather than arbitrary dollar amounts.
-• Overtrading Check: Ensure you do not take revenge trades immediately after a stop-out. Take a mandatory 15-minute reset between executions.
-• Discipline Index: Keep adhering to your checklist to prevent premature exits before price reaches target.`;
+• **London Session (07:00 - 11:00 UTC):** Best for initial liquidity sweeps and trend establishment on ${primaryAsset}.
+• **New York Session (13:00 - 17:00 UTC):** Peak volume and highest follow-through for your setups.
+• **Rule:** Avoid late Asian session ranges where spread widening and choppy consolidation hurt win rate.`;
     }
 
-    if (q.includes('time') || q.includes('session') || q.includes('when')) {
-      return `Session & Timing Optimization:
+    // Dynamic, question-relevant response
+    return `Looking directly at your ${ctx.trades.length} logged trades:
 
-• Peak Edge: Your best performing trades cluster during high-liquidity volume windows (London Open & New York Morning).
-• Avoid Low-Volume Chop: Steer clear of late Asian session ranges where false breakouts are more frequent.
-• Rule of Thumb: Focus your daily energy into 1-2 prime setups rather than spreading trades across the entire day.`;
-    }
+• **Net Account PnL:** ${ctx.totalPnl >= 0 ? '+' : ''}$${ctx.totalPnl.toFixed(2)}
+• **Overall Win Rate:** ${ctx.winRate.toFixed(1)}% (${primaryAsset} is your top performer at ${primaryAssetRate}%)
+• **Risk/Reward Profile:** Avg Win: +$${ctx.avgWin.toFixed(2)} | Avg Loss: -$${ctx.avgLoss.toFixed(2)}
 
-    // Default intelligent summary
-    return `Analysis based on your ${ctx.trades.length} logged executions:
-
-• Account Health: Net P&L stands at ${ctx.totalPnl >= 0 ? '+' : ''}$${ctx.totalPnl.toFixed(2)} with an overall ${ctx.winRate.toFixed(1)}% win rate.
-• Core Strength: High win rate on ${primaryAsset} (${primaryAssetRate}%) shows solid directional bias and entry discipline.
-• Recommended Next Step: Continue logging every trade with emotional tags and exit notes to refine your behavioral edge further.`;
+Regarding "${query}": Keep your execution focused on your highest conviction ${primaryAsset} setups. What specific area do you want to drill down into next?`;
   };
 
   const handleSend = async (text: string) => {
