@@ -703,7 +703,22 @@ export function Settings() {
               description="Permanently erase all trades across all accounts"
               danger
               action={
-                <button className="px-3.5 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400 text-xs font-semibold transition-all">
+                <button
+                  onClick={async () => {
+                    if (!user?.id) return;
+                    const confirmed = window.confirm('Are you sure you want to permanently delete ALL trade data? This cannot be undone.');
+                    if (!confirmed) return;
+                    try {
+                      const { error } = await supabase.from('trades').delete().eq('user_id', user.id);
+                      if (error) throw error;
+                      alert('All trade data has been deleted.');
+                      window.location.reload();
+                    } catch (err: any) {
+                      alert(`Error deleting trades: ${err.message}`);
+                    }
+                  }}
+                  className="px-3.5 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400 text-xs font-semibold transition-all cursor-pointer"
+                >
                   Delete
                 </button>
               }
