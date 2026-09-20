@@ -479,9 +479,21 @@ COACHING RULES:
 
       // 1. Try serverless /api/chat endpoint (uses Vercel server-side GROQ_API_KEY automatically)
       try {
+        const authDataStr = localStorage.getItem('sb-kjbffiwucfokooejgpxo-auth-token') || localStorage.getItem('supabase.auth.token');
+        let authToken = '';
+        if (authDataStr) {
+          try {
+            const parsedAuth = JSON.parse(authDataStr);
+            authToken = parsedAuth?.access_token || parsedAuth?.currentSession?.access_token || '';
+          } catch(e) {}
+        }
+
         const chatReq = await fetch('/api/chat', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            ...(authToken ? { 'Authorization': `Bearer ${authToken}` } : {}),
+          },
           body: JSON.stringify({
             messages: [
               { role: 'system', content: systemPrompt },
