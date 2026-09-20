@@ -1,19 +1,19 @@
 import React, { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { 
-  LayoutGrid, 
   TrendingUp, 
+  LayoutGrid, 
+  Sparkles, 
   Wallet, 
-  FileText, 
   Layers, 
+  Target, 
+  FileText, 
+  PieChart, 
   Search, 
+  PanelLeftClose, 
+  PanelLeft, 
   LogOut,
-  Sparkles,
-  Target,
-  PanelLeftClose,
-  PanelLeft,
-  ChevronRight,
-  PieChart
+  Settings
 } from "lucide-react";
 import { cn } from "./utils";
 import { useAuth } from "../contexts/AuthContext";
@@ -89,6 +89,12 @@ export function Sidebar({ isMobileOpen, setIsMobileOpen }: SidebarProps) {
       title: "Wealth & Portfolio",
       items: [
         { title: "Investments", icon: PieChart, href: "/investments", shortcut: "8" },
+      ]
+    },
+    {
+      title: "System",
+      items: [
+        { title: "Settings", icon: Settings, href: "/settings", shortcut: "9" },
       ]
     }
   ];
