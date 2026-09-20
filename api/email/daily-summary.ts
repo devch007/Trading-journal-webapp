@@ -153,100 +153,142 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // 5. Fetch 100% Real-Time Live Ticker Prices (BTC, ETH, XAU, DXY, SPX, NIFTY)
     let liveTickers = {
-      xau: { price: '$2,624.80', change: '+0.65%', isPositive: true },
-      btc: { price: '$63,450', change: '+2.18%', isPositive: true },
-      eth: { price: '$2,580.40', change: '+1.84%', isPositive: true },
-      dxy: { price: '100.75', change: '-0.22%', isPositive: false },
-      spx: { price: '5,718.50', change: '+0.48%', isPositive: true },
-      nifty: { price: '25,790.90', change: '+0.72%', isPositive: true },
+      xau: { price: '$2,735.40', change: '+0.42%', isPositive: true },
+      btc: { price: '$80,950', change: '-0.85%', isPositive: false },
+      eth: { price: '$2,610.20', change: '-1.10%', isPositive: false },
+      dxy: { price: '100.22', change: '-0.01%', isPositive: false },
+      spx: { price: '$5,860.25', change: '+0.38%', isPositive: true },
+      nifty: { price: '₹24,850.50', change: '+0.45%', isPositive: true },
     };
 
-    // A. Fetch Live Crypto & Gold from Binance API
-    try {
-      const cryptoRes = await fetch('https://api.binance.com/api/v3/ticker/24hr?symbols=[%22BTCUSDT%22,%22ETHUSDT%22,%22PAXGUSDT%22]', {
-        headers: { 'User-Agent': 'TradeX-Journal/1.0' },
-      });
-      if (cryptoRes.ok) {
-        const cryptoData = await cryptoRes.json();
-        for (const item of cryptoData) {
-          const priceNum = parseFloat(item.lastPrice);
-          const changeNum = parseFloat(item.priceChangePercent);
-          const sign = changeNum >= 0 ? '+' : '';
-          const formattedChange = `${sign}${changeNum.toFixed(2)}%`;
-          const isPos = changeNum >= 0;
-
-          if (item.symbol === 'BTCUSDT') {
-            liveTickers.btc = {
-              price: `$${priceNum.toLocaleString('en-US', { maximumFractionDigits: 0 })}`,
-              change: formattedChange,
-              isPositive: isPos,
-            };
-          } else if (item.symbol === 'ETHUSDT') {
-            liveTickers.eth = {
-              price: `$${priceNum.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-              change: formattedChange,
-              isPositive: isPos,
-            };
-          } else if (item.symbol === 'PAXGUSDT') {
-            liveTickers.xau = {
-              price: `$${priceNum.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-              change: formattedChange,
-              isPositive: isPos,
-            };
-          }
-        }
-      }
-    } catch (cryptoErr) {
-      console.warn('Crypto ticker fetch error:', cryptoErr);
-    }
-
-    // B. Fetch Live S&P 500, NIFTY 50, DXY & Gold Spot from Yahoo Finance
-    const yahooSymbols: Record<string, 'spx' | 'nifty' | 'dxy' | 'xau'> = {
-      '^GSPC': 'spx',
-      '^NSEI': 'nifty',
-      'DX-Y.NYB': 'dxy',
-      'GC=F': 'xau',
-    };
-
-    await Promise.all(
-      Object.entries(yahooSymbols).map(async ([symbolKey, targetKey]) => {
+    // Parallel multi-source fetch
+    await Promise.allSettled([
+      // 1. CoinGecko (Guaranteed no-block public endpoint for BTC, ETH, Gold PAXG)
+      (async () => {
         try {
-          const yRes = await fetch(
-            `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbolKey)}?interval=1d&range=1d`,
-            { headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' } }
+          const cgRes = await fetch(
+            'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,pax-gold&vs_currencies=usd&include_24hr_change=true',
+            { headers: { Accept: 'application/json' } }
           );
-          if (yRes.ok) {
-            const yData = await yRes.json();
-            const meta = yData?.chart?.result?.[0]?.meta;
-            const price = meta?.regularMarketPrice;
-            const prevClose = meta?.chartPreviousClose || meta?.previousClose;
-            if (typeof price === 'number') {
-              const changePct = prevClose ? ((price - prevClose) / prevClose) * 100 : 0;
-              const sign = changePct >= 0 ? '+' : '';
-              const formattedChange = `${sign}${changePct.toFixed(2)}%`;
-              const isPos = changePct >= 0;
-
-              let formattedPrice = '';
-              if (targetKey === 'dxy') {
-                formattedPrice = price.toFixed(2);
-              } else if (targetKey === 'nifty') {
-                formattedPrice = `₹${price.toLocaleString('en-IN', { maximumFractionDigits: 2 })}`;
-              } else {
-                formattedPrice = `$${price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-              }
-
-              liveTickers[targetKey] = {
-                price: formattedPrice,
-                change: formattedChange,
-                isPositive: isPos,
+          if (cgRes.ok) {
+            const cg = await cgRes.json();
+            if (cg.bitcoin?.usd) {
+              const btcChange = cg.bitcoin.usd_24h_change || 0;
+              liveTickers.btc = {
+                price: `$${cg.bitcoin.usd.toLocaleString('en-US', { maximumFractionDigits: 0 })}`,
+                change: `${btcChange >= 0 ? '+' : ''}${btcChange.toFixed(2)}%`,
+                isPositive: btcChange >= 0,
+              };
+            }
+            if (cg.ethereum?.usd) {
+              const ethChange = cg.ethereum.usd_24h_change || 0;
+              liveTickers.eth = {
+                price: `$${cg.ethereum.usd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+                change: `${ethChange >= 0 ? '+' : ''}${ethChange.toFixed(2)}%`,
+                isPositive: ethChange >= 0,
+              };
+            }
+            if (cg['pax-gold']?.usd) {
+              const xauChange = cg['pax-gold'].usd_24h_change || 0;
+              liveTickers.xau = {
+                price: `$${cg['pax-gold'].usd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+                change: `${xauChange >= 0 ? '+' : ''}${xauChange.toFixed(2)}%`,
+                isPositive: xauChange >= 0,
               };
             }
           }
-        } catch (yErr) {
-          console.warn(`Yahoo ticker fetch error for ${symbolKey}:`, yErr);
+        } catch (e) {
+          console.warn('CoinGecko fetch failed:', e);
         }
-      })
-    );
+      })(),
+
+      // 2. Binance Direct (Ultra-fast real-time crypto & gold spot)
+      (async () => {
+        try {
+          const bRes = await fetch('https://api.binance.com/api/v3/ticker/24hr?symbols=[%22BTCUSDT%22,%22ETHUSDT%22,%22PAXGUSDT%22]');
+          if (bRes.ok) {
+            const bData = await bRes.json();
+            for (const item of bData) {
+              const price = parseFloat(item.lastPrice);
+              const change = parseFloat(item.priceChangePercent);
+              if (isNaN(price)) continue;
+              const formattedChange = `${change >= 0 ? '+' : ''}${change.toFixed(2)}%`;
+              const isPos = change >= 0;
+
+              if (item.symbol === 'BTCUSDT') {
+                liveTickers.btc = {
+                  price: `$${price.toLocaleString('en-US', { maximumFractionDigits: 0 })}`,
+                  change: formattedChange,
+                  isPositive: isPos,
+                };
+              } else if (item.symbol === 'ETHUSDT') {
+                liveTickers.eth = {
+                  price: `$${price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+                  change: formattedChange,
+                  isPositive: isPos,
+                };
+              } else if (item.symbol === 'PAXGUSDT') {
+                liveTickers.xau = {
+                  price: `$${price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+                  change: formattedChange,
+                  isPositive: isPos,
+                };
+              }
+            }
+          }
+        } catch (e) {
+          console.warn('Binance fetch failed:', e);
+        }
+      })(),
+
+      // 3. Yahoo Finance Real-time Indices (^GSPC S&P 500, ^NSEI Nifty 50, DX-Y.NYB US Dollar Index, GC=F Gold Futures)
+      (async () => {
+        const symbols: Record<string, 'spx' | 'nifty' | 'dxy' | 'xau'> = {
+          '^GSPC': 'spx',
+          '^NSEI': 'nifty',
+          'DX-Y.NYB': 'dxy',
+          'GC=F': 'xau',
+        };
+
+        for (const [sym, key] of Object.entries(symbols)) {
+          try {
+            const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?interval=1d&range=1d`;
+            const res = await fetch(url, {
+              headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
+            });
+            if (res.ok) {
+              const data = await res.json();
+              const meta = data?.chart?.result?.[0]?.meta;
+              const price = meta?.regularMarketPrice;
+              const prevClose = meta?.chartPreviousClose || meta?.previousClose;
+              if (typeof price === 'number' && !isNaN(price)) {
+                const changePct = prevClose ? ((price - prevClose) / prevClose) * 100 : 0;
+                const sign = changePct >= 0 ? '+' : '';
+                const formattedChange = `${sign}${changePct.toFixed(2)}%`;
+                const isPos = changePct >= 0;
+
+                let formattedPrice = '';
+                if (key === 'dxy') {
+                  formattedPrice = price.toFixed(2);
+                } else if (key === 'nifty') {
+                  formattedPrice = `₹${price.toLocaleString('en-IN', { maximumFractionDigits: 2 })}`;
+                } else {
+                  formattedPrice = `$${price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                }
+
+                liveTickers[key] = {
+                  price: formattedPrice,
+                  change: formattedChange,
+                  isPositive: isPos,
+                };
+              }
+            }
+          } catch (e) {
+            console.warn(`Yahoo fetch failed for ${sym}:`, e);
+          }
+        }
+      })(),
+    ]);
 
     // 6. Generate Market Intelligence Corner (Forex, Crypto, US Markets, Indian Markets)
     let marketNews = {
