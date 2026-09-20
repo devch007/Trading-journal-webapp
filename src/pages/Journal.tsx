@@ -31,8 +31,6 @@ import { useTrades, Trade } from "../hooks/useTrades";
 import { useNavigate } from "react-router-dom";
 import { useAccountContext } from "../contexts/AccountContext";
 import { getTradeDate } from "../lib/timeUtils";
-import { Skeleton } from "../components/ui/Skeleton";
-import { SmartEmptyState } from "../components/ui/SmartEmptyState";
 
 export function Journal() {
   const { trades: allTrades, loading, updateTrades, fetchTradeProof } = useTrades();
@@ -218,31 +216,37 @@ export function Journal() {
           <div className="overflow-y-auto space-y-2.5 no-scrollbar max-h-[calc(100vh-280px)] pr-0.5">
             {loading ? (
               Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="p-4 rounded-3xl bg-white dark:bg-[#16181f] border border-gray-200/80 dark:border-neutral-800/80 shadow-2xs space-y-3">
+                <div key={i} className="p-4 rounded-3xl bg-white dark:bg-[#16181f] border border-gray-200/80 dark:border-neutral-800/80 shadow-2xs space-y-3 animate-pulse">
                   <div className="flex justify-between items-center">
                     <div className="flex items-center gap-2.5">
-                      <Skeleton variant="circle" className="w-8 h-8" />
+                      <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-neutral-700" />
                       <div className="space-y-1.5">
-                        <Skeleton className="w-16 h-4 rounded" />
-                        <Skeleton className="w-20 h-3 rounded" />
+                        <div className="w-16 h-4 rounded bg-gray-200 dark:bg-neutral-700" />
+                        <div className="w-20 h-3 rounded bg-gray-200 dark:bg-neutral-700" />
                       </div>
                     </div>
-                    <Skeleton className="w-16 h-5 rounded-lg" />
+                    <div className="w-16 h-5 rounded-lg bg-gray-200 dark:bg-neutral-700" />
                   </div>
                   <div className="flex items-center gap-2">
-                    <Skeleton className="w-12 h-4 rounded" />
-                    <Skeleton className="w-20 h-4 rounded" />
+                    <div className="w-12 h-4 rounded bg-gray-200 dark:bg-neutral-700" />
+                    <div className="w-20 h-4 rounded bg-gray-200 dark:bg-neutral-700" />
                   </div>
                 </div>
               ))
             ) : entries.length === 0 ? (
-              <SmartEmptyState 
-                title="No trades to journal"
-                description="Logged trades for this account will appear here for execution scoring, psychology notes, and screenshot proof."
-                actionLabel="Log Trade (N)"
-                onAction={() => window.dispatchEvent(new CustomEvent('openNewTradeModal'))}
-                className="py-10 shadow-none border-none bg-transparent"
-              />
+              <div className="py-12 text-center flex flex-col items-center justify-center p-6 bg-white dark:bg-[#16181f] rounded-3xl border border-dashed border-gray-200 dark:border-neutral-800">
+                <div className="w-10 h-10 rounded-2xl bg-blue-500/10 text-blue-500 flex items-center justify-center mb-3">
+                  <Sparkles className="w-5 h-5" />
+                </div>
+                <h4 className="text-sm font-bold text-gray-900 dark:text-white mb-1">No trades to journal</h4>
+                <p className="text-xs text-gray-400 mb-4 max-w-xs">Logged trades for this account will appear here for execution scoring, notes, and screenshot proof.</p>
+                <button
+                  onClick={() => window.dispatchEvent(new CustomEvent('openNewTradeModal'))}
+                  className="btn-primary px-4 py-2 text-xs font-semibold"
+                >
+                  <Sparkles className="w-3.5 h-3.5" /> Log Trade (N)
+                </button>
+              </div>
             ) : (
               entries.map(entry => {
                 const pnlNum = Number(entry.pnl) || 0;

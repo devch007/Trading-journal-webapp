@@ -37,7 +37,6 @@ import {
   Tooltip, 
   ResponsiveContainer 
 } from 'recharts';
-import { SmartEmptyState } from '../components/ui/SmartEmptyState';
 import { motion } from 'motion/react';
 import { 
   getIndianApiKey, 
@@ -530,13 +529,19 @@ export function Investments() {
               {/* Table Container */}
               <div className="overflow-x-auto no-scrollbar">
                 {filteredHoldings.length === 0 ? (
-                  <SmartEmptyState
-                    title="No holdings found"
-                    description="No assets match the selected filter. Add a holding to begin tracking wealth."
-                    actionLabel="Add Investment"
-                    onAction={() => setIsAddModalOpen(true)}
-                    className="shadow-none border-none bg-transparent py-8"
-                  />
+                  <div className="py-10 text-center flex flex-col items-center justify-center p-6 bg-gray-50/50 dark:bg-neutral-900/30 rounded-2xl border border-dashed border-gray-200 dark:border-neutral-800">
+                    <div className="w-10 h-10 rounded-2xl bg-blue-500/10 text-blue-500 flex items-center justify-center mb-3">
+                      <Sparkles className="w-5 h-5" />
+                    </div>
+                    <h4 className="text-sm font-bold text-gray-900 dark:text-white mb-1">No holdings found</h4>
+                    <p className="text-xs text-gray-400 mb-4 max-w-xs">No assets match the selected filter. Add a holding to begin tracking wealth.</p>
+                    <button
+                      onClick={() => setIsAddModalOpen(true)}
+                      className="btn-primary px-4 py-2 text-xs font-semibold"
+                    >
+                      <Plus className="w-3.5 h-3.5" /> Add Investment
+                    </button>
+                  </div>
                 ) : (
                   <table className="w-full text-left border-collapse">
                     <thead>

@@ -5,8 +5,6 @@ import { TradeModal } from "../components/TradeModal";
 import { ImportTradesModal } from "../components/ImportTradesModal";
 import { TradingCalendarHeatmap } from "../components/TradingCalendarHeatmap";
 import { GoalHeatmap, DailyHeatmapData, DailyGoalStatus } from "../components/GoalHeatmap";
-import { DashboardSkeleton } from "../components/ui/Skeleton";
-import { SmartEmptyState } from "../components/ui/SmartEmptyState";
 import { startOfDay, startOfMonth } from "date-fns";
 import { 
   TrendingUp, 

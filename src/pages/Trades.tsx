@@ -3,11 +3,9 @@ import { TopBar } from "../lib/TopBar";
 import { useTrades } from "../hooks/useTrades";
 import { useAccountContext } from "../contexts/AccountContext";
 import { TradeModal } from "../components/TradeModal";
-import { Plus, ChevronDown, Calendar, Trash2, Tag, X, CheckSquare, Square, Layers } from "lucide-react";
+import { Plus, ChevronDown, Calendar, Trash2, Tag, X, CheckSquare, Square, Layers, Sparkles } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { getTradeDate, parseDurationToMinutes, formatMinutesToDuration } from "../lib/timeUtils";
-import { Skeleton } from "../components/ui/Skeleton";
-import { SmartEmptyState } from "../components/ui/SmartEmptyState";
 
 export function Trades() {
   const { trades: allTrades, loading, addTrade, deleteTrades, updateTrades } = useTrades();
@@ -523,22 +521,28 @@ export function Trades() {
           <div className="md:hidden flex flex-col gap-3">
             {loading ? (
               Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="p-4 rounded-2xl bg-gray-50/70 dark:bg-neutral-800/40 border border-gray-100 dark:border-neutral-800 space-y-3">
+                <div key={i} className="p-4 rounded-2xl bg-gray-50/70 dark:bg-neutral-800/40 border border-gray-100 dark:border-neutral-800 space-y-3 animate-pulse">
                   <div className="flex justify-between items-center">
-                    <Skeleton className="w-24 h-5 rounded" />
-                    <Skeleton className="w-16 h-5 rounded" />
+                    <div className="w-24 h-5 rounded bg-gray-200 dark:bg-neutral-700" />
+                    <div className="w-16 h-5 rounded bg-gray-200 dark:bg-neutral-700" />
                   </div>
-                  <Skeleton className="w-full h-10 rounded" />
+                  <div className="w-full h-10 rounded bg-gray-200 dark:bg-neutral-700" />
                 </div>
               ))
             ) : (trades || []).length === 0 ? (
-              <SmartEmptyState 
-                title="No trades found matching current filter"
-                description="Try resetting your filters or log a new execution for this account."
-                actionLabel="Log New Trade (N)"
-                onAction={() => { setEditingTrade(null); setIsTradeModalOpen(true); }}
-                className="border-none shadow-none bg-transparent"
-              />
+              <div className="py-10 text-center flex flex-col items-center justify-center p-6 bg-gray-50/50 dark:bg-neutral-900/30 rounded-2xl border border-dashed border-gray-200 dark:border-neutral-800">
+                <div className="w-10 h-10 rounded-2xl bg-blue-500/10 text-blue-500 flex items-center justify-center mb-3">
+                  <Sparkles className="w-5 h-5" />
+                </div>
+                <h4 className="text-sm font-bold text-gray-900 dark:text-white mb-1">No trades found</h4>
+                <p className="text-xs text-gray-400 mb-4 max-w-xs">Try resetting your filters or log a new trade execution.</p>
+                <button
+                  onClick={() => { setEditingTrade(null); setIsTradeModalOpen(true); }}
+                  className="btn-primary px-4 py-2 text-xs font-semibold"
+                >
+                  <Plus className="w-3.5 h-3.5" /> Log Trade
+                </button>
+              </div>
             ) : (
               (trades || []).map((trade, index) => {
                 const isSelected = selectedTradeIds.includes(trade.id);
@@ -558,20 +562,22 @@ export function Trades() {
                       <div className="flex items-center gap-2 min-w-0">
                         <button
                           onClick={(e) => toggleSelectTrade(trade.id, e)}
-                          className="p-1 -ml-1 hover:bg-gray-200 dark:hover:bg-neutral-700 rounded-lg transition-colors"
+                          className="p-0.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
                         >
                           {isSelected ? (
-                            <CheckSquare className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                            <CheckSquare className="w-4 h-4 text-blue-500" />
                           ) : (
-                            <Square className="w-4 h-4 text-gray-300 dark:text-gray-600" />
+                            <Square className="w-4 h-4" />
                           )}
                         </button>
-                        <span className="text-xs font-bold text-gray-400 tabular-nums">#{trades.length - index}</span>
-                        <span className="text-sm font-bold text-gray-900 dark:text-white truncate">{trade.symbol}</span>
-                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                          trade.action === 'BUY' 
-                            ? 'bg-emerald-100/80 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300' 
-                            : 'bg-rose-100/80 dark:bg-rose-900/60 text-rose-700 dark:text-rose-300'
+                        <span className="text-xs font-bold text-gray-400 tabular-nums">#{index + 1}</span>
+                        <span className="text-sm font-bold text-gray-900 dark:text-white truncate">
+                          {trade.symbol}
+                        </span>
+                        <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase ${
+                          trade.action?.toUpperCase() === 'BUY'
+                            ? 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400'
+                            : 'bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400'
                         }`}>
                           {trade.action}
                         </span>
@@ -639,54 +645,60 @@ export function Trades() {
                       onClick={toggleSelectAll}
                       className="p-1 hover:bg-gray-100 dark:hover:bg-neutral-800 rounded-lg transition-colors"
                     >
-                      {selectedTradeIds.length === (trades || []).length && (trades || []).length > 0 ? (
-                        <CheckSquare className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                      {selectedTradeIds.length === trades.length && trades.length > 0 ? (
+                        <CheckSquare className="w-4 h-4 text-blue-500" />
                       ) : (
-                        <Square className="w-4 h-4 text-gray-400" />
+                        <Square className="w-4 h-4" />
                       )}
                     </button>
                   </th>
-                  <th className="pb-3 font-semibold">#</th>
-                  <th className="pb-3 font-semibold">Date & Time</th>
-                  <th className="pb-3 font-semibold">Symbol</th>
-                  <th className="pb-3 font-semibold">Side</th>
-                  <th className="pb-3 font-semibold">Entry</th>
-                  <th className="pb-3 font-semibold">Exit</th>
-                  <th className="pb-3 font-semibold">Volume</th>
-                  <th className="pb-3 font-semibold">Session</th>
-                  <th className="pb-3 font-semibold">Conf.</th>
-                  <th className="pb-3 font-semibold">Result P&L</th>
-                  <th className="pb-3 font-semibold pr-2">Strategy / Tags</th>
+                  <th className="pb-3 font-medium">#</th>
+                  <th className="pb-3 font-medium">DATE</th>
+                  <th className="pb-3 font-medium">SYMBOL</th>
+                  <th className="pb-3 font-medium">SIDE</th>
+                  <th className="pb-3 font-medium">SIZE</th>
+                  <th className="pb-3 font-medium">ENTRY</th>
+                  <th className="pb-3 font-medium">EXIT</th>
+                  <th className="pb-3 font-medium">SESSION</th>
+                  <th className="pb-3 font-medium">DURATION</th>
+                  <th className="pb-3 font-medium">STRATEGY</th>
+                  <th className="pb-3 font-medium text-right pr-2">NET P&L</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-neutral-800/40 text-xs">
                 {loading ? (
                   Array.from({ length: 5 }).map((_, i) => (
-                    <tr key={i}>
-                      <td className="py-4 pl-2"><Skeleton className="w-4 h-4 rounded" /></td>
-                      <td className="py-4"><Skeleton className="w-6 h-4 rounded" /></td>
-                      <td className="py-4"><Skeleton className="w-20 h-4 rounded" /></td>
-                      <td className="py-4"><Skeleton className="w-16 h-4 rounded" /></td>
-                      <td className="py-4"><Skeleton className="w-12 h-5 rounded-full" /></td>
-                      <td className="py-4"><Skeleton className="w-12 h-4 rounded" /></td>
-                      <td className="py-4"><Skeleton className="w-16 h-4 rounded" /></td>
-                      <td className="py-4"><Skeleton className="w-16 h-4 rounded" /></td>
-                      <td className="py-4"><Skeleton className="w-14 h-4 rounded" /></td>
-                      <td className="py-4"><Skeleton className="w-16 h-4 rounded" /></td>
-                      <td className="py-4"><Skeleton className="w-16 h-4 rounded" /></td>
-                      <td className="py-4"><Skeleton className="w-20 h-4 rounded" /></td>
+                    <tr key={i} className="animate-pulse">
+                      <td className="py-4 pl-2"><div className="w-4 h-4 rounded bg-gray-200 dark:bg-neutral-700" /></td>
+                      <td className="py-4"><div className="w-6 h-4 rounded bg-gray-200 dark:bg-neutral-700" /></td>
+                      <td className="py-4"><div className="w-20 h-4 rounded bg-gray-200 dark:bg-neutral-700" /></td>
+                      <td className="py-4"><div className="w-16 h-4 rounded bg-gray-200 dark:bg-neutral-700" /></td>
+                      <td className="py-4"><div className="w-12 h-5 rounded-full bg-gray-200 dark:bg-neutral-700" /></td>
+                      <td className="py-4"><div className="w-12 h-4 rounded bg-gray-200 dark:bg-neutral-700" /></td>
+                      <td className="py-4"><div className="w-16 h-4 rounded bg-gray-200 dark:bg-neutral-700" /></td>
+                      <td className="py-4"><div className="w-16 h-4 rounded bg-gray-200 dark:bg-neutral-700" /></td>
+                      <td className="py-4"><div className="w-14 h-4 rounded bg-gray-200 dark:bg-neutral-700" /></td>
+                      <td className="py-4"><div className="w-16 h-4 rounded bg-gray-200 dark:bg-neutral-700" /></td>
+                      <td className="py-4"><div className="w-16 h-4 rounded bg-gray-200 dark:bg-neutral-700" /></td>
+                      <td className="py-4"><div className="w-20 h-4 rounded bg-gray-200 dark:bg-neutral-700 ml-auto" /></td>
                     </tr>
                   ))
                 ) : (trades || []).length === 0 ? (
                   <tr>
-                    <td colSpan={12} className="py-8 text-center">
-                      <SmartEmptyState 
-                        title="No trades found matching current filter"
-                        description="Try resetting your filters or log a new execution for this account."
-                        actionLabel="Log New Trade (N)"
-                        onAction={() => { setEditingTrade(null); setIsTradeModalOpen(true); }}
-                        className="border-none shadow-none bg-transparent"
-                      />
+                    <td colSpan={12} className="py-12 text-center">
+                      <div className="flex flex-col items-center justify-center p-6">
+                        <div className="w-10 h-10 rounded-2xl bg-blue-500/10 text-blue-500 flex items-center justify-center mb-3">
+                          <Sparkles className="w-5 h-5" />
+                        </div>
+                        <h4 className="text-sm font-bold text-gray-900 dark:text-white mb-1">No trades found matching current filter</h4>
+                        <p className="text-xs text-gray-400 mb-4 max-w-sm">Try resetting your filters or log a new execution for this account.</p>
+                        <button
+                          onClick={() => { setEditingTrade(null); setIsTradeModalOpen(true); }}
+                          className="btn-primary px-4 py-2 text-xs font-semibold"
+                        >
+                          <Plus className="w-3.5 h-3.5" /> Log New Trade (N)
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ) : (
