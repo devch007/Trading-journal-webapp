@@ -833,12 +833,16 @@ export function Dashboard() {
           {/* ================= LEFT / CENTER AREA (8 COLS) ================= */}
           <div className="lg:col-span-8 flex flex-col gap-7">
             
-            {/* Trader Performance Snapshot (Actionable Overview) */}
-            <div className="bg-white dark:bg-[#16181f] rounded-3xl p-6 md:p-7 border border-gray-200/80 dark:border-neutral-800/80 shadow-2xs space-y-6 relative overflow-hidden">
+            {/* Trader Performance Snapshot (Actionable Overview with Circular Gauges & Rich Visuals) */}
+            <div className="bg-white dark:bg-[#16181f] rounded-3xl p-6 md:p-7 border border-gray-200/80 dark:border-neutral-800/80 shadow-2xs space-y-6 relative overflow-hidden group">
+              {/* Subtle background ambient glow for high-end aesthetic */}
+              <div className="absolute top-0 right-0 w-80 h-80 bg-gradient-to-br from-emerald-500/5 via-blue-500/5 to-transparent rounded-full blur-3xl pointer-events-none -mr-20 -mt-20"></div>
+
               {/* Header with Title Pill and Copy/Share Button */}
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between relative z-10">
                 <div className="flex items-center gap-2">
-                  <span className="text-[11px] font-bold tracking-wider uppercase text-gray-500 dark:text-gray-400 font-mono">
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-gray-100 dark:bg-neutral-800/80 text-gray-700 dark:text-gray-300 text-[11px] font-semibold tracking-wider uppercase font-mono border border-gray-200/60 dark:border-neutral-700/60">
+                    <Activity className="w-3 h-3 text-emerald-500" />
                     YOUR TRADING {stats.isShowingCurrentMonth ? 'THIS MONTH' : 'OVERVIEW'}
                   </span>
                 </div>
@@ -856,7 +860,7 @@ export function Dashboard() {
                     setCopiedSnapshot(true);
                     setTimeout(() => setCopiedSnapshot(false), 2000);
                   }}
-                  className="w-8 h-8 rounded-xl border border-gray-200 dark:border-neutral-800 flex items-center justify-center text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-neutral-800/60 transition-all duration-200"
+                  className="w-8 h-8 rounded-xl border border-gray-200 dark:border-neutral-800 flex items-center justify-center text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-neutral-800/60 transition-all duration-200 shadow-2xs"
                   title="Copy Snapshot summary"
                 >
                   {copiedSnapshot ? (
@@ -867,112 +871,161 @@ export function Dashboard() {
                 </button>
               </div>
 
-              {/* 2-Row Metric Grid */}
-              <div className="grid grid-cols-3 gap-y-5 gap-x-4 sm:gap-x-8 font-mono">
-                {/* Net P&L */}
-                <div>
-                  <div className={`text-xl sm:text-2xl font-bold tracking-tight ${
-                    stats.periodPnl > 0 
-                      ? 'text-emerald-600 dark:text-emerald-400' 
-                      : stats.periodPnl < 0 
-                        ? 'text-rose-600 dark:text-rose-400' 
-                        : 'text-gray-900 dark:text-white'
-                  }`}>
-                    {stats.periodPnl >= 0 ? `+$${stats.periodPnl.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : `-$${Math.abs(stats.periodPnl).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
-                  </div>
-                  <div className="text-xs text-gray-400 dark:text-gray-400 mt-1 font-sans font-medium">
-                    Net P&amp;L
+              {/* Main Content Layout: Left Circular Gauge + Right Metrics Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center relative z-10">
+                {/* Circular Win Rate Gauge (4 cols) */}
+                <div className="md:col-span-4 flex items-center justify-center">
+                  <div className="relative w-36 h-36 flex items-center justify-center">
+                    <svg className="w-full h-full transform -rotate-90" viewBox="0 0 120 120">
+                      {/* Background circle */}
+                      <circle
+                        cx="60"
+                        cy="60"
+                        r="48"
+                        className="stroke-gray-100 dark:stroke-neutral-800"
+                        strokeWidth="9"
+                        fill="transparent"
+                      />
+                      {/* Progress circle */}
+                      <circle
+                        cx="60"
+                        cy="60"
+                        r="48"
+                        className="transition-all duration-1000 ease-out"
+                        strokeWidth="9"
+                        strokeDasharray={2 * Math.PI * 48}
+                        strokeDashoffset={2 * Math.PI * 48 * (1 - Math.min(1, Math.max(0, stats.periodWinRate / 100)))}
+                        strokeLinecap="round"
+                        stroke={stats.periodWinRate >= 50 ? '#10b981' : stats.periodWinRate >= 40 ? '#f59e0b' : '#f43f5e'}
+                        fill="transparent"
+                      />
+                    </svg>
+
+                    {/* Center Text with Win Rate & Subtitle */}
+                    <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+                      <span className="text-2xl font-bold font-mono text-gray-900 dark:text-white tracking-tight">
+                        {stats.periodWinRate.toFixed(1)}%
+                      </span>
+                      <span className="text-[11px] font-semibold text-gray-400 dark:text-gray-400 uppercase tracking-wider">
+                        Win Rate
+                      </span>
+                      <div className="mt-0.5 flex items-center gap-1 text-[10px] font-mono text-gray-500 dark:text-gray-400">
+                        <span>{stats.periodWinsCount}W</span>
+                        <span>•</span>
+                        <span>{stats.periodLossesCount}L</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
-                {/* Win Rate */}
-                <div>
-                  <div className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white tracking-tight">
-                    {stats.periodWinRate.toFixed(1)}%
+                {/* 5 Key Metric Cards (8 cols) */}
+                <div className="md:col-span-8 grid grid-cols-2 sm:grid-cols-3 gap-3 font-mono">
+                  {/* Net P&L */}
+                  <div className="bg-gray-50/80 dark:bg-neutral-900/50 rounded-2xl p-3.5 border border-gray-100 dark:border-neutral-800/60 flex flex-col justify-between">
+                    <span className="text-[11px] text-gray-400 dark:text-gray-400 font-sans font-medium uppercase tracking-wider">
+                      Net P&amp;L
+                    </span>
+                    <div className={`text-lg sm:text-xl font-bold tracking-tight mt-1 ${
+                      stats.periodPnl > 0 
+                        ? 'text-emerald-600 dark:text-emerald-400' 
+                        : stats.periodPnl < 0 
+                          ? 'text-rose-600 dark:text-rose-400' 
+                          : 'text-gray-900 dark:text-white'
+                    }`}>
+                      {stats.periodPnl >= 0 ? `+$${stats.periodPnl.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : `-$${Math.abs(stats.periodPnl).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                    </div>
                   </div>
-                  <div className="text-xs text-gray-400 dark:text-gray-400 mt-1 font-sans font-medium">
-                    Win Rate
-                  </div>
-                </div>
 
-                {/* Profit Factor */}
-                <div>
-                  <div className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white tracking-tight">
-                    {stats.periodProfitFactor.toFixed(2)}
+                  {/* Profit Factor */}
+                  <div className="bg-gray-50/80 dark:bg-neutral-900/50 rounded-2xl p-3.5 border border-gray-100 dark:border-neutral-800/60 flex flex-col justify-between">
+                    <span className="text-[11px] text-gray-400 dark:text-gray-400 font-sans font-medium uppercase tracking-wider">
+                      Profit Factor
+                    </span>
+                    <div className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white tracking-tight mt-1">
+                      {stats.periodProfitFactor.toFixed(2)}
+                    </div>
                   </div>
-                  <div className="text-xs text-gray-400 dark:text-gray-400 mt-1 font-sans font-medium">
-                    Profit Factor
-                  </div>
-                </div>
 
-                {/* Trades count */}
-                <div>
-                  <div className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white tracking-tight">
-                    {stats.periodTradeCount}
+                  {/* Avg R */}
+                  <div className="bg-gray-50/80 dark:bg-neutral-900/50 rounded-2xl p-3.5 border border-gray-100 dark:border-neutral-800/60 flex flex-col justify-between">
+                    <span className="text-[11px] text-gray-400 dark:text-gray-400 font-sans font-medium uppercase tracking-wider">
+                      Avg R
+                    </span>
+                    <div className={`text-lg sm:text-xl font-bold tracking-tight mt-1 ${
+                      stats.avgR > 0 
+                        ? 'text-emerald-600 dark:text-emerald-400' 
+                        : stats.avgR < 0 
+                          ? 'text-rose-600 dark:text-rose-400' 
+                          : 'text-gray-900 dark:text-white'
+                    }`}>
+                      {stats.avgR >= 0 ? `+${stats.avgR.toFixed(1)}R` : `${stats.avgR.toFixed(1)}R`}
+                    </div>
                   </div>
-                  <div className="text-xs text-gray-400 dark:text-gray-400 mt-1 font-sans font-medium">
-                    Trades
-                  </div>
-                </div>
 
-                {/* W / L */}
-                <div>
-                  <div className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white tracking-tight">
-                    {stats.periodWinsCount}W <span className="text-gray-400 font-normal">/</span> {stats.periodLossesCount}L
+                  {/* Total Trades */}
+                  <div className="bg-gray-50/80 dark:bg-neutral-900/50 rounded-2xl p-3.5 border border-gray-100 dark:border-neutral-800/60 flex flex-col justify-between">
+                    <span className="text-[11px] text-gray-400 dark:text-gray-400 font-sans font-medium uppercase tracking-wider">
+                      Trades
+                    </span>
+                    <div className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white tracking-tight mt-1">
+                      {stats.periodTradeCount}
+                    </div>
                   </div>
-                  <div className="text-xs text-gray-400 dark:text-gray-400 mt-1 font-sans font-medium">
-                    W/L
-                  </div>
-                </div>
 
-                {/* Avg R */}
-                <div>
-                  <div className={`text-xl sm:text-2xl font-bold tracking-tight ${
-                    stats.avgR > 0 
-                      ? 'text-emerald-600 dark:text-emerald-400' 
-                      : stats.avgR < 0 
-                        ? 'text-rose-600 dark:text-rose-400' 
-                        : 'text-gray-900 dark:text-white'
-                  }`}>
-                    {stats.avgR >= 0 ? `+${stats.avgR.toFixed(1)}R` : `${stats.avgR.toFixed(1)}R`}
+                  {/* Win / Loss Split */}
+                  <div className="bg-gray-50/80 dark:bg-neutral-900/50 rounded-2xl p-3.5 border border-gray-100 dark:border-neutral-800/60 flex flex-col justify-between">
+                    <span className="text-[11px] text-gray-400 dark:text-gray-400 font-sans font-medium uppercase tracking-wider">
+                      W / L Ratio
+                    </span>
+                    <div className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white tracking-tight mt-1">
+                      <span className="text-emerald-600 dark:text-emerald-400">{stats.periodWinsCount}</span>
+                      <span className="text-gray-400 font-normal mx-1">/</span>
+                      <span className="text-rose-600 dark:text-rose-400">{stats.periodLossesCount}</span>
+                    </div>
                   </div>
-                  <div className="text-xs text-gray-400 dark:text-gray-400 mt-1 font-sans font-medium">
-                    Avg R
+
+                  {/* Best Symbol / Edge */}
+                  <div className="bg-gray-50/80 dark:bg-neutral-900/50 rounded-2xl p-3.5 border border-gray-100 dark:border-neutral-800/60 flex flex-col justify-between">
+                    <span className="text-[11px] text-gray-400 dark:text-gray-400 font-sans font-medium uppercase tracking-wider">
+                      Top Asset
+                    </span>
+                    <div className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white tracking-tight mt-1 truncate">
+                      {stats.bestPair || '—'}
+                    </div>
                   </div>
                 </div>
               </div>
 
               {/* Dividing separator */}
-              <div className="border-t border-gray-100 dark:border-neutral-800/80 pt-5">
+              <div className="border-t border-gray-100 dark:border-neutral-800/80 pt-5 relative z-10">
                 {/* Biggest Pattern Actionable Section */}
-                <div className="space-y-2.5">
-                  <div className="flex items-center gap-1.5 text-xs font-semibold text-gray-700 dark:text-gray-300">
-                    <span className="text-gray-400 dark:text-gray-400 text-sm leading-none">▲</span>
-                    <span className="font-headline tracking-tight">Biggest Pattern</span>
-                  </div>
+                <div className="bg-gray-50/60 dark:bg-neutral-900/40 rounded-2xl p-4 border border-gray-200/50 dark:border-neutral-800/60 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="space-y-1.5 flex-1">
+                    <div className="flex items-center gap-1.5 text-xs font-semibold text-gray-900 dark:text-gray-200">
+                      <div className="w-5 h-5 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center font-bold text-[10px]">
+                        ▲
+                      </div>
+                      <span className="font-headline tracking-tight font-semibold">Biggest Pattern</span>
+                    </div>
 
-                  <div className="space-y-1.5 text-sm">
-                    <p className="text-gray-900 dark:text-gray-100 font-medium leading-relaxed">
+                    <p className="text-gray-900 dark:text-gray-100 font-medium text-sm leading-relaxed">
                       {stats.biggestPattern?.headline || "Log your trades to discover behavioral edge leaks & patterns."}
                     </p>
                     
                     {stats.biggestPattern?.costText && (
-                      <p className="text-rose-600 dark:text-rose-400 font-medium">
+                      <p className="text-rose-600 dark:text-rose-400 font-medium text-xs">
                         {stats.biggestPattern.costText}
                       </p>
                     )}
                   </div>
 
-                  <div className="pt-1">
-                    <button 
-                      onClick={() => navigate('/ai-engine')}
-                      className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors group"
-                    >
-                      <span>[View Analysis</span>
-                      <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
-                      <span>]</span>
-                    </button>
-                  </div>
+                  <button 
+                    onClick={() => navigate('/ai-engine')}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white dark:bg-neutral-800 text-xs font-medium text-gray-700 hover:text-gray-900 dark:text-gray-200 dark:hover:text-white border border-gray-200 dark:border-neutral-700 shadow-2xs hover:shadow-xs transition-all group shrink-0"
+                  >
+                    <span>View Analysis</span>
+                    <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white" />
+                  </button>
                 </div>
               </div>
             </div>
