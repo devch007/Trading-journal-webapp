@@ -388,6 +388,97 @@ export function Dashboard() {
     };
   }, [trades, isDark]);
 
+  // Session Breakdown & Performance Stats
+  const sessionStats = useMemo(() => {
+    // Determine session from trade.session or by trade timestamp UTC hour
+    const getTradeSession = (t: Trade): 'Asian' | 'London' | 'New York' | 'Out of Session' => {
+      const rawSession = (t.session || '').toLowerCase().trim();
+      if (rawSession.includes('asia') || rawSession.includes('tokyo') || rawSession.includes('sydney')) return 'Asian';
+      if (rawSession.includes('london') || rawSession.includes('frankfurt') || rawSession.includes('europe')) return 'London';
+      if (rawSession.includes('ny') || rawSession.includes('new york') || rawSession.includes('us')) return 'New York';
+      
+      // Fallback to trade time if available
+      const date = getTradeDate(t.date || t.createdAt);
+      if (!isNaN(date.getTime())) {
+        const utcHour = date.getUTCHours();
+        if (utcHour >= 0 && utcHour < 7) return 'Asian';       // 00:00 - 07:00 UTC
+        if (utcHour >= 7 && utcHour < 13) return 'London';     // 07:00 - 13:00 UTC
+        if (utcHour >= 13 && utcHour < 21) return 'New York';  // 13:00 - 21:00 UTC
+      }
+      return 'Out of Session';
+    };
+
+    const buckets: Record<'Asian' | 'London' | 'New York' | 'Out of Session', {
+      trades: Trade[];
+      wins: number;
+      losses: number;
+      pnl: number;
+      color: string;
+      dotColor: string;
+    }> = {
+      'Asian': { trades: [], wins: 0, losses: 0, pnl: 0, color: '#f59e0b', dotColor: 'bg-amber-500' },
+      'London': { trades: [], wins: 0, losses: 0, pnl: 0, color: '#3b82f6', dotColor: 'bg-blue-500' },
+      'New York': { trades: [], wins: 0, losses: 0, pnl: 0, color: '#10b981', dotColor: 'bg-emerald-500' },
+      'Out of Session': { trades: [], wins: 0, losses: 0, pnl: 0, color: '#a855f7', dotColor: 'bg-purple-500' }
+    };
+
+    trades.forEach(t => {
+      const s = getTradeSession(t);
+      buckets[s].trades.push(t);
+      const isWin = t.isPositive || Number(t.pnl) > 0;
+      if (isWin) {
+        buckets[s].wins += 1;
+      } else {
+        buckets[s].losses += 1;
+      }
+      buckets[s].pnl += (Number(t.pnl) || 0);
+    });
+
+    const totalTrades = trades.length;
+
+    const list = (['Asian', 'London', 'New York', 'Out of Session'] as const).map(name => {
+      const b = buckets[name];
+      const count = b.trades.length;
+      const winRate = count > 0 ? (b.wins / count) * 100 : 0;
+      const lossRate = count > 0 ? (b.losses / count) * 100 : 0;
+      const pctOfTotal = totalTrades > 0 ? (count / totalTrades) * 100 : 0;
+
+      return {
+        name,
+        count,
+        wins: b.wins,
+        losses: b.losses,
+        pnl: b.pnl,
+        winRate: winRate.toFixed(0),
+        lossRate: lossRate.toFixed(0),
+        pctOfTotal: pctOfTotal.toFixed(1),
+        color: b.color,
+        dotColor: b.dotColor
+      };
+    });
+
+    // Best performing session
+    const activeSessions = list.filter(s => s.count > 0);
+    const bestSession = activeSessions.length > 0 
+      ? [...activeSessions].sort((a, b) => b.pnl - a.pnl)[0] 
+      : null;
+
+    const chartData = activeSessions.length > 0 ? activeSessions.map(s => ({
+      name: s.name,
+      value: s.count,
+      color: s.color
+    })) : [
+      { name: 'None', value: 1, color: isDark ? '#262626' : '#e5e7eb' }
+    ];
+
+    return {
+      list,
+      totalTrades,
+      bestSession,
+      chartData
+    };
+  }, [trades, isDark]);
+
   // Activity Chart Data Calculation (Strictly for selected account trades)
   const activityChartData = useMemo(() => {
     const parseTradeDate = (dStr: string) => {
@@ -1552,6 +1643,96 @@ export function Dashboard() {
                     </p>
                   </div>
                 </div>
+              </div>
+            </div>
+
+            {/* Card 4: Session Performance Breakdown Card (Asian, London, NY, Out of Session) */}
+            <div className="bg-white dark:bg-[#16181f] rounded-3xl p-6 border border-gray-200/80 dark:border-neutral-800/80 shadow-2xs space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+                    Trading Session Analysis
+                  </h3>
+                  <p className="text-[11px] text-gray-400">Asian • London • NY • Out of Session</p>
+                </div>
+                {sessionStats.bestSession ? (
+                  <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/40">
+                    ★ Best: {sessionStats.bestSession.name}
+                  </span>
+                ) : (
+                  <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-gray-100 dark:bg-neutral-800 text-gray-400">
+                    All Sessions
+                  </span>
+                )}
+              </div>
+
+              {/* Donut Circle Chart for Sessions */}
+              <div className="relative flex items-center justify-center py-1">
+                <div className="w-[140px] h-[140px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={sessionStats.chartData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={46}
+                        outerRadius={64}
+                        paddingAngle={sessionStats.totalTrades > 1 ? 3 : 0}
+                        dataKey="value"
+                        stroke={isDark ? "#16181f" : "#ffffff"}
+                        strokeWidth={3}
+                      >
+                        {sessionStats.chartData.map((entry, index) => (
+                          <Cell key={`session-cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+
+                {/* Center Badge inside Circle */}
+                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center">
+                  <span className="text-xl font-black tabular-nums text-gray-900 dark:text-white tracking-tight">
+                    {sessionStats.totalTrades}
+                  </span>
+                  <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">
+                    Sessions
+                  </span>
+                </div>
+              </div>
+
+              {/* Session Grid Cards (2x2 Neat Layout) */}
+              <div className="grid grid-cols-2 gap-2.5 pt-1">
+                {sessionStats.list.map((sess) => {
+                  return (
+                    <div 
+                      key={sess.name}
+                      onClick={() => navigate('/trades')}
+                      className="p-3 rounded-2xl bg-[#f8f9fb] dark:bg-neutral-800/40 border border-gray-100 dark:border-neutral-800/80 hover:border-blue-300 dark:hover:border-blue-800/60 transition-all cursor-pointer group"
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <span className={`w-2 h-2 rounded-full ${sess.dotColor} shrink-0`}></span>
+                          <span className="text-xs font-bold text-gray-900 dark:text-white truncate">
+                            {sess.name === 'New York' ? 'NY' : sess.name === 'Out of Session' ? 'Out of Sess' : sess.name}
+                          </span>
+                        </div>
+                        <span className="text-[10px] font-bold tabular-nums text-gray-500 dark:text-gray-400 shrink-0">
+                          {sess.pctOfTotal}%
+                        </span>
+                      </div>
+                      
+                      <div className="space-y-0.5">
+                        <p className={`text-xs font-bold tabular-nums ${sess.pnl >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-500'}`}>
+                          {sess.pnl >= 0 ? `+$${sess.pnl.toFixed(2)}` : `-$${Math.abs(sess.pnl).toFixed(2)}`}
+                        </p>
+                        <p className="text-[10px] text-gray-400 font-medium">
+                          {sess.count} trades • <span className="font-bold text-emerald-600 dark:text-emerald-400">{sess.winRate}% W</span> / <span className="font-bold text-rose-500">{sess.lossRate}% L</span>
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
 
