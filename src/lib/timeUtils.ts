@@ -52,8 +52,16 @@ export function formatMinutesToDuration(totalMinutes: number): string {
  *
  * Year is always forced to 2026 when missing or implausibly old (< 2020).
  */
-export function getTradeDate(dateStr: string): Date {
-  if (!dateStr) return new Date();
+export function getTradeDate(dateInput: any): Date {
+  if (!dateInput) return new Date();
+  if (dateInput instanceof Date) return isNaN(dateInput.getTime()) ? new Date() : dateInput;
+
+  // If a Trade object was passed directly instead of a date string
+  let dateStr: string = typeof dateInput === 'object' 
+    ? (dateInput.date || dateInput.createdAt || '')
+    : String(dateInput);
+
+  if (!dateStr || typeof dateStr !== 'string') return new Date();
 
   // Handle "Today, " and "Yesterday, " relative formats
   if (dateStr.startsWith('Today, ')) {

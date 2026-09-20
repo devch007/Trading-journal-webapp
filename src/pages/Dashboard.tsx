@@ -191,7 +191,7 @@ export function Dashboard() {
     
     // Monthly trades vs all trades
     const monthlyTrades = trades.filter(t => {
-      const d = getTradeDate(t);
+      const d = getTradeDate(t.date || t.createdAt);
       return d >= monthStart;
     });
 
