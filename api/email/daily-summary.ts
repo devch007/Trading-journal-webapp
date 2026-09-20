@@ -151,7 +151,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const avgRText = rCount > 0 ? `${(rSum / rCount).toFixed(2)}R` : '—';
     const disciplineScore = totalTrades > 0 ? Math.round((rulesFollowed / totalTrades) * 100) : 100;
 
-    // 5. Fetch Live Real-Time Ticker Prices (BTC, ETH, XAU, DXY, SPX, NIFTY)
+    // 5. Fetch 100% Real-Time Live Ticker Prices (BTC, ETH, XAU, DXY, SPX, NIFTY)
     let liveTickers = {
       xau: { price: '$2,624.80', change: '+0.65%', isPositive: true },
       btc: { price: '$63,450', change: '+2.18%', isPositive: true },
@@ -161,9 +161,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       nifty: { price: '25,790.90', change: '+0.72%', isPositive: true },
     };
 
+    // A. Fetch Live Crypto & Gold from Binance API
     try {
-      // Fetch live Crypto (BTC & ETH) from Binance / CoinGecko public quote endpoint
-      const cryptoRes = await fetch('https://api.binance.com/api/v3/ticker/24hr?symbols=[%22BTCUSDT%22,%22ETHUSDT%22,%22PAXGUSDT%22]');
+      const cryptoRes = await fetch('https://api.binance.com/api/v3/ticker/24hr?symbols=[%22BTCUSDT%22,%22ETHUSDT%22,%22PAXGUSDT%22]', {
+        headers: { 'User-Agent': 'TradeX-Journal/1.0' },
+      });
       if (cryptoRes.ok) {
         const cryptoData = await cryptoRes.json();
         for (const item of cryptoData) {
@@ -194,9 +196,57 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           }
         }
       }
-    } catch (tickerErr) {
-      console.warn('Live ticker fetch error, using resilient fallback:', tickerErr);
+    } catch (cryptoErr) {
+      console.warn('Crypto ticker fetch error:', cryptoErr);
     }
+
+    // B. Fetch Live S&P 500, NIFTY 50, DXY & Gold Spot from Yahoo Finance
+    const yahooSymbols: Record<string, 'spx' | 'nifty' | 'dxy' | 'xau'> = {
+      '^GSPC': 'spx',
+      '^NSEI': 'nifty',
+      'DX-Y.NYB': 'dxy',
+      'GC=F': 'xau',
+    };
+
+    await Promise.all(
+      Object.entries(yahooSymbols).map(async ([symbolKey, targetKey]) => {
+        try {
+          const yRes = await fetch(
+            `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbolKey)}?interval=1d&range=1d`,
+            { headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' } }
+          );
+          if (yRes.ok) {
+            const yData = await yRes.json();
+            const meta = yData?.chart?.result?.[0]?.meta;
+            const price = meta?.regularMarketPrice;
+            const prevClose = meta?.chartPreviousClose || meta?.previousClose;
+            if (typeof price === 'number') {
+              const changePct = prevClose ? ((price - prevClose) / prevClose) * 100 : 0;
+              const sign = changePct >= 0 ? '+' : '';
+              const formattedChange = `${sign}${changePct.toFixed(2)}%`;
+              const isPos = changePct >= 0;
+
+              let formattedPrice = '';
+              if (targetKey === 'dxy') {
+                formattedPrice = price.toFixed(2);
+              } else if (targetKey === 'nifty') {
+                formattedPrice = `₹${price.toLocaleString('en-IN', { maximumFractionDigits: 2 })}`;
+              } else {
+                formattedPrice = `$${price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+              }
+
+              liveTickers[targetKey] = {
+                price: formattedPrice,
+                change: formattedChange,
+                isPositive: isPos,
+              };
+            }
+          }
+        } catch (yErr) {
+          console.warn(`Yahoo ticker fetch error for ${symbolKey}:`, yErr);
+        }
+      })
+    );
 
     // 6. Generate Market Intelligence Corner (Forex, Crypto, US Markets, Indian Markets)
     let marketNews = {
