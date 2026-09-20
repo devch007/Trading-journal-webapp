@@ -441,6 +441,7 @@ Ask me about your "last trade", "biggest mistake", or "best trading session" for
 
       const symbolEntries = Object.entries(symbolStats);
       const bestSymbol = symbolEntries.length > 0 ? [...symbolEntries].sort((a, b) => b[1].pnl - a[1].pnl)[0] : null;
+      const worstSymbol = symbolEntries.length > 0 ? [...symbolEntries].sort((a, b) => a[1].pnl - b[1].pnl)[0] : null;
       const groqKey = getAiApiKey();
       const geminiKey = getGeminiApiKey();
       let aiContent = "";
@@ -594,13 +595,21 @@ COACHING RULES:
       setMessages(prev => [...prev, aiMsg]);
     } catch (error) {
       console.error("AI Error:", error);
+      const fallbackContent = generateLocalAnalytics(text, {
+        trades,
+        winRate: (trades.filter(t => t.isPositive || Number(t.pnl) >= 0).length / (trades.length || 1)) * 100,
+        totalPnl: trades.reduce((acc, t) => acc + (Number(t.pnl) || 0), 0),
+        avgWin: 0,
+        avgLoss: 0,
+        rrRatio: 'N/A',
+        bestSymbol: null,
+        worstSymbol: null,
+      });
+
       const fallbackMsg: Message = {
         id: (Date.now() + 1).toString(),
         role: 'ai',
-        content: `Here is your current performance snapshot:
-• Win Rate: Maintaining ${((trades.filter(t => t.isPositive).length / (trades.length || 1)) * 100).toFixed(1)}% across ${trades.length} executions.
-• Primary Asset: Your edge is highest on ${trades[0]?.symbol || 'XAUUSD'}.
-• Plan: Keep your risk tight and follow pre-trade checklist rules.`,
+        content: fallbackContent,
         timestamp: new Date()
       };
       setMessages(prev => [...prev, fallbackMsg]);
