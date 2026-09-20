@@ -57,19 +57,23 @@ export async function dispatchDailySummaryForUser(options: DispatchSummaryOption
 
   try {
     // 2. Query today's completed trades for this user
-    // Look for trades matching the summary date in close_date, open_date, or created_at
+    // Query trades by user_id
     const { data: rawTrades, error: tradesError } = await supabase
       .from('trades')
       .select('*')
-      .eq('user_id', userId)
-      .or(`close_date.ilike.${summaryDateStr}%,open_date.ilike.${summaryDateStr}%,created_at.ilike.${summaryDateStr}%`);
+      .eq('user_id', userId);
 
     if (tradesError) {
-      console.error(`[DailySummary] Error querying trades for user ${userId}:`, tradesError);
-      throw new Error(`Failed to query trades: ${tradesError.message}`);
+      console.warn(`[DailySummary] Error querying trades for user ${userId}:`, tradesError);
     }
 
-    const trades: RawTrade[] = rawTrades || [];
+    const allUserTrades: RawTrade[] = rawTrades || [];
+
+    // Filter today's trades safely in JS matching summaryDateStr (YYYY-MM-DD)
+    const trades = allUserTrades.filter((t: any) => {
+      const dateStr = t.close_date || t.open_date || t.date || t.created_at || '';
+      return String(dateStr).startsWith(summaryDateStr);
+    });
 
     // 3. Deterministic calculation
     const stats = calculateDailyStats(trades);
