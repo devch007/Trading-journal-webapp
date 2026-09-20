@@ -190,8 +190,9 @@ export function calculateDailyStats(trades: RawTrade[]): TradeSummaryStats {
           }
         });
       } else if (typeof t.emotions === 'string') {
-        emotionsSet.add(t.emotions);
-        if (['FOMO', 'Revenge', 'Greed', 'Fear', 'Anxious', 'Angry'].some(neg => t.emotions?.toLowerCase().includes(neg.toLowerCase()))) {
+        const emotionStr = t.emotions;
+        emotionsSet.add(emotionStr);
+        if (['FOMO', 'Revenge', 'Greed', 'Fear', 'Anxious', 'Angry'].some(neg => emotionStr.toLowerCase().includes(neg.toLowerCase()))) {
           hasEmotionalTag = true;
         }
       }
