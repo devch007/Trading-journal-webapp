@@ -446,7 +446,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       `;
     }
 
-    // 7. Ultra-Beautiful 100% Table-Based HTML Email Template (No Gmail clipping or truncation)
+    // 7. Ultra-Beautiful Responsive Table-Based HTML Email Template
     const subject = totalTrades === 0
       ? `TradeX Daily Intelligence · ${formattedDate}`
       : `TradeX Daily Intelligence · ${formattedDate} (${pnlFormatted})`;
@@ -459,13 +459,29 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   <meta name="color-scheme" content="light" />
   <meta name="supported-color-schemes" content="light" />
   <title>${subject}</title>
+  <style type="text/css">
+    body, table, td, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+    table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
+    img { -ms-interpolation-mode: bicubic; border: 0; height: auto; line-height: 100%; outline: none; text-decoration: none; }
+    @media screen and (max-width: 600px) {
+      .email-container { width: 100% !important; max-width: 100% !important; border-radius: 16px !important; }
+      .content-cell { padding: 18px 16px !important; }
+      .hero-pnl { font-size: 28px !important; }
+      .ticker-col { width: 31% !important; padding: 7px 6px !important; }
+      .ticker-sym { font-size: 8.5px !important; margin-bottom: 2px !important; }
+      .ticker-price { font-size: 12.5px !important; }
+      .ticker-change { font-size: 9.5px !important; }
+      .brief-row td { display: block !important; width: 100% !important; box-sizing: border-box !important; margin-bottom: 10px !important; }
+      .brief-spacer { display: none !important; }
+    }
+  </style>
 </head>
-<body style="margin: 0; padding: 24px 8px; background-color: #F1F5F9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; width: 100% !important;">
+<body style="margin: 0; padding: 16px 8px; background-color: #F1F5F9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; width: 100% !important;">
   <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #F1F5F9;">
     <tr>
       <td align="center">
         <!-- MAIN CONTAINER -->
-        <table role="presentation" width="580" cellspacing="0" cellpadding="0" border="0" style="width: 580px; max-width: 580px; background-color: #FFFFFF; border: 1px solid #CBD5E1; border-radius: 20px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.06);">
+        <table role="presentation" class="email-container" width="580" cellspacing="0" cellpadding="0" border="0" style="width: 580px; max-width: 580px; background-color: #FFFFFF; border: 1px solid #CBD5E1; border-radius: 20px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.06);">
           
           <!-- TOP ACCENT BAR -->
           <tr>
@@ -474,10 +490,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
           <!-- INNER CONTAINER -->
           <tr>
-            <td style="padding: 24px 28px;">
+            <td class="content-cell" style="padding: 24px 26px;">
               
               <!-- HEADER -->
-              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-bottom: 18px;">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-bottom: 16px;">
                 <tr>
                   <td align="left" style="vertical-align: middle;">
                     <table role="presentation" cellspacing="0" cellpadding="0" border="0">
@@ -507,7 +523,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
               <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-bottom: 16px;">
                 <tr>
                   <td>
-                    <div style="font-size: 21px; font-weight: 800; color: #0F172A; letter-spacing: -0.5px; margin-bottom: 4px;">
+                    <div style="font-size: 20px; font-weight: 800; color: #0F172A; letter-spacing: -0.5px; margin-bottom: 4px;">
                       Good evening, ${userName}.
                     </div>
                     <div style="font-size: 13px; color: #64748B; line-height: 1.45;">
@@ -520,11 +536,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
               <!-- HERO P&L STAT CARD -->
               <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 16px; margin-bottom: 14px;">
                 <tr>
-                  <td style="padding: 18px 20px;">
+                  <td style="padding: 16px 18px;">
                     <div style="font-size: 11px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 4px;">
                       Today's Net Result
                     </div>
-                    <div style="font-size: 34px; font-weight: 800; letter-spacing: -1px; color: ${isProfit ? '#059669' : '#DC2626'}; line-height: 1.1; margin-bottom: 4px;">
+                    <div class="hero-pnl" style="font-size: 32px; font-weight: 800; letter-spacing: -1px; color: ${isProfit ? '#059669' : '#DC2626'}; line-height: 1.1; margin-bottom: 4px;">
                       ${pnlFormatted}
                     </div>
                     <div style="font-size: 12.5px; font-weight: 600; color: #64748B;">
@@ -553,6 +569,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                   </td>
                 </tr>
               </table>
+
+              <!-- BEST & REVIEW TRADES (IF ANY) -->
+              ${tradeCardsHtml}
 
               <!-- AI TRADING COACH CARD -->
               <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #0F172A; border-radius: 16px; margin-bottom: 18px;">
@@ -584,17 +603,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
               <!-- ======================================================= -->
               <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 16px; margin-bottom: 18px;">
                 <tr>
-                  <td style="padding: 16px 18px;">
+                  <td style="padding: 16px 16px;">
                     
                     <!-- Title Bar -->
                     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="border-bottom: 1px solid #E2E8F0; padding-bottom: 10px; margin-bottom: 12px;">
                       <tr>
-                        <td align="left" style="font-size: 12px; font-weight: 800; color: #0F172A; text-transform: uppercase; letter-spacing: 0.6px;">
-                          ⚡ Global Market Intelligence &amp; Live Tickers
+                        <td align="left" style="font-size: 11.5px; font-weight: 800; color: #0F172A; text-transform: uppercase; letter-spacing: 0.6px;">
+                          ⚡ Market Pulse &amp; Live Feeds
                         </td>
                         <td align="right">
                           <span style="font-size: 9.5px; font-weight: 700; color: #059669; background-color: #ECFDF5; border: 1px solid #A7F3D0; padding: 2px 7px; border-radius: 999px;">
-                            ● Real-Time Feed
+                            ● Live
                           </span>
                         </td>
                       </tr>
@@ -604,40 +623,40 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-bottom: 8px;">
                       <tr>
                         <!-- GOLD -->
-                        <td width="31%" style="background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 10px; padding: 8px 10px;">
-                          <div style="font-size: 9.5px; font-weight: 700; color: #D97706; text-transform: uppercase; margin-bottom: 2px;">
-                            🥇 XAU / USD (Gold)
+                        <td width="31%" class="ticker-col" style="background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 10px; padding: 8px 8px; vertical-align: top;">
+                          <div class="ticker-sym" style="font-size: 9px; font-weight: 700; color: #D97706; text-transform: uppercase; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                            🥇 Gold Spot
                           </div>
-                          <div style="font-size: 14px; font-weight: 800; color: #0F172A;">
+                          <div class="ticker-price" style="font-size: 13.5px; font-weight: 800; color: #0F172A;">
                             ${liveTickers.xau.price}
                           </div>
-                          <div style="font-size: 10.5px; font-weight: 700; color: ${liveTickers.xau.isPositive ? '#059669' : '#DC2626'}; margin-top: 1px;">
+                          <div class="ticker-change" style="font-size: 10px; font-weight: 700; color: ${liveTickers.xau.isPositive ? '#059669' : '#DC2626'}; margin-top: 1px;">
                             ${liveTickers.xau.isPositive ? '▲' : '▼'} ${liveTickers.xau.change}
                           </div>
                         </td>
                         <td width="3%"></td>
                         <!-- BTC -->
-                        <td width="31%" style="background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 10px; padding: 8px 10px;">
-                          <div style="font-size: 9.5px; font-weight: 700; color: #F59E0B; text-transform: uppercase; margin-bottom: 2px;">
-                            ₿ BTC / USD
+                        <td width="31%" class="ticker-col" style="background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 10px; padding: 8px 8px; vertical-align: top;">
+                          <div class="ticker-sym" style="font-size: 9px; font-weight: 700; color: #F59E0B; text-transform: uppercase; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                            ₿ BTC/USD
                           </div>
-                          <div style="font-size: 14px; font-weight: 800; color: #0F172A;">
+                          <div class="ticker-price" style="font-size: 13.5px; font-weight: 800; color: #0F172A;">
                             ${liveTickers.btc.price}
                           </div>
-                          <div style="font-size: 10.5px; font-weight: 700; color: ${liveTickers.btc.isPositive ? '#059669' : '#DC2626'}; margin-top: 1px;">
+                          <div class="ticker-change" style="font-size: 10px; font-weight: 700; color: ${liveTickers.btc.isPositive ? '#059669' : '#DC2626'}; margin-top: 1px;">
                             ${liveTickers.btc.isPositive ? '▲' : '▼'} ${liveTickers.btc.change}
                           </div>
                         </td>
                         <td width="3%"></td>
                         <!-- ETH -->
-                        <td width="31%" style="background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 10px; padding: 8px 10px;">
-                          <div style="font-size: 9.5px; font-weight: 700; color: #6366F1; text-transform: uppercase; margin-bottom: 2px;">
-                            Ξ ETH / USD
+                        <td width="31%" class="ticker-col" style="background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 10px; padding: 8px 8px; vertical-align: top;">
+                          <div class="ticker-sym" style="font-size: 9px; font-weight: 700; color: #6366F1; text-transform: uppercase; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                            Ξ ETH/USD
                           </div>
-                          <div style="font-size: 14px; font-weight: 800; color: #0F172A;">
+                          <div class="ticker-price" style="font-size: 13.5px; font-weight: 800; color: #0F172A;">
                             ${liveTickers.eth.price}
                           </div>
-                          <div style="font-size: 10.5px; font-weight: 700; color: ${liveTickers.eth.isPositive ? '#059669' : '#DC2626'}; margin-top: 1px;">
+                          <div class="ticker-change" style="font-size: 10px; font-weight: 700; color: ${liveTickers.eth.isPositive ? '#059669' : '#DC2626'}; margin-top: 1px;">
                             ${liveTickers.eth.isPositive ? '▲' : '▼'} ${liveTickers.eth.change}
                           </div>
                         </td>
@@ -645,100 +664,100 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                     </table>
 
                     <!-- LIVE TICKER ROW 2: DXY, S&P 500, NIFTY 50 -->
-                    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-bottom: 12px;">
+                    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-bottom: 14px;">
                       <tr>
                         <!-- DXY -->
-                        <td width="31%" style="background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 10px; padding: 8px 10px;">
-                          <div style="font-size: 9.5px; font-weight: 700; color: #2563EB; text-transform: uppercase; margin-bottom: 2px;">
-                            💵 DXY (Dollar)
+                        <td width="31%" class="ticker-col" style="background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 10px; padding: 8px 8px; vertical-align: top;">
+                          <div class="ticker-sym" style="font-size: 9px; font-weight: 700; color: #2563EB; text-transform: uppercase; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                            💵 DXY Index
                           </div>
-                          <div style="font-size: 14px; font-weight: 800; color: #0F172A;">
+                          <div class="ticker-price" style="font-size: 13.5px; font-weight: 800; color: #0F172A;">
                             ${liveTickers.dxy.price}
                           </div>
-                          <div style="font-size: 10.5px; font-weight: 700; color: ${liveTickers.dxy.isPositive ? '#059669' : '#DC2626'}; margin-top: 1px;">
+                          <div class="ticker-change" style="font-size: 10px; font-weight: 700; color: ${liveTickers.dxy.isPositive ? '#059669' : '#DC2626'}; margin-top: 1px;">
                             ${liveTickers.dxy.isPositive ? '▲' : '▼'} ${liveTickers.dxy.change}
                           </div>
                         </td>
                         <td width="3%"></td>
                         <!-- SPX -->
-                        <td width="31%" style="background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 10px; padding: 8px 10px;">
-                          <div style="font-size: 9.5px; font-weight: 700; color: #059669; text-transform: uppercase; margin-bottom: 2px;">
+                        <td width="31%" class="ticker-col" style="background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 10px; padding: 8px 8px; vertical-align: top;">
+                          <div class="ticker-sym" style="font-size: 9px; font-weight: 700; color: #059669; text-transform: uppercase; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                             🇺🇸 S&amp;P 500
                           </div>
-                          <div style="font-size: 14px; font-weight: 800; color: #0F172A;">
+                          <div class="ticker-price" style="font-size: 13.5px; font-weight: 800; color: #0F172A;">
                             ${liveTickers.spx.price}
                           </div>
-                          <div style="font-size: 10.5px; font-weight: 700; color: ${liveTickers.spx.isPositive ? '#059669' : '#DC2626'}; margin-top: 1px;">
+                          <div class="ticker-change" style="font-size: 10px; font-weight: 700; color: ${liveTickers.spx.isPositive ? '#059669' : '#DC2626'}; margin-top: 1px;">
                             ${liveTickers.spx.isPositive ? '▲' : '▼'} ${liveTickers.spx.change}
                           </div>
                         </td>
                         <td width="3%"></td>
                         <!-- NIFTY -->
-                        <td width="31%" style="background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 10px; padding: 8px 10px;">
-                          <div style="font-size: 9.5px; font-weight: 700; color: #EA580C; text-transform: uppercase; margin-bottom: 2px;">
+                        <td width="31%" class="ticker-col" style="background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 10px; padding: 8px 8px; vertical-align: top;">
+                          <div class="ticker-sym" style="font-size: 9px; font-weight: 700; color: #EA580C; text-transform: uppercase; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                             🇮🇳 NIFTY 50
                           </div>
-                          <div style="font-size: 14px; font-weight: 800; color: #0F172A;">
+                          <div class="ticker-price" style="font-size: 13.5px; font-weight: 800; color: #0F172A;">
                             ${liveTickers.nifty.price}
                           </div>
-                          <div style="font-size: 10.5px; font-weight: 700; color: ${liveTickers.nifty.isPositive ? '#059669' : '#DC2626'}; margin-top: 1px;">
+                          <div class="ticker-change" style="font-size: 10px; font-weight: 700; color: ${liveTickers.nifty.isPositive ? '#059669' : '#DC2626'}; margin-top: 1px;">
                             ${liveTickers.nifty.isPositive ? '▲' : '▼'} ${liveTickers.nifty.change}
                           </div>
                         </td>
                       </tr>
                     </table>
 
-                    <!-- 4 SECTOR HIGHLIGHT BRIEFS -->
+                    <!-- 4 SECTOR HIGHLIGHT BRIEFS (RESPONSIVE STACK ON MOBILE) -->
                     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
                       <!-- ROW A: FOREX & CRYPTO -->
-                      <tr>
-                        <td width="48%" style="vertical-align: top; background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 10px; padding: 10px 12px;">
-                          <div style="font-size: 10.5px; font-weight: 800; color: #2563EB; margin-bottom: 2px;">
+                      <tr class="brief-row">
+                        <td width="48%" style="vertical-align: top; background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px; padding: 12px 14px;">
+                          <div style="font-size: 10.5px; font-weight: 800; color: #2563EB; margin-bottom: 4px;">
                             💱 Forex &amp; Metals
                           </div>
-                          <div style="font-size: 11.5px; font-weight: 700; color: #0F172A; margin-bottom: 2px;">
+                          <div style="font-size: 12px; font-weight: 700; color: #0F172A; margin-bottom: 4px; line-height: 1.35;">
                             ${marketNews.forex.title}
                           </div>
-                          <div style="font-size: 11px; color: #64748B; line-height: 1.4;">
+                          <div style="font-size: 11.5px; color: #64748B; line-height: 1.45;">
                             ${marketNews.forex.text}
                           </div>
                         </td>
-                        <td width="4%"></td>
-                        <td width="48%" style="vertical-align: top; background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 10px; padding: 10px 12px;">
-                          <div style="font-size: 10.5px; font-weight: 800; color: #7C3AED; margin-bottom: 2px;">
+                        <td width="4%" class="brief-spacer"></td>
+                        <td width="48%" style="vertical-align: top; background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px; padding: 12px 14px;">
+                          <div style="font-size: 10.5px; font-weight: 800; color: #7C3AED; margin-bottom: 4px;">
                             ⚡ Crypto Pulse
                           </div>
-                          <div style="font-size: 11.5px; font-weight: 700; color: #0F172A; margin-bottom: 2px;">
+                          <div style="font-size: 12px; font-weight: 700; color: #0F172A; margin-bottom: 4px; line-height: 1.35;">
                             ${marketNews.crypto.title}
                           </div>
-                          <div style="font-size: 11px; color: #64748B; line-height: 1.4;">
+                          <div style="font-size: 11.5px; color: #64748B; line-height: 1.45;">
                             ${marketNews.crypto.text}
                           </div>
                         </td>
                       </tr>
-                      <tr><td height="8" colspan="3"></td></tr>
+                      <tr><td height="10" colspan="3" class="brief-spacer"></td></tr>
                       <!-- ROW B: US & INDIA -->
-                      <tr>
-                        <td width="48%" style="vertical-align: top; background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 10px; padding: 10px 12px;">
-                          <div style="font-size: 10.5px; font-weight: 800; color: #059669; margin-bottom: 2px;">
+                      <tr class="brief-row">
+                        <td width="48%" style="vertical-align: top; background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px; padding: 12px 14px;">
+                          <div style="font-size: 10.5px; font-weight: 800; color: #059669; margin-bottom: 4px;">
                             🇺🇸 US Stock Markets
                           </div>
-                          <div style="font-size: 11.5px; font-weight: 700; color: #0F172A; margin-bottom: 2px;">
+                          <div style="font-size: 12px; font-weight: 700; color: #0F172A; margin-bottom: 4px; line-height: 1.35;">
                             ${marketNews.us_stocks.title}
                           </div>
-                          <div style="font-size: 11px; color: #64748B; line-height: 1.4;">
+                          <div style="font-size: 11.5px; color: #64748B; line-height: 1.45;">
                             ${marketNews.us_stocks.text}
                           </div>
                         </td>
-                        <td width="4%"></td>
-                        <td width="48%" style="vertical-align: top; background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 10px; padding: 10px 12px;">
-                          <div style="font-size: 10.5px; font-weight: 800; color: #D97706; margin-bottom: 2px;">
+                        <td width="4%" class="brief-spacer"></td>
+                        <td width="48%" style="vertical-align: top; background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px; padding: 12px 14px;">
+                          <div style="font-size: 10.5px; font-weight: 800; color: #D97706; margin-bottom: 4px;">
                             🇮🇳 Indian Markets
                           </div>
-                          <div style="font-size: 11.5px; font-weight: 700; color: #0F172A; margin-bottom: 2px;">
+                          <div style="font-size: 12px; font-weight: 700; color: #0F172A; margin-bottom: 4px; line-height: 1.35;">
                             ${marketNews.india_stocks.title}
                           </div>
-                          <div style="font-size: 11px; color: #64748B; line-height: 1.4;">
+                          <div style="font-size: 11.5px; color: #64748B; line-height: 1.45;">
                             ${marketNews.india_stocks.text}
                           </div>
                         </td>
@@ -750,13 +769,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
               </table>
 
               <!-- TOMORROW FOCUS -->
-              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 14px; margin-bottom: 20px;">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 14px; margin-bottom: 18px;">
                 <tr>
                   <td style="padding: 14px 16px;">
-                    <div style="font-size: 10.5px; font-weight: 700; color: #2563EB; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 3px;">
+                    <div style="font-size: 10.5px; font-weight: 700; color: #2563EB; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">
                       🎯 Tomorrow's Focus: ${aiReview.tomorrowFocusTitle}
                     </div>
-                    <div style="font-size: 12.5px; color: #334155; line-height: 1.45;">
+                    <div style="font-size: 12.5px; color: #334155; line-height: 1.5;">
                       ${aiReview.tomorrowFocus}
                     </div>
                   </td>
@@ -785,7 +804,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
           <!-- FOOTER -->
           <tr>
-            <td style="background-color: #F8FAFC; border-top: 1px solid #E2E8F0; padding: 16px 28px; text-align: center;">
+            <td style="background-color: #F8FAFC; border-top: 1px solid #E2E8F0; padding: 16px 24px; text-align: center;">
               <p style="margin: 0 0 4px 0; font-size: 11.5px; font-weight: 600; color: #64748B;">
                 TradeX · Trading Journal &amp; Market Intelligence Platform
               </p>
