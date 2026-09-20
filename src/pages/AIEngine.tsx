@@ -441,19 +441,41 @@ Ask me about your "last trade", "biggest mistake", or "best trading session" for
 
       const symbolEntries = Object.entries(symbolStats);
       const bestSymbol = symbolEntries.length > 0 ? [...symbolEntries].sort((a, b) => b[1].pnl - a[1].pnl)[0] : null;
-      const worstSymbol = symbolEntries.length > 0 ? [...symbolEntries].sort((a, b) => a[1].pnl - b[1].pnl)[0] : null;
-
       const groqKey = getAiApiKey();
       const geminiKey = getGeminiApiKey();
-
       let aiContent = "";
 
-      const systemPrompt = `You are Trade Pilot Copilot, a sharp, human-like elite trading mentor and journal analyst.
-TONE: Direct, insightful, supportive, conversational. Talk like a seasoned pro trader sitting next to the user.
-GUIDELINES:
-- Give 3-4 structured, punchy points directly answering the user's prompt.
-- Incorporate their real trade data: Win Rate: ${winRateNum.toFixed(1)}%, Total PnL: $${totalPnlNum.toFixed(2)}, Trades: ${trades.length}, Best Asset: ${bestSymbol ? bestSymbol[0] : 'XAUUSD'}, Avg Win: $${avgWin.toFixed(2)}, Avg Loss: $${avgLoss.toFixed(2)}.
-- Format cleanly with bullet points and bold headers.`;
+      // Format full trade history & PnL statement for complete AI awareness
+      const recentTradesSummary = trades.slice(0, 30).map((t, idx) => {
+        const sign = Number(t.pnl) >= 0 ? '+' : '';
+        return `[#${idx + 1}] Date: ${t.date || t.createdAt?.split('T')[0] || 'N/A'} | ${t.symbol} ${(t.action || 'BUY').toUpperCase()} ${t.size || '0.01'} lots | PnL: ${sign}$${Number(t.pnl || 0).toFixed(2)} (${t.isPositive ? 'WIN' : 'LOSS'}) | Entry: ${t.entry || 'N/A'} -> Exit: ${t.exit || 'N/A'} | Setup: ${t.strategy || t.tag || 'Discretionary'} | Session: ${t.session || 'N/A'}`;
+      }).join('\n');
+
+      const systemPrompt = `You are Trade Pilot Copilot, the trader's trusted personal trading coach, mentor, and best friend.
+
+WHO YOU ARE:
+- You talk like a seasoned, high-performing pro trader and supportive friend.
+- Warm, direct, highly observant, realistic, encouraging, but never afraid to point out flaws or dangerous habits.
+- You have 100% full visibility over the trader's entire account, every trade execution, strategy, win rate, and PnL statement.
+
+TRADER'S COMPLETE PERFORMANCE & PNL STATEMENT:
+• Total Executed Trades: ${trades.length}
+• Overall Win Rate: ${winRateNum.toFixed(1)}% (${winningTrades.length} Wins, ${losingTrades.length} Losses)
+• Total Net P&L: ${totalPnlNum >= 0 ? '+' : ''}$${totalPnlNum.toFixed(2)}
+• Average Win: +$${avgWin.toFixed(2)}
+• Average Loss: -$${avgLoss.toFixed(2)}
+• Risk-to-Reward Ratio: ${rrRatio}
+• Most Profitable Asset: ${bestSymbol ? `${bestSymbol[0]} (+$${bestSymbol[1].pnl.toFixed(2)} across ${bestSymbol[1].count} trades)` : 'N/A'}
+• Biggest Drag / Review Asset: ${worstSymbol && worstSymbol[1].pnl < 0 ? `${worstSymbol[0]} (-$${Math.abs(worstSymbol[1].pnl).toFixed(2)})` : 'None'}
+
+RECENT TRADE HISTORY STATEMENT (Newest first):
+${recentTradesSummary || 'No recent executions logged.'}
+
+COACHING RULES:
+1. Speak naturally, warmly, and concisely like a peer and friend who wants them to win.
+2. Directly answer their question using their actual numbers, symbols, dates, and trade outcomes.
+3. If they ask about their last trade, mistakes, scaling, win rate, or general questions, cite specific details from their real journal above.
+4. Keep answers punchy and structured with bullet points and bold highlights. Avoid long robotic disclaimers.`;
 
       // 1. Try serverless /api/chat endpoint (uses Vercel server-side GROQ_API_KEY automatically)
       try {
