@@ -874,45 +874,94 @@ export function Dashboard() {
               {/* Main Content Layout: Left Circular Gauge + Right Metrics Grid */}
               <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center relative z-10">
                 {/* Circular Win Rate Gauge (4 cols) */}
-                <div className="md:col-span-4 flex items-center justify-center">
-                  <div className="relative w-36 h-36 flex items-center justify-center">
-                    <svg className="w-full h-full transform -rotate-90" viewBox="0 0 120 120">
-                      {/* Background circle */}
+                <div className="md:col-span-4 flex items-center justify-center py-2">
+                  <div className="relative w-44 h-44 flex items-center justify-center">
+                    {/* Background soft ambient halo */}
+                    <div className={`absolute inset-3 rounded-full blur-xl opacity-20 dark:opacity-30 ${
+                      stats.periodWinRate >= 50 
+                        ? 'bg-emerald-500' 
+                        : stats.periodWinRate >= 40 
+                          ? 'bg-amber-500' 
+                          : 'bg-rose-500'
+                    }`}></div>
+
+                    <svg className="w-full h-full transform -rotate-90 drop-shadow-sm" viewBox="0 0 140 140">
+                      <defs>
+                        {/* Premium linear gradients based on win rate status */}
+                        <linearGradient id="winRateGradientEmerald" x1="0%" y1="0%" x2="100%" y2="100%">
+                          <stop offset="0%" stopColor="#34d399" />
+                          <stop offset="100%" stopColor="#059669" />
+                        </linearGradient>
+                        <linearGradient id="winRateGradientAmber" x1="0%" y1="0%" x2="100%" y2="100%">
+                          <stop offset="0%" stopColor="#fbbf24" />
+                          <stop offset="100%" stopColor="#d97706" />
+                        </linearGradient>
+                        <linearGradient id="winRateGradientRose" x1="0%" y1="0%" x2="100%" y2="100%">
+                          <stop offset="0%" stopColor="#f87171" />
+                          <stop offset="100%" stopColor="#e11d48" />
+                        </linearGradient>
+                      </defs>
+
+                      {/* Outer subtle guide ring */}
                       <circle
-                        cx="60"
-                        cy="60"
-                        r="48"
-                        className="stroke-gray-100 dark:stroke-neutral-800"
-                        strokeWidth="9"
+                        cx="70"
+                        cy="70"
+                        r="58"
+                        className="stroke-gray-200/40 dark:stroke-neutral-800/60"
+                        strokeWidth="1"
+                        strokeDasharray="3 3"
                         fill="transparent"
                       />
-                      {/* Progress circle */}
+
+                      {/* Track background circle */}
                       <circle
-                        cx="60"
-                        cy="60"
-                        r="48"
+                        cx="70"
+                        cy="70"
+                        r="50"
+                        className="stroke-gray-100 dark:stroke-neutral-800/90"
+                        strokeWidth="10"
+                        fill="transparent"
+                      />
+
+                      {/* Animated Progress circle */}
+                      <circle
+                        cx="70"
+                        cy="70"
+                        r="50"
                         className="transition-all duration-1000 ease-out"
-                        strokeWidth="9"
-                        strokeDasharray={2 * Math.PI * 48}
-                        strokeDashoffset={2 * Math.PI * 48 * (1 - Math.min(1, Math.max(0, stats.periodWinRate / 100)))}
+                        strokeWidth="10"
+                        strokeDasharray={2 * Math.PI * 50}
+                        strokeDashoffset={2 * Math.PI * 50 * (1 - Math.min(1, Math.max(0, stats.periodWinRate / 100)))}
                         strokeLinecap="round"
-                        stroke={stats.periodWinRate >= 50 ? '#10b981' : stats.periodWinRate >= 40 ? '#f59e0b' : '#f43f5e'}
+                        stroke={
+                          stats.periodWinRate >= 50 
+                            ? 'url(#winRateGradientEmerald)' 
+                            : stats.periodWinRate >= 40 
+                              ? 'url(#winRateGradientAmber)' 
+                              : 'url(#winRateGradientRose)'
+                        }
                         fill="transparent"
                       />
                     </svg>
 
-                    {/* Center Text with Win Rate & Subtitle */}
-                    <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-                      <span className="text-2xl font-bold font-mono text-gray-900 dark:text-white tracking-tight">
-                        {stats.periodWinRate.toFixed(1)}%
+                    {/* Center Content with Sleek Visual Hierarchy */}
+                    <div className="absolute inset-0 flex flex-col items-center justify-center text-center select-none pointer-events-none">
+                      <div className="flex items-baseline">
+                        <span className="text-3xl font-extrabold font-mono tracking-tight text-gray-900 dark:text-white">
+                          {stats.periodWinRate.toFixed(1)}
+                        </span>
+                        <span className="text-base font-bold font-mono text-gray-400 dark:text-gray-400 ml-0.5">%</span>
+                      </div>
+
+                      <span className="text-[10px] font-bold text-gray-400 dark:text-gray-400 uppercase tracking-widest mt-0.5 font-sans">
+                        WIN RATE
                       </span>
-                      <span className="text-[11px] font-semibold text-gray-400 dark:text-gray-400 uppercase tracking-wider">
-                        Win Rate
-                      </span>
-                      <div className="mt-0.5 flex items-center gap-1 text-[10px] font-mono text-gray-500 dark:text-gray-400">
-                        <span>{stats.periodWinsCount}W</span>
-                        <span>•</span>
-                        <span>{stats.periodLossesCount}L</span>
+
+                      {/* Pill Badge for Wins & Losses */}
+                      <div className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-gray-100/90 dark:bg-neutral-800/90 border border-gray-200/60 dark:border-neutral-700/60 text-[10px] font-mono font-medium text-gray-600 dark:text-gray-300">
+                        <span className="text-emerald-600 dark:text-emerald-400 font-semibold">{stats.periodWinsCount}W</span>
+                        <span className="text-gray-300 dark:text-gray-400 font-normal">/</span>
+                        <span className="text-rose-600 dark:text-rose-400 font-semibold">{stats.periodLossesCount}L</span>
                       </div>
                     </div>
                   </div>
