@@ -220,6 +220,18 @@ export const GoalHeatmap: React.FC<GoalHeatmapProps> = ({ data, mode }) => {
           </div>
 
           <div className="grid grid-cols-7 gap-1 sm:gap-2.5 w-full min-w-0">
+            {/* Leading empty weekday padding so Day 1 aligns with its correct day of week */}
+            {(() => {
+              if (monthDays.length === 0) return null;
+              const firstDate = monthDays[0].date;
+              // getDay(): 0 is Sunday, 1 is Monday ... 6 is Saturday
+              // For Mon-start (Mon=0, Tue=1, ..., Sun=6):
+              const startDayOfWeek = (firstDate.getDay() + 6) % 7;
+              return Array.from({ length: startDayOfWeek }).map((_, padIdx) => (
+                <div key={`pad-${padIdx}`} className="aspect-square sm:aspect-auto sm:min-h-[58px] p-1 sm:p-2 rounded-lg sm:rounded-2xl border border-transparent bg-transparent opacity-0 pointer-events-none" />
+              ));
+            })()}
+
             {monthDays.map((day, i) => {
               let heatClass = 'bg-gray-50/50 dark:bg-neutral-900/40 border-gray-100 dark:border-neutral-800/60 text-gray-400';
               let isCurrent = isSameDay(day.date, new Date());

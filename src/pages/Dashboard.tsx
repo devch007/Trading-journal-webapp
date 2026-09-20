@@ -703,12 +703,12 @@ export function Dashboard() {
       
       const goalStatuses: DailyGoalStatus[] = [];
 
-      // Default targets
+      // Default targets & limits
       if (active) {
         goalStatuses.push({
           id: 'pnl',
           label: 'Daily Profit Target (+$300)',
-          status: pnl >= 300 ? 'achieved' : pnl > 0 ? 'in-progress' : 'breached'
+          status: pnl >= 300 ? 'achieved' : pnl > 0 ? 'in-progress' : 'not-started'
         });
         goalStatuses.push({
           id: 'loss',
@@ -764,7 +764,7 @@ export function Dashboard() {
       return {
         date: day,
         active,
-        breachedLimits: active && (breachedAny || pnl < -200),
+        breachedLimits: active && breachedAny,
         score,
         goals: goalStatuses
       };
