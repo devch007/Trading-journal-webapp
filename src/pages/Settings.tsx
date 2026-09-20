@@ -1,14 +1,16 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { TopBar } from '../lib/TopBar';
 import { motion } from 'motion/react';
 import { useAuth } from '../contexts/AuthContext';
 import { useAccountContext } from '../contexts/AccountContext';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '../lib/supabase';
 import {
   Palette, Globe, BarChart2, Bell, Shield, Download, Trash2,
   Check, ChevronRight, Monitor, Zap, BookOpen, DollarSign,
   SlidersHorizontal, Clock, RefreshCw, AlertTriangle, Eye,
-  Keyboard, Database, FileText, LogOut, Info, Sun, Moon
+  Keyboard, Database, FileText, LogOut, Info, Sun, Moon,
+  Mail, Send
 } from 'lucide-react';
 
 // ─── Reusable Components ─────────────────────────────────────────────────────
@@ -132,6 +134,125 @@ export function Settings() {
   });
 
   const [savedAnim, setSavedAnim] = useState(false);
+
+  // Email Notification Settings State
+  const [emailSettings, setEmailSettings] = useState({
+    daily_summary_enabled: true,
+    daily_summary_time: '21:00',
+    timezone: 'Asia/Kolkata',
+    weekly_summary_enabled: true,
+    monthly_summary_enabled: false,
+    ai_insights_enabled: true,
+  });
+
+  const [isSendingTest, setIsSendingTest] = useState(false);
+  const [testCooldown, setTestCooldown] = useState(0);
+  const [testStatusMsg, setTestStatusMsg] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+
+  // Fetch saved notification settings from Supabase
+  useEffect(() => {
+    if (!user?.id) return;
+    const fetchSettings = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('user_notification_settings')
+          .select('*')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        if (data && !error) {
+          setEmailSettings({
+            daily_summary_enabled: data.daily_summary_enabled ?? true,
+            daily_summary_time: data.daily_summary_time ?? '21:00',
+            timezone: data.timezone ?? 'Asia/Kolkata',
+            weekly_summary_enabled: data.weekly_summary_enabled ?? true,
+            monthly_summary_enabled: data.monthly_summary_enabled ?? false,
+            ai_insights_enabled: data.ai_insights_enabled ?? true,
+          });
+        }
+      } catch (err) {
+        console.warn('Could not load user notification settings:', err);
+      }
+    };
+    fetchSettings();
+  }, [user?.id]);
+
+  // Handle cooldown timer
+  useEffect(() => {
+    if (testCooldown <= 0) return;
+    const timer = setInterval(() => {
+      setTestCooldown((prev) => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [testCooldown]);
+
+  const updateEmailSetting = async (key: string, val: any) => {
+    const updated = { ...emailSettings, [key]: val };
+    setEmailSettings(updated);
+    setSavedAnim(true);
+    setTimeout(() => setSavedAnim(false), 1800);
+
+    if (user?.id) {
+      try {
+        await supabase.from('user_notification_settings').upsert(
+          {
+            user_id: user.id,
+            ...updated,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: 'user_id' }
+        );
+      } catch (err) {
+        console.error('Failed saving notification settings to Supabase:', err);
+      }
+    }
+  };
+
+  const handleSendTestEmail = async () => {
+    if (isSendingTest || testCooldown > 0) return;
+    setIsSendingTest(true);
+    setTestStatusMsg(null);
+
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData?.session?.access_token;
+
+      if (!token) {
+        throw new Error('Please sign in to send a test summary email.');
+      }
+
+      const response = await fetch('/api/email/daily-summary', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          timezone: emailSettings.timezone,
+          isTest: true,
+        }),
+      });
+
+      const resData = await response.json();
+
+      if (!response.ok || !resData.success) {
+        throw new Error(resData.error || 'Failed to dispatch test email.');
+      }
+
+      setTestStatusMsg({
+        type: 'success',
+        text: `Preview email sent successfully to ${user?.email || 'your email'}!`,
+      });
+      setTestCooldown(60); // 60s cooldown
+    } catch (err: any) {
+      setTestStatusMsg({
+        type: 'error',
+        text: err.message || 'Error triggering test email. Check server configuration.',
+      });
+    } finally {
+      setIsSendingTest(false);
+    }
+  };
 
   const update = (key: string, val: any) => {
     const updated = { ...prefs, [key]: val };
@@ -330,23 +451,131 @@ export function Settings() {
             />
           </SettingsSection>
 
-          {/* ── Notifications ── */}
-          <SettingsSection title="Notifications & Alerts" icon={Bell}>
+          {/* ── Email Notifications (Daily Trading Summary) ── */}
+          <SettingsSection title="Email Notifications & Reports" icon={Mail}>
             <SettingRow
-              icon={BookOpen}
-              label="Daily Journal Reminder"
-              description="Evening prompt to log and review trades"
+              icon={Mail}
+              label="Daily Trading Summary"
+              description="Receive an automated evening review with P&L, stats, and AI coaching"
               toggle
-              checked={prefs.journalReminder}
-              onToggle={(v: boolean) => update('journalReminder', v)}
+              checked={emailSettings.daily_summary_enabled}
+              onToggle={(v: boolean) => updateEmailSetting('daily_summary_enabled', v)}
+            />
+            <SelectRow
+              icon={Clock}
+              label="Send at Time"
+              description="Local time your daily summary email will be prepared and sent"
+              options={[
+                { value: '18:00', label: '06:00 PM' },
+                { value: '19:00', label: '07:00 PM' },
+                { value: '20:00', label: '08:00 PM' },
+                { value: '21:00', label: '09:00 PM (Default)' },
+                { value: '22:00', label: '10:00 PM' },
+                { value: '23:00', label: '11:00 PM' },
+              ]}
+              value={emailSettings.daily_summary_time}
+              onChange={(v: string) => updateEmailSetting('daily_summary_time', v)}
+            />
+            <SelectRow
+              icon={Globe}
+              label="Summary Timezone"
+              description="Used to calculate your daily trade window and delivery schedule"
+              options={[
+                { value: 'Asia/Kolkata', label: 'Asia/Kolkata (IST +5:30)' },
+                { value: 'UTC', label: 'UTC (+0:00)' },
+                { value: 'America/New_York', label: 'America/New_York (EST/EDT)' },
+                { value: 'America/Chicago', label: 'America/Chicago (CST/CDT)' },
+                { value: 'America/Los_Angeles', label: 'America/Los_Angeles (PST/PDT)' },
+                { value: 'Europe/London', label: 'Europe/London (GMT/BST)' },
+                { value: 'Europe/Frankfurt', label: 'Europe/Frankfurt (CET/CEST)' },
+                { value: 'Asia/Dubai', label: 'Asia/Dubai (GST +4:00)' },
+                { value: 'Asia/Singapore', label: 'Asia/Singapore (SGT +8:00)' },
+                { value: 'Asia/Tokyo', label: 'Asia/Tokyo (JST +9:00)' },
+                { value: 'Australia/Sydney', label: 'Australia/Sydney (AEST/AEDT)' },
+              ]}
+              value={emailSettings.timezone}
+              onChange={(v: string) => updateEmailSetting('timezone', v)}
             />
             <SettingRow
               icon={FileText}
-              label="Weekly Performance Report"
-              description="Receive a weekly P&L and stats summary"
+              label="Weekly Review"
+              description="Receive weekly performance synthesis on Sundays"
               toggle
-              checked={prefs.weeklyReport}
-              onToggle={(v: boolean) => update('weeklyReport', v)}
+              checked={emailSettings.weekly_summary_enabled}
+              onToggle={(v: boolean) => updateEmailSetting('weekly_summary_enabled', v)}
+            />
+            <SettingRow
+              icon={BarChart2}
+              label="Monthly Review"
+              description="Monthly equity curve and setup breakdown report"
+              toggle
+              checked={emailSettings.monthly_summary_enabled}
+              onToggle={(v: boolean) => updateEmailSetting('monthly_summary_enabled', v)}
+            />
+            <SettingRow
+              icon={Zap}
+              label="AI Insights in Summary"
+              description="Include qualitative AI coach recommendations and pattern detection"
+              toggle
+              checked={emailSettings.ai_insights_enabled}
+              onToggle={(v: boolean) => updateEmailSetting('ai_insights_enabled', v)}
+            />
+            <div className="px-6 py-4 bg-gray-50/50 dark:bg-neutral-900/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div className="flex flex-col">
+                <span className="text-xs font-semibold text-gray-900 dark:text-white">
+                  Delivery Destination
+                </span>
+                <span className="text-[11px] text-gray-500 font-mono">
+                  {user?.email || 'No email attached'}
+                </span>
+              </div>
+              <button
+                onClick={handleSendTestEmail}
+                disabled={isSendingTest || testCooldown > 0}
+                className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                  isSendingTest || testCooldown > 0
+                    ? 'bg-gray-100 dark:bg-neutral-800 text-gray-400 cursor-not-allowed'
+                    : 'bg-blue-600 hover:bg-blue-700 text-white shadow-xs'
+                }`}
+              >
+                {isSendingTest ? (
+                  <>
+                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                    <span>Sending Preview...</span>
+                  </>
+                ) : testCooldown > 0 ? (
+                  <span>Cooldown ({testCooldown}s)</span>
+                ) : (
+                  <>
+                    <Send className="w-3.5 h-3.5" />
+                    <span>Send Test Email</span>
+                  </>
+                )}
+              </button>
+            </div>
+            {testStatusMsg && (
+              <div
+                className={`px-6 py-2.5 text-xs font-medium flex items-center gap-2 ${
+                  testStatusMsg.type === 'success'
+                    ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400'
+                    : 'bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400'
+                }`}
+              >
+                <Info className="w-3.5 h-3.5" />
+                <span>{testStatusMsg.text}</span>
+              </div>
+            )}
+          </SettingsSection>
+
+          {/* ── In-App Notifications ── */}
+          <SettingsSection title="In-App Notifications & Alerts" icon={Bell}>
+            <SettingRow
+              icon={BookOpen}
+              label="Daily Journal Reminder"
+              description="Evening in-app prompt to log and review trades"
+              toggle
+              checked={prefs.journalReminder}
+              onToggle={(v: boolean) => update('journalReminder', v)}
             />
             <SettingRow
               icon={Bell}

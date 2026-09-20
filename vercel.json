@@ -1,11 +1,17 @@
 {
+  "crons": [
+    {
+      "path": "/api/cron/daily-summary",
+      "schedule": "0 * * * *"
+    }
+  ],
   "rewrites": [
     {
       "source": "/api/indianapi/(.*)",
       "destination": "https://dev.indianapi.in/$1"
     },
     {
-      "source": "/(.*)",
+      "source": "/((?!api/).*)",
       "destination": "/index.html"
     }
   ],
