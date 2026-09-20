@@ -233,10 +233,16 @@ export function Settings() {
         }),
       });
 
-      const resData = await response.json();
+      const textResponse = await response.text();
+      let resData: any = {};
+      try {
+        resData = JSON.parse(textResponse);
+      } catch {
+        resData = { error: textResponse || `Server returned status ${response.status}` };
+      }
 
       if (!response.ok || !resData.success) {
-        throw new Error(resData.error || 'Failed to dispatch test email.');
+        throw new Error(resData.error || `Failed to dispatch test email (HTTP ${response.status})`);
       }
 
       setTestStatusMsg({
