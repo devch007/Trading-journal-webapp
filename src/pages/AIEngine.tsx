@@ -271,7 +271,7 @@ export function AIEngine() {
     }, 1000);
   };
 
-  // Intelligent Local Analytics Engine (Fallback when API key is not configured or network error)
+  // Intelligent Local Analytics Engine (Dynamic conversational fallback)
   const generateLocalAnalytics = (query: string, ctx: {
     trades: Trade[];
     winRate: number;
@@ -282,26 +282,56 @@ export function AIEngine() {
     bestSymbol: [string, { pnl: number; count: number; wins: number }] | null;
     worstSymbol: [string, { pnl: number; count: number; wins: number }] | null;
   }) => {
-    const q = query.toLowerCase();
+    const q = query.toLowerCase().trim();
     const primaryAsset = ctx.bestSymbol ? ctx.bestSymbol[0] : (ctx.trades[0]?.symbol || 'XAUUSD');
     const primaryAssetWins = ctx.bestSymbol ? ctx.bestSymbol[1].wins : 0;
     const primaryAssetCount = ctx.bestSymbol ? ctx.bestSymbol[1].count : 0;
     const primaryAssetRate = primaryAssetCount > 0 ? ((primaryAssetWins / primaryAssetCount) * 100).toFixed(1) : ctx.winRate.toFixed(1);
 
+    // 1. Casual Greetings & Acknowledgments
+    if (['hi', 'hello', 'hey', 'yo', 'sup', 'gm', 'good morning', 'good evening'].includes(q)) {
+      return `Hey! Trade Pilot Copilot is active and tracking your journal in real-time.
+
+• Tracked Volume: ${ctx.trades.length} executions logged.
+• Net Performance: ${ctx.totalPnl >= 0 ? '+' : ''}$${ctx.totalPnl.toFixed(2)} (${ctx.winRate.toFixed(1)}% win rate).
+• Primary Focus: Highest edge on ${primaryAsset}.
+
+What would you like to review? (e.g. "Analyze my mistakes", "How to scale my edge?", or "Best trading session")`;
+    }
+
+    if (['ok', 'okay', 'got it', 'thanks', 'cool', 'understood', 'sure'].includes(q)) {
+      return `Got it! Ready whenever you want to analyze a setup, check risk management, or review today's entries. Just ask!`;
+    }
+
+    if (['why', 'why?', 'how so?', 'explain', 'what do you mean', 'means'].includes(q)) {
+      return `Here is why based on your recorded trading data:
+
+1. Trade Sample Size:
+   Your metrics reflect ${ctx.trades.length} logged trades with ${ctx.winRate.toFixed(1)}% win rate.
+
+2. Risk & Reward Asymmetry:
+   Your average win is $${ctx.avgWin.toFixed(2)} compared to an average loss of $${ctx.avgLoss.toFixed(2)} (R:R Ratio: ${ctx.rrRatio}).
+
+3. Asset Concentration:
+   Your gains are heavily centered on ${primaryAsset} with $${(ctx.bestSymbol?.[1]?.pnl || ctx.totalPnl).toFixed(2)} net profit.
+
+Would you like a breakdown of your losing setups or your best session entry times?`;
+    }
+
     if (q.includes('scale') || q.includes('edge') || q.includes('grow')) {
       return `Here is how you can systematically scale your current trading edge:
 
 1. Double Down on Your Prime Asset (${primaryAsset}):
-   You currently have a strong ${primaryAssetRate}% win rate on ${primaryAsset}. Avoid distributing focus across too many pairs and concentrate your highest-conviction entries where your data proves an edge.
+   You currently have a strong ${primaryAssetRate}% win rate on ${primaryAsset}. Concentrate your highest-conviction entries where your data proves an edge.
 
 2. Structured Position Scaling:
-   Instead of jumping straight to larger lots, increment size gradually (e.g. 0.02 → 0.03 lot) only after 5 consecutive trades that fully respect your pre-trade checklist.
+   Increment lot sizes gradually (e.g. 0.02 → 0.03) only after 5 consecutive trades that fully respect your pre-trade checklist.
 
 3. Enforce 1:2 Minimum Risk-to-Reward:
-   With an average win of $${ctx.avgWin.toFixed(2)} vs average loss of $${ctx.avgLoss.toFixed(2)}, lock in partial profits at 1:1.5 R:R and move stop-loss to breakeven to eliminate risk on runners.
+   With an average win of $${ctx.avgWin.toFixed(2)} vs average loss of $${ctx.avgLoss.toFixed(2)}, lock in partial profits at 1:1.5 R:R and move stop-loss to breakeven.
 
 4. Eliminate Underperforming Leaks:
-   ${ctx.worstSymbol && ctx.worstSymbol[1].pnl < 0 ? `Cut down executions on ${ctx.worstSymbol[0]} (currently at -$${Math.abs(ctx.worstSymbol[1].pnl).toFixed(2)}) until you backtest a dedicated model.` : 'Maintain strict daily loss limits (-$200) to protect compounding.'}`;
+   ${ctx.worstSymbol && ctx.worstSymbol[1].pnl < 0 ? `Cut down executions on ${ctx.worstSymbol[0]} (currently at -$${Math.abs(ctx.worstSymbol[1].pnl).toFixed(2)}) until backtested.` : 'Maintain strict daily loss limits to protect compounding.'}`;
     }
 
     if (q.includes('xau') || q.includes('gold') || q.includes('eur') || q.includes('symbol')) {
@@ -312,7 +342,7 @@ export function AIEngine() {
 • Execution Recommendation: Continue taking trend-continuation pullbacks during the London/NY session overlap for optimal liquidity.`;
     }
 
-    if (q.includes('lose') || q.includes('loss') || q.includes('mistake') || q.includes('why')) {
+    if (q.includes('lose') || q.includes('loss') || q.includes('mistake') || q.includes('drawdown')) {
       return `Diagnostic review of your recent drawdowns:
 
 • Average Loss Sizing: Your average loss is currently $${ctx.avgLoss.toFixed(2)}. Ensure stops are placed at structural invalidation levels rather than arbitrary dollar amounts.
@@ -328,11 +358,11 @@ export function AIEngine() {
 • Rule of Thumb: Focus your daily energy into 1-2 prime setups rather than spreading trades across the entire day.`;
     }
 
-    // General query response
+    // Default intelligent analysis
     return `Analysis based on your ${ctx.trades.length} logged executions:
 
 • Account Health: Net P&L stands at ${ctx.totalPnl >= 0 ? '+' : ''}$${ctx.totalPnl.toFixed(2)} with an overall ${ctx.winRate.toFixed(1)}% win rate.
-• Core Strength: High win rate on ${primaryAsset} shows solid directional bias and entry discipline.
+• Core Strength: High win rate on ${primaryAsset} (${primaryAssetRate}%) shows solid directional bias and entry discipline.
 • Recommended Next Step: Continue logging every trade with emotional tags and exit notes to refine your behavioral edge further.`;
   };
 
