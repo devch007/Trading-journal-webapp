@@ -837,13 +837,15 @@ export function Dashboard() {
               {/* Subtle background ambient glow for high-end aesthetic */}
               <div className="absolute top-0 right-0 w-80 h-80 bg-gradient-to-br from-emerald-500/5 via-blue-500/5 to-transparent rounded-full blur-3xl pointer-events-none -mr-20 -mt-20"></div>
 
-              {/* Header with Title Pill and Copy/Share Button */}
+              {/* Header with Title Pill & Heading and Copy/Share Button */}
               <div className="flex items-center justify-between relative z-10">
-                <div className="flex items-center gap-2">
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-gray-100 dark:bg-neutral-800/80 text-gray-700 dark:text-gray-300 text-[11px] font-semibold tracking-wider uppercase font-mono border border-gray-200/60 dark:border-neutral-700/60">
-                    <Activity className="w-3 h-3 text-emerald-500" />
-                    YOUR TRADING {stats.isShowingCurrentMonth ? 'THIS MONTH' : 'OVERVIEW'}
-                  </span>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gray-100 dark:bg-neutral-800 text-gray-800 dark:text-gray-200 text-xs font-semibold tracking-tight font-headline border border-gray-200/60 dark:border-neutral-700/60 shadow-2xs">
+                      <Activity className="w-3.5 h-3.5 text-emerald-500 stroke-[2.5]" />
+                      <span>YOUR TRADING {stats.isShowingCurrentMonth ? 'THIS MONTH' : 'OVERVIEW'}</span>
+                    </span>
+                  </div>
                 </div>
                 
                 <button
