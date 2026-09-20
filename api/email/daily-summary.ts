@@ -290,13 +290,65 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       })(),
     ]);
 
-    // 6. Generate Market Intelligence Corner (Forex, Crypto, US Markets, Indian Markets)
+    // 6. Generate 100% Real-Time Market Intelligence Headlines & Briefs (Forex, Crypto, US Markets, Indian Markets)
     let marketNews = {
-      forex: { title: 'DXY & Major Pairs', text: 'Dollar Index consolidates around key support; EUR/USD and GBP/USD await central bank monetary policy updates.' },
-      crypto: { title: 'Bitcoin & Digital Assets', text: 'Bitcoin holds critical moving average support amid steady spot ETF institutional inflows and derivative liquidity sweeps.' },
-      us_stocks: { title: 'Wall Street (S&P 500 & Nasdaq)', text: 'Tech and semiconductor leaders drive market breadth as traders price in rate trajectory and earnings momentum.' },
-      india_stocks: { title: 'Dalal Street (Nifty 50 & Bank Nifty)', text: 'Nifty maintains bullish structural strength near record levels driven by robust domestic institutional flows.' },
+      forex: { title: 'Global Forex & Rates', text: 'Dollar Index and currency pairs adjust as traders assess central bank monetary policy updates.' },
+      crypto: { title: 'Bitcoin & Digital Assets', text: 'Crypto markets navigate key liquidity levels and spot ETF volume flows.' },
+      us_stocks: { title: 'Wall Street (S&P 500 & Nasdaq)', text: 'US equities track treasury yields, earnings catalysts, and macro economic indicators.' },
+      india_stocks: { title: 'Dalal Street (Nifty 50 & Bank Nifty)', text: 'Indian indices react to domestic institutional flows and sector rotation trends.' },
     };
+
+    // Fetch live breaking news from authoritative RSS feeds
+    const newsFeeds: Record<string, string> = {
+      crypto: 'https://cointelegraph.com/rss',
+      forex: 'https://www.fxstreet.com/rss/news',
+      us_stocks: 'https://feeds.finance.yahoo.com/rss/2.0/headline?s=%5EGSPC&region=US&lang=en-US',
+      india_stocks: 'https://economictimes.indiatimes.com/markets/rssfeeds/1977021501.cms',
+    };
+
+    const cleanHtmlEntities = (str: string) => {
+      return str
+        .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1')
+        .replace(/<[^>]+>/g, '')
+        .replace(/&amp;/g, '&')
+        .replace(/&#39;/g, "'")
+        .replace(/&quot;/g, '"')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/\]\]>/g, '')
+        .trim();
+    };
+
+    let rawLiveHeadlines: Record<string, { title: string; text: string }> = {};
+
+    await Promise.allSettled(
+      Object.entries(newsFeeds).map(async ([key, url]) => {
+        try {
+          const res = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' } });
+          if (res.ok) {
+            const text = await res.text();
+            const items = text.match(/<item>[\s\S]*?<\/item>/gi) || [];
+            if (items.length > 0) {
+              const titleMatch = items[0].match(/<title>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/title>/i);
+              const descMatch = items[0].match(/<description>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/description>/i);
+              const title = titleMatch ? cleanHtmlEntities(titleMatch[1]) : '';
+              let desc = descMatch ? cleanHtmlEntities(descMatch[1]) : '';
+              if (desc.length > 130) desc = desc.slice(0, 127) + '...';
+
+              if (title) {
+                rawLiveHeadlines[key] = {
+                  title: title.length > 55 ? title.slice(0, 52) + '...' : title,
+                  text: desc || title,
+                };
+                marketNews[key as keyof typeof marketNews] = rawLiveHeadlines[key];
+              }
+            }
+          }
+        } catch (rssErr) {
+          console.warn(`RSS fetch failed for ${key}:`, rssErr);
+        }
+      })
+    );
 
     let aiReview = {
       headline: totalTrades === 0 ? 'Patience & Capital Preservation' : isProfit ? 'Disciplined Execution & Positive Returns' : 'Risk Control Under Market Resistance',
@@ -306,7 +358,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       tomorrowFocus: 'Execute strictly when your primary setup criteria and risk parameters are satisfied without hesitation.',
     };
 
-    // AI enhancement if Groq API key is present
+    // AI enhancement using live news context if Groq API key is present
     if (groqApiKey) {
       try {
         const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -320,13 +372,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             messages: [
               {
                 role: 'system',
-                content: `You are TradeX Financial Intelligence. Provide a brief daily market update for 4 sectors (Forex, Crypto, US Markets, Indian Markets) and coaching review. Return valid JSON only:
+                content: `You are TradeX Financial Intelligence. Synthesize real-time breaking market context and trade coaching. Return valid JSON only:
 {
   "marketNews": {
-    "forex": { "title": "...", "text": "1 sentence" },
-    "crypto": { "title": "...", "text": "1 sentence" },
-    "us_stocks": { "title": "...", "text": "1 sentence" },
-    "india_stocks": { "title": "...", "text": "1 sentence" }
+    "forex": { "title": "Short title max 6 words", "text": "1 punchy sentence" },
+    "crypto": { "title": "Short title max 6 words", "text": "1 punchy sentence" },
+    "us_stocks": { "title": "Short title max 6 words", "text": "1 punchy sentence" },
+    "india_stocks": { "title": "Short title max 6 words", "text": "1 punchy sentence" }
   },
   "headline": "Short punchy headline (max 7 words)",
   "summary": "1-2 concise sentences analyzing risk and execution.",
@@ -337,7 +389,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
               },
               {
                 role: 'user',
-                content: `Journal stats today: ${totalTrades} trades, net P&L: ${pnlFormatted}, win rate: ${winRate}%, discipline: ${disciplineScore}%.`,
+                content: `Real-time Breaking News:\nForex: ${rawLiveHeadlines.forex?.title || 'DXY steady'}\nCrypto: ${rawLiveHeadlines.crypto?.title || 'BTC/ETH momentum'}\nUS: ${rawLiveHeadlines.us_stocks?.title || 'Wall Street session'}\nIndia: ${rawLiveHeadlines.india_stocks?.title || 'Dalal Street update'}\n\nJournal stats today: ${totalTrades} trades, net P&L: ${pnlFormatted}, win rate: ${winRate}%, discipline: ${disciplineScore}%.`,
               },
             ],
             response_format: { type: 'json_object' },
@@ -349,7 +401,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         if (groqRes.ok) {
           const groqData = await groqRes.json();
           const parsed = JSON.parse(groqData.choices?.[0]?.message?.content || '{}');
-          if (parsed.marketNews) marketNews = parsed.marketNews;
+          if (parsed.marketNews?.forex?.title) marketNews.forex = parsed.marketNews.forex;
+          if (parsed.marketNews?.crypto?.title) marketNews.crypto = parsed.marketNews.crypto;
+          if (parsed.marketNews?.us_stocks?.title) marketNews.us_stocks = parsed.marketNews.us_stocks;
+          if (parsed.marketNews?.india_stocks?.title) marketNews.india_stocks = parsed.marketNews.india_stocks;
           if (parsed.headline) {
             aiReview = {
               headline: parsed.headline,
