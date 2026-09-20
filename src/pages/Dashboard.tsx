@@ -208,34 +208,33 @@ export function Dashboard() {
     const grossLoss = Math.abs(losingTrades.reduce((sum, t) => sum + Number(t.pnl || 0), 0));
     const profitFactor = grossLoss === 0 ? (grossProfit > 0 ? 3.5 : 0.0) : grossProfit / grossLoss;
 
-    // Period snapshot metrics (this month or recent period)
-    const periodPnl = activePeriodTrades.reduce((sum, trade) => sum + (Number(trade.pnl) || 0), 0);
-    const periodWins = activePeriodTrades.filter(t => t.isPositive || Number(t.pnl) > 0);
-    const periodLosses = activePeriodTrades.filter(t => !t.isPositive && Number(t.pnl) < 0);
-    const periodWinRate = activePeriodTrades.length > 0 ? (periodWins.length / activePeriodTrades.length) * 100 : 0;
-    const periodGrossProfit = periodWins.reduce((sum, t) => sum + Number(t.pnl || 0), 0);
-    const periodGrossLoss = Math.abs(periodLosses.reduce((sum, t) => sum + Number(t.pnl || 0), 0));
-    const periodProfitFactor = periodGrossLoss === 0 ? (periodGrossProfit > 0 ? 3.5 : 0.0) : periodGrossProfit / periodGrossLoss;
+    // Real trades metrics for the active account
+    const periodPnl = totalPnl;
+    const periodWins = winningTrades;
+    const periodLosses = losingTrades;
+    const periodWinRate = winRate;
+    const periodProfitFactor = profitFactor;
+    const periodTradeCount = trades.length;
 
-    // Avg R estimate: avg win pnl / avg loss pnl (or avg return multiple)
-    const avgWinAmount = periodWins.length > 0 ? (periodGrossProfit / periodWins.length) : 0;
-    const avgLossAmount = periodLosses.length > 0 ? (periodGrossLoss / periodLosses.length) : (avgWinAmount || 1);
-    const avgR = activePeriodTrades.length > 0 && avgLossAmount > 0
-      ? (periodPnl / (avgLossAmount * activePeriodTrades.length))
-      : 0;
+    // Real Avg R computation
+    const avgWinAmount = periodWins.length > 0 ? (grossProfit / periodWins.length) : 0;
+    const avgLossAmount = periodLosses.length > 0 ? (grossLoss / periodLosses.length) : 0;
+    const avgR = trades.length > 0 && avgLossAmount > 0
+      ? (totalPnl / (avgLossAmount * trades.length))
+      : (trades.length > 0 && avgWinAmount > 0 ? 1.0 : 0);
 
-    // Automated Pattern Discovery / Behavioral Insight
+    // Automated Pattern Discovery / Behavioral Insight from actual recorded trades
     let biggestPattern = {
-      headline: "No active behavioral leaks detected.",
-      detail: "Your execution parameters and trading rules are disciplined. Keep following your system.",
+      headline: trades.length === 0 ? "No trade executions recorded yet." : "No active behavioral leaks detected.",
+      detail: trades.length === 0 ? "Log trades manually or upload a broker statement/screenshot to detect edge patterns." : "Your execution parameters and trading rules are disciplined. Keep following your system.",
       costText: null as string | null,
       type: "neutral" as "neutral" | "warning" | "positive"
     };
 
-    if (activePeriodTrades.length > 0) {
+    if (trades.length > 0) {
       // 1. Check for negative session leak
       const sessionPnls: Record<string, { pnl: number; count: number }> = {};
-      activePeriodTrades.forEach(t => {
+      trades.forEach(t => {
         const sess = t.session || 'Else';
         if (!sessionPnls[sess]) sessionPnls[sess] = { pnl: 0, count: 0 };
         sessionPnls[sess].pnl += Number(t.pnl) || 0;
@@ -245,34 +244,34 @@ export function Dashboard() {
       const worstSessionEntry = Object.entries(sessionPnls).find(([, d]) => d.pnl < -10 && d.count >= 2);
 
       // 2. Check for emotional trade leak
-      const emotionalTrades = activePeriodTrades.filter(t => 
+      const emotionalTrades = trades.filter(t => 
         t.emotions && t.emotions.some(e => ['FOMO', 'Revenge', 'Greedy', 'Anxious', 'Impulsive'].includes(e))
       );
       const emotionalLoss = emotionalTrades.reduce((s, t) => s + (Number(t.pnl) < 0 ? Number(t.pnl) : 0), 0);
 
       // 3. Check for worst instrument leak
       const losingSymbols = Object.entries(
-        activePeriodTrades.reduce((acc, t) => {
+        trades.reduce((acc, t) => {
           acc[t.symbol] = (acc[t.symbol] || 0) + (Number(t.pnl) || 0);
           return acc;
         }, {} as Record<string, number>)
       ).filter(([, pnl]) => pnl < -15).sort((a, b) => a[1] - b[1]);
 
       if (emotionalTrades.length >= 2 && Math.abs(emotionalLoss) > 20) {
-        const pct = Math.round((emotionalTrades.length / activePeriodTrades.length) * 100);
+        const pct = Math.round((emotionalTrades.length / trades.length) * 100);
         biggestPattern = {
           headline: `You took ${pct}% of trades under emotional pressure (FOMO / Revenge).`,
           detail: `Unplanned emotional executions are reducing your portfolio edge.`,
-          costText: `This has cost you approximately -$${Math.abs(Math.round(emotionalLoss))} ${isShowingCurrentMonth ? 'this month' : 'recently'}.`,
+          costText: `This has cost you approximately -$${Math.abs(Math.round(emotionalLoss))} in total losses.`,
           type: "warning"
         };
       } else if (worstSessionEntry) {
         const [sessName, sData] = worstSessionEntry;
-        const pct = Math.round((sData.count / activePeriodTrades.length) * 100);
+        const pct = Math.round((sData.count / trades.length) * 100);
         biggestPattern = {
-          headline: `You are taking ${pct}% of your trades during ${sessName} session hours.`,
+          headline: `You took ${pct}% of your trades during ${sessName} session.`,
           detail: `Performance in this session shows negative expectancy compared to your core trading hours.`,
-          costText: `This has cost you approximately -$${Math.abs(Math.round(sData.pnl))} ${isShowingCurrentMonth ? 'this month' : 'recently'}.`,
+          costText: `This has cost you approximately -$${Math.abs(Math.round(sData.pnl))} in total losses.`,
           type: "warning"
         };
       } else if (losingSymbols.length > 0) {
@@ -280,14 +279,14 @@ export function Dashboard() {
         biggestPattern = {
           headline: `Underperforming asset: ${sym} is generating recurring drag.`,
           detail: `Losses on ${sym} are offsetting consistent gains from your high-probability setups.`,
-          costText: `This has cost you approximately -$${Math.abs(Math.round(symPnl))} ${isShowingCurrentMonth ? 'this month' : 'recently'}.`,
+          costText: `This has cost you approximately -$${Math.abs(Math.round(symPnl))} in total losses.`,
           type: "warning"
         };
-      } else if (periodWinRate >= 55) {
+      } else if (winRate >= 55) {
         biggestPattern = {
           headline: `High win rate consistency across top traded setups.`,
           detail: `Your execution is aligned with your strategy. Consider scaling size gradually on A+ setups.`,
-          costText: `Generated +$${Math.round(periodPnl)} in net edge ${isShowingCurrentMonth ? 'this month' : 'recently'}.`,
+          costText: `Generated +$${Math.round(totalPnl)} in net edge.`,
           type: "positive"
         };
       }
