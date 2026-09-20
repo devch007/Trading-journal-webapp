@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import {
   Search,
   LayoutGrid,
@@ -363,10 +364,10 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
     onClose();
   };
 
-  return (
+  const modalContent = (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-[100] flex items-start justify-center pt-[10vh] px-4">
+        <div className="fixed inset-0 z-[9999] flex items-start justify-center pt-[12vh] px-4">
           
           {/* Deep Frosted Backdrop */}
           <motion.div
@@ -374,7 +375,7 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="absolute inset-0 bg-slate-950/50 dark:bg-black/80 backdrop-blur-md"
+            className="fixed inset-0 bg-slate-950/60 dark:bg-black/80 backdrop-blur-md"
           />
 
           {/* Liquid Glass Shell with Pure Diffusion */}
@@ -401,6 +402,7 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
               <input
                 ref={inputRef}
                 type="text"
+                autoFocus
                 placeholder="Search pages, actions, trades, symbols…"
                 value={query}
                 onChange={(e) => { setQuery(e.target.value); setSelectedIndex(0); }}
@@ -445,50 +447,50 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
                                 onClick={() => handleSelect(item)}
                                 onMouseEnter={() => setSelectedIndex(globalIndex)}
                                 className={cn(
-                                  "w-full flex items-center gap-3.5 px-3.5 py-2.5 rounded-2xl transition-all duration-150 text-left group",
+                                  "w-full flex items-center justify-between px-3.5 py-3 rounded-2xl text-left transition-all duration-150 group cursor-pointer",
                                   isSelected
-                                    ? "bg-blue-50/80 dark:bg-white/[0.12] text-gray-900 dark:text-white shadow-xs border border-blue-200/70 dark:border-white/20"
-                                    : "text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/[0.04] border border-transparent"
+                                    ? "bg-blue-50/90 dark:bg-white/[0.08] text-blue-900 dark:text-white shadow-2xs"
+                                    : "hover:bg-gray-50/80 dark:hover:bg-white/[0.03] text-gray-700 dark:text-gray-300"
                                 )}
                               >
-                                {/* Icon container */}
-                                <div
-                                  className={cn(
-                                    "p-2 rounded-xl transition-all flex-shrink-0 flex items-center justify-center",
-                                    isSelected
-                                      ? "bg-blue-600 text-white shadow-xs"
-                                      : "bg-gray-100 dark:bg-white/[0.06] text-gray-500 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"
-                                  )}
-                                >
-                                  <Icon className="w-4 h-4" />
-                                </div>
-
-                                {/* Title & Subtitle */}
-                                <div className="flex-1 min-w-0">
-                                  <div className="text-[13px] font-semibold text-gray-900 dark:text-white leading-tight truncate">
-                                    {item.title}
-                                  </div>
-                                  <div className="text-[11px] text-gray-400 dark:text-gray-500 mt-0.5 truncate font-normal">
-                                    {item.subtitle}
-                                  </div>
-                                </div>
-
-                                {/* Badge */}
-                                {item.badge && (
-                                  <span
+                                <div className="flex items-center gap-3.5 min-w-0">
+                                  <div
                                     className={cn(
-                                      "px-2.5 py-0.5 rounded-full text-[10px] font-medium tracking-wide uppercase flex-shrink-0",
-                                      item.badgeColor || "bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-300"
+                                      "w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-colors",
+                                      isSelected
+                                        ? "bg-blue-600 text-white shadow-sm"
+                                        : "bg-gray-100 dark:bg-white/[0.06] text-gray-500 dark:text-gray-400 group-hover:bg-blue-500/10 group-hover:text-blue-600 dark:group-hover:text-blue-400"
                                     )}
                                   >
-                                    {item.badge}
-                                  </span>
-                                )}
-
-                                {/* Arrow Indicator on Hover/Selection */}
-                                {isSelected && (
-                                  <ArrowRight className="w-4 h-4 text-blue-600 dark:text-blue-400 flex-shrink-0 animate-in fade-in slide-in-from-left-1 duration-150" />
-                                )}
+                                    <Icon className="w-4 h-4" />
+                                  </div>
+                                  <div className="truncate">
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-sm font-semibold tracking-tight text-gray-900 dark:text-white truncate">
+                                        {item.title}
+                                      </span>
+                                      {item.badge && (
+                                        <span
+                                          className={cn(
+                                            "text-[10px] font-bold px-2 py-0.5 rounded-full tracking-wide",
+                                            item.badgeColor || "bg-gray-100 text-gray-600 dark:bg-white/10 dark:text-gray-300"
+                                          )}
+                                        >
+                                          {item.badge}
+                                        </span>
+                                      )}
+                                    </div>
+                                    <p className="text-xs text-gray-400 dark:text-gray-500 truncate mt-0.5">
+                                      {item.subtitle}
+                                    </p>
+                                  </div>
+                                </div>
+                                <ArrowRight
+                                  className={cn(
+                                    "w-3.5 h-3.5 text-gray-300 dark:text-gray-600 shrink-0 ml-2 transition-transform",
+                                    isSelected && "text-blue-500 dark:text-blue-400 translate-x-0.5"
+                                  )}
+                                />
                               </button>
                             );
                           })}
@@ -498,15 +500,15 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
                   })}
                 </div>
               ) : (
-                <div className="py-12 text-center">
-                  <div className="w-12 h-12 rounded-2xl bg-gray-100 dark:bg-white/[0.05] border border-gray-200 dark:border-white/10 flex items-center justify-center mx-auto mb-3 text-gray-400">
+                <div className="py-12 text-center space-y-2">
+                  <div className="w-10 h-10 rounded-2xl bg-gray-100 dark:bg-white/[0.04] flex items-center justify-center mx-auto text-gray-400">
                     <Search className="w-5 h-5" />
                   </div>
-                  <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">
-                    No results for "{query}"
+                  <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                    No results found for "{query}"
                   </p>
-                  <p className="text-xs text-gray-400 mt-1">
-                    Try searching for a symbol, trade, strategy or page name
+                  <p className="text-xs text-gray-400">
+                    Try searching for pages (e.g. "trades"), symbols ("XAUUSD"), or quick actions.
                   </p>
                 </div>
               )}
@@ -536,4 +538,7 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
       )}
     </AnimatePresence>
   );
+
+  if (typeof document === "undefined") return null;
+  return createPortal(modalContent, document.body);
 }
