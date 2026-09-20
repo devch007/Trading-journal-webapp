@@ -386,8 +386,36 @@ GUIDELINES:
 - Incorporate their real trade data: Win Rate: ${winRateNum.toFixed(1)}%, Total PnL: $${totalPnlNum.toFixed(2)}, Trades: ${trades.length}, Best Asset: ${bestSymbol ? bestSymbol[0] : 'XAUUSD'}, Avg Win: $${avgWin.toFixed(2)}, Avg Loss: $${avgLoss.toFixed(2)}.
 - Format cleanly with bullet points and bold headers.`;
 
-      // 1. Try Groq if key exists
-      if (groqKey) {
+      // 1. Try serverless /api/chat endpoint (uses Vercel server-side GROQ_API_KEY automatically)
+      try {
+        const chatReq = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            messages: [
+              { role: 'system', content: systemPrompt },
+              ...messages.slice(-5).map(m => ({
+                role: m.role === 'ai' ? 'assistant' : 'user',
+                content: m.content
+              })),
+              { role: 'user', content: text }
+            ],
+            userKey: groqKey || undefined,
+          })
+        });
+
+        if (chatReq.ok) {
+          const chatRes = await chatReq.json();
+          if (chatRes.reply) {
+            aiContent = chatRes.reply;
+          }
+        }
+      } catch (backendErr) {
+        console.warn('Serverless chat endpoint fallback to direct client call:', backendErr);
+      }
+
+      // 2. Direct client-side Groq call if backend endpoint was unavailable
+      if (!aiContent && groqKey) {
         try {
           const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
             method: "POST",
@@ -419,7 +447,7 @@ GUIDELINES:
         }
       }
 
-      // 2. Try Gemini if Groq didn't return content
+      // 3. Try Gemini if Groq didn't return content
       if (!aiContent && geminiKey) {
         try {
           const geminiPrompt = `${systemPrompt}\n\nUser Question: ${text}`;
@@ -440,7 +468,7 @@ GUIDELINES:
         }
       }
 
-      // 3. Fallback: Intelligent Real-Time Analytics Engine
+      // 4. Fallback: Intelligent Real-Time Analytics Engine
       if (!aiContent) {
         aiContent = generateLocalAnalytics(text, {
           trades,
