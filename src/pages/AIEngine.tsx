@@ -256,10 +256,18 @@ export function AIEngine() {
   }, [messages, isTyping]);
 
   // AI Key Configuration State
-  const [isConfigOpen, setIsConfigOpen] = useState(false);
   const [groqKeyInput, setGroqKeyInput] = useState(getAiApiKey());
   const [geminiKeyInput, setGeminiKeyInput] = useState(getGeminiApiKey());
+  const [isConfigOpen, setIsConfigOpen] = useState(!getAiApiKey() && !getGeminiApiKey());
   const [saveSuccess, setSaveSuccess] = useState(false);
+
+  // Auto-open modal on first visit if no key is stored
+  useEffect(() => {
+    const hasKey = Boolean(getAiApiKey() || getGeminiApiKey());
+    if (!hasKey) {
+      setIsConfigOpen(true);
+    }
+  }, []);
 
   const handleSaveKeys = () => {
     setAiApiKey(groqKeyInput);
@@ -487,80 +495,83 @@ COACHING RULES:
 3. If they ask about their last trade, mistakes, scaling, win rate, or general questions, cite specific details from their real journal above.
 4. Keep answers punchy and structured with bullet points and bold highlights. Avoid long robotic disclaimers.`;
 
-      // 1. Try serverless /api/chat endpoint (uses Vercel server-side GROQ_API_KEY automatically)
-      try {
-        const authDataStr = localStorage.getItem('sb-kjbffiwucfokooejgpxo-auth-token') || localStorage.getItem('supabase.auth.token');
-        let authToken = '';
-        if (authDataStr) {
-          try {
-            const parsedAuth = JSON.parse(authDataStr);
-            authToken = parsedAuth?.access_token || parsedAuth?.currentSession?.access_token || '';
-          } catch(e) {}
-        }
-
-        const chatReq = await fetch('/api/chat', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            ...(authToken ? { 'Authorization': `Bearer ${authToken}` } : {}),
-          },
-          body: JSON.stringify({
-            messages: [
-              { role: 'system', content: systemPrompt },
-              ...messages.slice(-5).map(m => ({
-                role: m.role === 'ai' ? 'assistant' : 'user',
-                content: m.content
-              })),
-              { role: 'user', content: text }
-            ],
-            userKey: groqKey || undefined,
-          })
-        });
-
-        if (chatReq.ok) {
-          const chatRes = await chatReq.json();
-          if (chatRes.reply) {
-            aiContent = chatRes.reply;
-          }
-        }
-      } catch (backendErr) {
-        console.warn('Serverless chat endpoint fallback to direct client call:', backendErr);
-      }
-
-      // 2. Direct client-side Groq call if backend endpoint was unavailable
-      if (!aiContent && groqKey) {
+      // Connect to backend LLM ONLY when user has entered an API key
+      if (groqKey) {
+        // 1. Try serverless /api/chat endpoint with userKey
         try {
-          const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-            method: "POST",
+          const authDataStr = localStorage.getItem('sb-kjbffiwucfokooejgpxo-auth-token') || localStorage.getItem('supabase.auth.token');
+          let authToken = '';
+          if (authDataStr) {
+            try {
+              const parsedAuth = JSON.parse(authDataStr);
+              authToken = parsedAuth?.access_token || parsedAuth?.currentSession?.access_token || '';
+            } catch(e) {}
+          }
+
+          const chatReq = await fetch('/api/chat', {
+            method: 'POST',
             headers: {
-              "Authorization": `Bearer ${groqKey}`,
-              "Content-Type": "application/json",
+              'Content-Type': 'application/json',
+              ...(authToken ? { 'Authorization': `Bearer ${authToken}` } : {}),
             },
             body: JSON.stringify({
-              model: "llama-3.3-70b-versatile",
               messages: [
-                { role: "system", content: systemPrompt },
+                { role: 'system', content: systemPrompt },
                 ...messages.slice(-5).map(m => ({
                   role: m.role === 'ai' ? 'assistant' : 'user',
                   content: m.content
                 })),
-                { role: "user", content: text }
+                { role: 'user', content: text }
               ],
-              temperature: 0.6,
-              max_tokens: 800
+              userKey: groqKey,
             })
           });
 
-          if (response.ok) {
-            const data = await response.json();
-            aiContent = data.choices?.[0]?.message?.content || "";
+          if (chatReq.ok) {
+            const chatRes = await chatReq.json();
+            if (chatRes.reply) {
+              aiContent = chatRes.reply;
+            }
           }
-        } catch (e) {
-          console.warn("Groq request error:", e);
+        } catch (backendErr) {
+          console.warn('Backend chat error, falling back to direct Groq client fetch:', backendErr);
+        }
+
+        // 2. Direct client-side Groq call if backend proxy was unavailable
+        if (!aiContent) {
+          try {
+            const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+              method: "POST",
+              headers: {
+                "Authorization": `Bearer ${groqKey}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                model: "llama-3.3-70b-versatile",
+                messages: [
+                  { role: "system", content: systemPrompt },
+                  ...messages.slice(-5).map(m => ({
+                    role: m.role === 'ai' ? 'assistant' : 'user',
+                    content: m.content
+                  })),
+                  { role: "user", content: text }
+                ],
+                temperature: 0.6,
+                max_tokens: 800
+              })
+            });
+
+            if (response.ok) {
+              const data = await response.json();
+              aiContent = data.choices?.[0]?.message?.content || "";
+            }
+          } catch (e) {
+            console.warn("Groq request error:", e);
+          }
         }
       }
 
-      // 3. Try Gemini if Groq didn't return content
+      // 3. Try Gemini if user provided a Gemini key and Groq didn't return content
       if (!aiContent && geminiKey) {
         try {
           const geminiPrompt = `${systemPrompt}\n\nUser Question: ${text}`;
@@ -579,6 +590,11 @@ COACHING RULES:
         } catch (e) {
           console.warn("Gemini request error:", e);
         }
+      }
+
+      // If no key was configured at all, open the API key setup modal
+      if (!groqKey && !geminiKey) {
+        setIsConfigOpen(true);
       }
 
       // 4. Fallback: Intelligent Real-Time Analytics Engine
