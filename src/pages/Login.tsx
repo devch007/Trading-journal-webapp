@@ -1,75 +1,109 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
+import { Eye, EyeOff, Sparkles, AlertCircle, TrendingUp } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
-/* ── tiny floating particle ──────────────────────────────────────────── */
-const NUM_PARTICLES = 18;
-function Particles() {
-  const particles = Array.from({ length: NUM_PARTICLES }, (_, i) => ({
-    id: i,
-    size: 3 + Math.random() * 5,
-    x: 5 + Math.random() * 90,
-    y: 5 + Math.random() * 90,
-    delay: Math.random() * 6,
-    duration: 5 + Math.random() * 8,
-    opacity: 0.15 + Math.random() * 0.35,
-  }));
-  return (
-    <div className="lp-particles" aria-hidden>
-      {particles.map((p) => (
-        <span
-          key={p.id}
-          className="lp-particle"
-          style={{
-            width: p.size,
-            height: p.size,
-            left: `${p.x}%`,
-            top: `${p.y}%`,
-            opacity: p.opacity,
-            animationDelay: `${p.delay}s`,
-            animationDuration: `${p.duration}s`,
-          }}
-        />
-      ))}
-    </div>
-  );
+// --- HELPER ICONS ---
+const GoogleIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 shrink-0" viewBox="0 0 48 48">
+    <path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8-6.627 0-12-5.373-12-12s12-5.373 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-2.641-.21-5.236-.611-7.743z" />
+    <path fill="#FF3D00" d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 16.318 4 9.656 8.337 6.306 14.691z" />
+    <path fill="#4CAF50" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238C29.211 35.091 26.715 36 24 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z" />
+    <path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303c-.792 2.237-2.231 4.166-4.087 5.571l6.19 5.238C42.022 35.026 44 30.038 44 24c0-2.641-.21-5.236-.611-7.743z" />
+  </svg>
+);
+
+export interface Testimonial {
+  avatarSrc: string;
+  name: string;
+  handle: string;
+  text: string;
+  stat?: string;
 }
 
-/* ── stat badge ──────────────────────────────────────────────────────── */
-function StatBadge({ value, label, delay }: { value: string; label: string; delay: string }) {
-  return (
-    <div className="lp-stat-badge" style={{ animationDelay: delay }}>
-      <span className="lp-stat-value">{value}</span>
-      <span className="lp-stat-label">{label}</span>
+const sampleTestimonials: Testimonial[] = [
+  {
+    avatarSrc: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+    name: "Sarah Chen",
+    handle: "Prop Trader • FTMO Funded",
+    text: "TradeX transformed my risk consistency. The automated OCR journal and discipline tracker are unmatched.",
+    stat: "+$34.8K PnL"
+  },
+  {
+    avatarSrc: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
+    name: "Marcus Vance",
+    handle: "Futures & FX Trader",
+    text: "Session analytics showed me my edge is 80% London open. Doubled my average R:R in 30 days.",
+    stat: "74% Win Rate"
+  },
+  {
+    avatarSrc: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&auto=format&fit=crop&q=80",
+    name: "David Ross",
+    handle: "Macro & Crypto Analyst",
+    text: "AI Pilot Copilot knows my exact history and prevents revenge trades after stop-outs. Essential desk companion.",
+    stat: "3.2 Profit Factor"
+  }
+];
+
+const GlassInputWrapper = ({ children }: { children: React.ReactNode }) => (
+  <div className="rounded-2xl border border-gray-200/90 dark:border-neutral-800 bg-gray-50/70 dark:bg-neutral-900/60 backdrop-blur-sm transition-all focus-within:border-blue-500 focus-within:bg-blue-50/20 dark:focus-within:bg-blue-950/20 focus-within:ring-2 focus-within:ring-blue-500/20">
+    {children}
+  </div>
+);
+
+const TestimonialCard = ({ testimonial, delay }: { testimonial: Testimonial; delay: string }) => (
+  <div className={`animate-element ${delay} flex flex-col gap-2.5 rounded-3xl bg-white/85 dark:bg-[#16181f]/85 backdrop-blur-xl border border-gray-200/80 dark:border-white/10 p-5 w-72 shadow-xl hover:shadow-2xl transition-all`}>
+    <div className="flex items-center justify-between">
+      <div className="flex items-center gap-3">
+        <img src={testimonial.avatarSrc} className="h-10 w-10 object-cover rounded-2xl border border-gray-200/60 dark:border-neutral-700" alt={testimonial.name} />
+        <div>
+          <p className="text-xs font-bold text-gray-900 dark:text-white leading-tight">{testimonial.name}</p>
+          <p className="text-[10px] text-gray-400 font-medium">{testimonial.handle}</p>
+        </div>
+      </div>
+      {testimonial.stat && (
+        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+          {testimonial.stat}
+        </span>
+      )}
     </div>
-  );
-}
+    <p className="text-xs text-gray-600 dark:text-gray-300 leading-relaxed font-normal">{testimonial.text}</p>
+  </div>
+);
 
 export function Login() {
   const { signInWithGoogle, signInWithEmail, signUpWithEmail, user, loading: authLoading } = useAuth();
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [rememberMe, setRememberMe] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [focusedField, setFocusedField] = useState<string | null>(null);
   const navigate = useNavigate();
-  const formRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (user && !authLoading) navigate('/dashboard');
+    if (user && !authLoading) {
+      navigate('/dashboard');
+    }
   }, [user, authLoading, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!email.trim() || !password.trim()) {
+      setError('Please provide both email and password.');
+      return;
+    }
     setError('');
     setIsSubmitting(true);
     try {
-      if (isSignUp) await signUpWithEmail(email, password);
-      else await signInWithEmail(email, password);
+      if (isSignUp) {
+        await signUpWithEmail(email, password);
+      } else {
+        await signInWithEmail(email, password);
+      }
     } catch (err: any) {
-      setError(err.message || 'Authentication failed. Please try again.');
+      setError(err.message || 'Authentication failed. Please verify credentials.');
     } finally {
       setIsSubmitting(false);
     }
@@ -77,263 +111,225 @@ export function Login() {
 
   const handleGoogleSignIn = async () => {
     setError('');
+    setIsSubmitting(true);
     try {
       await signInWithGoogle();
     } catch (err: any) {
-      setError(err.message || 'Google sign-in failed.');
+      setError(err.message || 'Google sign-in could not be completed.');
+      setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="lp-root">
-
-      {/* ══════════════ LEFT PANEL ══════════════ */}
-      <div className="lp-left">
-        {/* Multi-layer sky gradient */}
-        <div className="lp-sky" />
-
-        {/* Animated particles */}
-        <Particles />
-
-        {/* Gradient orbs */}
-        <div className="lp-orb lp-orb-a" />
-        <div className="lp-orb lp-orb-b" />
-        <div className="lp-orb lp-orb-c" />
-        <div className="lp-orb lp-orb-d" />
-
-        {/* Top brand */}
-        <div className="lp-brand">
-          <div className="lp-brand-gem">
-            <svg viewBox="0 0 24 24" fill="none" className="lp-brand-icon">
-              <path d="M3 21H21" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
-              <path d="M3 21V3" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
-              <path d="M7 15L12 10L16 13L21 6" stroke="rgba(255,255,255,0.9)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </div>
-          <span className="lp-brand-name">TRADOVA</span>
-        </div>
-
-        {/* Floating stat badges */}
-        <StatBadge value="94.7%" label="Win Rate" delay="0s" />
-        <StatBadge value="+$18.2K" label="Avg Monthly" delay="0.3s" />
-
-        {/* Mascot — full-bleed with rounded corners */}
-        <div className="lp-mascot-wrap">
-          <img
-            src="/login-mascot.png"
-            alt="Tradova mascot"
-            className="lp-mascot"
-            draggable={false}
-          />
-        </div>
-
-        {/* Bottom frosted glass footer */}
-        <div className="lp-left-footer">
-          <div className="lp-footer-glass">
-            <p className="lp-footer-eyebrow">Your Trading Edge</p>
-            <h2 className="lp-footer-tagline">Where Money Grows.</h2>
-            <p className="lp-footer-sub">
-              Join thousands of traders who turned data into profit.
-            </p>
-
-          </div>
-        </div>
-      </div>
-
-      {/* ══════════════ RIGHT PANEL ══════════════ */}
-      <div className="lp-right">
-        {/* Subtle dot grid texture */}
-        <div className="lp-right-texture" />
-
-        {/* Subtle gradient blobs in background */}
-        <div className="lp-right-blob-1" />
-        <div className="lp-right-blob-2" />
-
-        <div className="lp-card" ref={formRef}>
-          {/* Card top shine */}
-          <div className="lp-card-shine" aria-hidden />
-
-          {/* Logo */}
-          <div className="lp-card-logo">
-            <div className="lp-card-logo-gem">
-              <svg viewBox="0 0 24 24" fill="none" className="lp-card-logo-icon">
-                <path d="M3 21H21" stroke="#1D4ED8" strokeWidth="2.5" strokeLinecap="round"/>
-                <path d="M3 21V3" stroke="#1D4ED8" strokeWidth="2.5" strokeLinecap="round"/>
-                <path d="M7 15L12 10L16 13L21 6" stroke="#3B82F6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
+    <div className="min-h-[100dvh] flex flex-col md:flex-row bg-white dark:bg-[#0e1017] text-gray-900 dark:text-white w-full overflow-x-hidden font-sans">
+      
+      {/* ── LEFT COLUMN: Sign In / Sign Up Form ── */}
+      <section className="flex-1 flex items-center justify-center p-6 sm:p-10 lg:p-14 relative">
+        <div className="w-full max-w-md space-y-7 my-auto">
+          
+          {/* Brand Header */}
+          <div className="flex flex-col gap-2.5">
+            <div className="flex items-center gap-2.5">
+              <div className="w-10 h-10 rounded-2xl bg-blue-600 flex items-center justify-center text-white font-black text-lg shadow-lg shadow-blue-500/25">
+                X
+              </div>
+              <span className="text-2xl font-black tracking-tight text-gray-900 dark:text-white">TradeX</span>
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
+                PRO JOURNAL
+              </span>
             </div>
-            <span className="lp-card-logo-text">Tradova</span>
-          </div>
 
-          {/* Heading */}
-          <div className="lp-card-heading-block">
-            <h1 className="lp-card-heading">
-              {isSignUp ? 'Create Account' : 'Welcome Back'}
+            <h1 className="animate-element animate-delay-100 text-3xl sm:text-4xl font-extrabold tracking-tight mt-2 text-gray-900 dark:text-white">
+              {isSignUp ? 'Create your TradeX Account' : 'Welcome back to TradeX'}
             </h1>
-            <p className="lp-card-subheading">
-              {isSignUp
-                ? 'Start your trading journey today.'
-                : 'Sign in to continue to your dashboard.'}
+            <p className="animate-element animate-delay-200 text-xs sm:text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
+              {isSignUp 
+                ? 'Join high-performing traders tracking edge, discipline, and daily PnL.' 
+                : 'Access your real-time performance metrics, AI Copilot, and journals.'}
             </p>
           </div>
 
-          {/* Error */}
+          {/* Error Banner */}
           {error && (
-            <div className="lp-error" role="alert">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0">
-                <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-              </svg>
-              <span>{error}</span>
+            <div className="animate-element p-3.5 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 text-xs text-rose-600 dark:text-rose-400 flex items-start gap-2.5">
+              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-500" />
+              <span className="leading-snug">{error}</span>
             </div>
           )}
 
-          {/* ── Google Button (Primary CTA) ── */}
+          {/* Google Sign-in Button (Reliable Supabase Auth) */}
           <button
             onClick={handleGoogleSignIn}
             disabled={isSubmitting || authLoading}
-            className="lp-google-btn"
-            id="google-signin-btn"
+            type="button"
+            className="animate-element animate-delay-300 w-full flex items-center justify-center gap-3 border border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 hover:bg-gray-50 dark:hover:bg-neutral-800 rounded-2xl py-3.5 px-4 text-xs sm:text-sm font-semibold text-gray-800 dark:text-gray-200 transition-all shadow-2xs hover:shadow-md cursor-pointer disabled:opacity-50 group"
           >
-            <div className="lp-google-btn-shine" aria-hidden />
-            <svg className="lp-google-icon" viewBox="0 0 24 24">
-              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-            </svg>
+            <GoogleIcon />
             <span>Continue with Google</span>
           </button>
 
           {/* Divider */}
-          <div className="lp-divider">
-            <span className="lp-divider-line" />
-            <span className="lp-divider-text">or</span>
-            <span className="lp-divider-line" />
+          <div className="animate-element animate-delay-400 relative flex items-center justify-center my-2">
+            <span className="w-full border-t border-gray-200 dark:border-neutral-800" />
+            <span className="px-3.5 text-xs text-gray-400 bg-white dark:bg-[#0e1017] absolute font-medium">
+              or continue with email
+            </span>
           </div>
 
-          {/* ── Email Form ── */}
-          <form onSubmit={handleSubmit} className="lp-form" noValidate>
-            {/* Email */}
-            <div className={`lp-field ${focusedField === 'email' ? 'lp-field-focused' : ''} ${email ? 'lp-field-filled' : ''}`}>
-              <label className="lp-field-label" htmlFor="lp-email">Email address</label>
-              <div className="lp-field-input-wrap">
-                <svg className="lp-field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-                  <rect x="2" y="4" width="20" height="16" rx="3"/><path d="m2 7 10 7 10-7"/>
-                </svg>
+          {/* Email / Password Form */}
+          <form className="space-y-4" onSubmit={handleSubmit} noValidate>
+            
+            {/* Email Field */}
+            <div className="animate-element animate-delay-500 space-y-1.5">
+              <label className="text-xs font-semibold text-gray-700 dark:text-gray-300">Email Address</label>
+              <GlassInputWrapper>
                 <input
-                  id="lp-email"
+                  name="email"
                   type="email"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  onFocus={() => setFocusedField('email')}
-                  onBlur={() => setFocusedField(null)}
-                  className="lp-input"
-                  placeholder="you@example.com"
-                  autoComplete="email"
+                  placeholder="trader@tradex.com"
+                  className="w-full bg-transparent text-xs sm:text-sm px-4 py-3 rounded-2xl focus:outline-none text-gray-900 dark:text-white placeholder:text-gray-400"
                 />
-              </div>
+              </GlassInputWrapper>
             </div>
 
-            {/* Password */}
-            <div className={`lp-field ${focusedField === 'password' ? 'lp-field-focused' : ''} ${password ? 'lp-field-filled' : ''}`}>
-              <label className="lp-field-label" htmlFor="lp-password">Password</label>
-              <div className="lp-field-input-wrap">
-                <svg className="lp-field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-                  <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-                </svg>
-                <input
-                  id="lp-password"
-                  type="password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  onFocus={() => setFocusedField('password')}
-                  onBlur={() => setFocusedField(null)}
-                  className="lp-input"
-                  placeholder="••••••••"
-                  minLength={6}
-                  autoComplete={isSignUp ? 'new-password' : 'current-password'}
-                />
-              </div>
+            {/* Password Field */}
+            <div className="animate-element animate-delay-600 space-y-1.5">
+              <label className="text-xs font-semibold text-gray-700 dark:text-gray-300">Password</label>
+              <GlassInputWrapper>
+                <div className="relative flex items-center">
+                  <input
+                    name="password"
+                    type={showPassword ? 'text' : 'password'}
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••••••"
+                    className="w-full bg-transparent text-xs sm:text-sm px-4 py-3 pr-11 rounded-2xl focus:outline-none text-gray-900 dark:text-white placeholder:text-gray-400"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3.5 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors p-1"
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </GlassInputWrapper>
             </div>
 
-            {/* Remember + Forgot */}
+            {/* Remember Me & Reset */}
             {!isSignUp && (
-              <div className="lp-meta-row">
-                <label className="lp-remember">
-                  <span className="lp-checkbox-wrap">
-                    <input
-                      type="checkbox"
-                      checked={rememberMe}
-                      onChange={(e) => setRememberMe(e.target.checked)}
-                      className="lp-checkbox-native"
-                    />
-                    <span className="lp-checkbox-custom">
-                      {rememberMe && (
-                        <svg viewBox="0 0 12 12" fill="none">
-                          <path d="M2 6l3 3 5-5" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-                        </svg>
-                      )}
-                    </span>
-                  </span>
-                  <span className="lp-remember-text">Remember me</span>
+              <div className="animate-element animate-delay-700 flex items-center justify-between text-xs pt-1">
+                <label className="flex items-center gap-2 cursor-pointer select-none text-gray-600 dark:text-gray-400">
+                  <input
+                    type="checkbox"
+                    checked={rememberMe}
+                    onChange={(e) => setRememberMe(e.target.checked)}
+                    className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 accent-blue-600"
+                  />
+                  <span>Keep me signed in</span>
                 </label>
-                <button type="button" className="lp-forgot">Forgot password?</button>
+                <button
+                  type="button"
+                  onClick={() => alert('Password reset email sent if account exists.')}
+                  className="text-blue-600 dark:text-blue-400 hover:underline font-semibold"
+                >
+                  Forgot password?
+                </button>
               </div>
             )}
 
-            {/* Submit */}
+            {/* Submit Button */}
             <button
               type="submit"
               disabled={isSubmitting || authLoading}
-              className="lp-submit"
-              id="email-signin-btn"
+              className="animate-element animate-delay-800 w-full rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 text-xs sm:text-sm transition-all shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 active:scale-[0.99] disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2 mt-2"
             >
-              <span className="lp-submit-shine" aria-hidden />
               {isSubmitting ? (
-                <span className="lp-spinner" />
+                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
               ) : (
-                isSignUp ? 'Create Account' : 'Sign In'
+                <span>{isSignUp ? 'Create TradeX Account' : 'Sign In to TradeX'}</span>
               )}
             </button>
           </form>
 
-          {/* Toggle sign up / sign in */}
-          <p className="lp-toggle-row">
-            <span>{isSignUp ? 'Already have an account?' : "Don't have an account?"}</span>
+          {/* Toggle Sign Up vs Sign In */}
+          <p className="animate-element animate-delay-900 text-center text-xs text-gray-500 dark:text-gray-400">
+            {isSignUp ? 'Already have an account?' : 'New to TradeX platform?'}{' '}
             <button
               type="button"
-              className="lp-toggle-btn"
               onClick={() => { setIsSignUp(!isSignUp); setError(''); }}
+              className="text-blue-600 dark:text-blue-400 font-bold hover:underline ml-1 cursor-pointer"
             >
-              {isSignUp ? 'Sign in' : 'Sign up free'}
+              {isSignUp ? 'Sign In' : 'Create Free Account'}
             </button>
           </p>
 
-          {/* Footer */}
-          <div className="lp-card-footer">
-            <p className="lp-terms">
+          {/* Footer Copyright */}
+          <div className="pt-4 border-t border-gray-100 dark:border-neutral-900 text-center text-[11px] text-gray-400 space-y-1">
+            <p>
               By continuing, you agree to our{' '}
-              <a href="#" className="lp-link">Terms of Service</a>
-              {' & '}
-              <a href="#" className="lp-link">Privacy Policy</a>
+              <a href="#" className="underline hover:text-gray-700 dark:hover:text-gray-300">Terms of Service</a> &{' '}
+              <a href="#" className="underline hover:text-gray-700 dark:hover:text-gray-300">Privacy Policy</a>
             </p>
-            <p className="lp-copyright">
-              © 2026 Powered by{' '}
-              <a
-                href="https://www.dctechnologies.in"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="lp-link"
-              >
-                DC Technologies
-              </a>
-              . All rights reserved.
+            <p className="text-[10px] text-gray-400/80">© 2026 TradeX Technologies. All rights reserved.</p>
+          </div>
+
+        </div>
+      </section>
+
+      {/* ── RIGHT COLUMN: Hero Showcase & Live Testimonials ── */}
+      <section className="hidden lg:flex flex-1 relative p-6 items-center justify-center overflow-hidden">
+        {/* Background Visual Container */}
+        <div 
+          className="animate-slide-right animate-delay-200 absolute inset-6 rounded-3xl bg-cover bg-center overflow-hidden border border-gray-200/80 dark:border-neutral-800 shadow-2xl"
+          style={{ 
+            backgroundImage: `url('https://images.unsplash.com/photo-1642543492481-44e81e3914a7?q=80&w=2000&auto=format&fit=crop')`,
+          }}
+        >
+          {/* Gradient Overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-black/20 backdrop-blur-[1px]" />
+
+          {/* Top Banner inside Hero */}
+          <div className="absolute top-8 left-8 right-8 flex items-center justify-between text-white z-10">
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-xs font-semibold">
+              <Sparkles className="w-3.5 h-3.5 text-blue-400" />
+              <span>AI Pilot Copilot & Analytics 2.0</span>
+            </div>
+            <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-400 bg-emerald-950/60 px-3 py-1.5 rounded-full border border-emerald-500/30">
+              <TrendingUp className="w-3.5 h-3.5" />
+              <span>Real-Time Execution OCR</span>
+            </div>
+          </div>
+
+          {/* Hero Center Title */}
+          <div className="absolute top-28 left-8 right-8 z-10 max-w-lg">
+            <h2 className="text-3xl xl:text-4xl font-black text-white tracking-tight leading-tight">
+              Master Your Psychology.<br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-300 to-emerald-400">
+                Compound Your Capital.
+              </span>
+            </h2>
+            <p className="text-xs xl:text-sm text-gray-300 mt-2 font-normal leading-relaxed">
+              Automated MT4/MT5 trade capture, deep session bias analysis, and AI coaching engineered for serious traders.
             </p>
           </div>
+
+          {/* Bottom Testimonial Stack */}
+          <div className="absolute bottom-8 left-8 right-8 z-10 flex gap-4 overflow-x-auto no-scrollbar justify-start xl:justify-center">
+            <TestimonialCard testimonial={sampleTestimonials[0]} delay="animate-delay-600" />
+            <TestimonialCard testimonial={sampleTestimonials[1]} delay="animate-delay-800" />
+            <div className="hidden 2xl:block">
+              <TestimonialCard testimonial={sampleTestimonials[2]} delay="animate-delay-1000" />
+            </div>
+          </div>
         </div>
-      </div>
+      </section>
+
     </div>
   );
 }
+
