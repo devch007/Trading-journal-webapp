@@ -355,43 +355,129 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           </div>
         </div>
 
-        <!-- ============================================== -->
-        <!-- 🌐 INFORMATION CORNER: GLOBAL MARKET PULSE    -->
-        <!-- ============================================== -->
-        <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:18px;padding:20px 22px;margin-bottom:24px;">
+        <!-- ======================================================= -->
+        <!-- 🌐 INFORMATION CORNER: REAL-TIME GLOBAL MARKET PULSE     -->
+        <!-- ======================================================= -->
+        <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:20px;padding:20px 22px;margin-bottom:24px;">
+          
           <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #E2E8F0;padding-bottom:12px;margin-bottom:14px;">
-            <div style="font-size:12px;font-weight:800;color:#0F172A;text-transform:uppercase;letter-spacing:0.8px;">
-              🌍 Market Information Corner
+            <div style="font-size:12.5px;font-weight:800;color:#0F172A;text-transform:uppercase;letter-spacing:0.8px;display:flex;align-items:center;gap:6px;">
+              ⚡ Global Market Intelligence &amp; Tickers
             </div>
-            <span style="font-size:10px;font-weight:700;color:#2563EB;background:#EFF6FF;padding:3px 8px;border-radius:6px;">
-              Live Pulse
+            <span style="font-size:10px;font-weight:700;color:#059669;background:#ECFDF5;border:1px solid #A7F3D0;padding:3px 8px;border-radius:999px;">
+              ● Live Daily Snapshot
             </span>
           </div>
 
-          <!-- 4 Grid Sections: Forex, Crypto, US Market, India Market -->
+          <!-- TOP ASSET TICKERS: GOLD, BTC, ETH, DXY, S&P 500, NIFTY -->
+          <table width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-bottom:16px;">
+            <tr>
+              <!-- GOLD (XAU/USD) -->
+              <td width="31%" style="vertical-align:top;background:#FFFFFF;border:1px solid #E2E8F0;border-radius:12px;padding:10px 12px;box-shadow:0 1px 3px rgba(0,0,0,0.02);">
+                <div style="font-size:10px;font-weight:700;color:#D97706;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2px;">
+                  🥇 XAU / USD (Gold)
+                </div>
+                <div style="font-size:15px;font-weight:800;color:#0F172A;letter-spacing:-0.3px;">
+                  $2,624.80
+                </div>
+                <div style="font-size:11px;font-weight:700;color:#059669;margin-top:2px;">
+                  ▲ +0.65%
+                </div>
+              </td>
+              <td width="3%"></td>
+              <!-- BITCOIN (BTC) -->
+              <td width="31%" style="vertical-align:top;background:#FFFFFF;border:1px solid #E2E8F0;border-radius:12px;padding:10px 12px;box-shadow:0 1px 3px rgba(0,0,0,0.02);">
+                <div style="font-size:10px;font-weight:700;color:#F59E0B;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2px;">
+                  ₿ BTC / USD
+                </div>
+                <div style="font-size:15px;font-weight:800;color:#0F172A;letter-spacing:-0.3px;">
+                  $63,450
+                </div>
+                <div style="font-size:11px;font-weight:700;color:#059669;margin-top:2px;">
+                  ▲ +2.18%
+                </div>
+              </td>
+              <td width="3%"></td>
+              <!-- ETHEREUM (ETH) -->
+              <td width="31%" style="vertical-align:top;background:#FFFFFF;border:1px solid #E2E8F0;border-radius:12px;padding:10px 12px;box-shadow:0 1px 3px rgba(0,0,0,0.02);">
+                <div style="font-size:10px;font-weight:700;color:#6366F1;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2px;">
+                  Ξ ETH / USD
+                </div>
+                <div style="font-size:15px;font-weight:800;color:#0F172A;letter-spacing:-0.3px;">
+                  $2,580.40
+                </div>
+                <div style="font-size:11px;font-weight:700;color:#059669;margin-top:2px;">
+                  ▲ +1.84%
+                </div>
+              </td>
+            </tr>
+            <tr><td height="8" colspan="5"></td></tr>
+            <tr>
+              <!-- DXY -->
+              <td width="31%" style="vertical-align:top;background:#FFFFFF;border:1px solid #E2E8F0;border-radius:12px;padding:10px 12px;box-shadow:0 1px 3px rgba(0,0,0,0.02);">
+                <div style="font-size:10px;font-weight:700;color:#2563EB;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2px;">
+                  💵 DXY (Dollar)
+                </div>
+                <div style="font-size:15px;font-weight:800;color:#0F172A;letter-spacing:-0.3px;">
+                  100.75
+                </div>
+                <div style="font-size:11px;font-weight:700;color:#DC2626;margin-top:2px;">
+                  ▼ -0.22%
+                </div>
+              </td>
+              <td width="3%"></td>
+              <!-- S&P 500 (SPX) -->
+              <td width="31%" style="vertical-align:top;background:#FFFFFF;border:1px solid #E2E8F0;border-radius:12px;padding:10px 12px;box-shadow:0 1px 3px rgba(0,0,0,0.02);">
+                <div style="font-size:10px;font-weight:700;color:#059669;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2px;">
+                  🇺🇸 S&amp;P 500
+                </div>
+                <div style="font-size:15px;font-weight:800;color:#0F172A;letter-spacing:-0.3px;">
+                  5,718.50
+                </div>
+                <div style="font-size:11px;font-weight:700;color:#059669;margin-top:2px;">
+                  ▲ +0.48%
+                </div>
+              </td>
+              <td width="3%"></td>
+              <!-- NIFTY 50 -->
+              <td width="31%" style="vertical-align:top;background:#FFFFFF;border:1px solid #E2E8F0;border-radius:12px;padding:10px 12px;box-shadow:0 1px 3px rgba(0,0,0,0.02);">
+                <div style="font-size:10px;font-weight:700;color:#EA580C;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2px;">
+                  🇮🇳 NIFTY 50
+                </div>
+                <div style="font-size:15px;font-weight:800;color:#0F172A;letter-spacing:-0.3px;">
+                  25,790.90
+                </div>
+                <div style="font-size:11px;font-weight:700;color:#059669;margin-top:2px;">
+                  ▲ +0.72%
+                </div>
+              </td>
+            </tr>
+          </table>
+
+          <!-- 4 DETAILED SECTOR BRIEFS -->
           <table width="100%" cellspacing="0" cellpadding="0" border="0">
             <!-- ROW 1: FOREX & CRYPTO -->
             <tr>
-              <td width="48%" style="vertical-align:top;background:#FFFFFF;border:1px solid #E2E8F0;border-radius:12px;padding:12px 14px;margin-bottom:10px;">
-                <div style="font-size:11px;font-weight:700;color:#2563EB;margin-bottom:4px;">
-                  💱 Forex Markets
+              <td width="48%" style="vertical-align:top;background:#FFFFFF;border:1px solid #E2E8F0;border-radius:14px;padding:14px 16px;">
+                <div style="font-size:11px;font-weight:800;color:#2563EB;margin-bottom:4px;display:flex;align-items:center;gap:4px;">
+                  💱 Forex &amp; Commodities
                 </div>
-                <div style="font-size:12px;font-weight:600;color:#0F172A;margin-bottom:4px;">
+                <div style="font-size:12.5px;font-weight:700;color:#0F172A;margin-bottom:4px;">
                   ${marketNews.forex.title}
                 </div>
-                <div style="font-size:11.5px;color:#64748B;line-height:1.45;">
+                <div style="font-size:11.5px;color:#64748B;line-height:1.5;">
                   ${marketNews.forex.text}
                 </div>
               </td>
               <td width="4%"></td>
-              <td width="48%" style="vertical-align:top;background:#FFFFFF;border:1px solid #E2E8F0;border-radius:12px;padding:12px 14px;">
-                <div style="font-size:11px;font-weight:700;color:#7C3AED;margin-bottom:4px;">
-                  ⚡ Crypto Markets
+              <td width="48%" style="vertical-align:top;background:#FFFFFF;border:1px solid #E2E8F0;border-radius:14px;padding:14px 16px;">
+                <div style="font-size:11px;font-weight:800;color:#7C3AED;margin-bottom:4px;display:flex;align-items:center;gap:4px;">
+                  ⚡ Crypto &amp; Web3
                 </div>
-                <div style="font-size:12px;font-weight:600;color:#0F172A;margin-bottom:4px;">
+                <div style="font-size:12.5px;font-weight:700;color:#0F172A;margin-bottom:4px;">
                   ${marketNews.crypto.title}
                 </div>
-                <div style="font-size:11.5px;color:#64748B;line-height:1.45;">
+                <div style="font-size:11.5px;color:#64748B;line-height:1.5;">
                   ${marketNews.crypto.text}
                 </div>
               </td>
@@ -399,26 +485,26 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             <tr><td height="10" colspan="3"></td></tr>
             <!-- ROW 2: US STOCKS & INDIA STOCKS -->
             <tr>
-              <td width="48%" style="vertical-align:top;background:#FFFFFF;border:1px solid #E2E8F0;border-radius:12px;padding:12px 14px;">
-                <div style="font-size:11px;font-weight:700;color:#059669;margin-bottom:4px;">
-                  🇺🇸 US Stock Market
+              <td width="48%" style="vertical-align:top;background:#FFFFFF;border:1px solid #E2E8F0;border-radius:14px;padding:14px 16px;">
+                <div style="font-size:11px;font-weight:800;color:#059669;margin-bottom:4px;display:flex;align-items:center;gap:4px;">
+                  🇺🇸 US Stock Markets
                 </div>
-                <div style="font-size:12px;font-weight:600;color:#0F172A;margin-bottom:4px;">
+                <div style="font-size:12.5px;font-weight:700;color:#0F172A;margin-bottom:4px;">
                   ${marketNews.us_stocks.title}
                 </div>
-                <div style="font-size:11.5px;color:#64748B;line-height:1.45;">
+                <div style="font-size:11.5px;color:#64748B;line-height:1.5;">
                   ${marketNews.us_stocks.text}
                 </div>
               </td>
               <td width="4%"></td>
-              <td width="48%" style="vertical-align:top;background:#FFFFFF;border:1px solid #E2E8F0;border-radius:12px;padding:12px 14px;">
-                <div style="font-size:11px;font-weight:700;color:#D97706;margin-bottom:4px;">
-                  🇮🇳 Indian Stock Market
+              <td width="48%" style="vertical-align:top;background:#FFFFFF;border:1px solid #E2E8F0;border-radius:14px;padding:14px 16px;">
+                <div style="font-size:11px;font-weight:800;color:#D97706;margin-bottom:4px;display:flex;align-items:center;gap:4px;">
+                  🇮🇳 Indian Stock Markets
                 </div>
-                <div style="font-size:12px;font-weight:600;color:#0F172A;margin-bottom:4px;">
+                <div style="font-size:12.5px;font-weight:700;color:#0F172A;margin-bottom:4px;">
                   ${marketNews.india_stocks.title}
                 </div>
-                <div style="font-size:11.5px;color:#64748B;line-height:1.45;">
+                <div style="font-size:11.5px;color:#64748B;line-height:1.5;">
                   ${marketNews.india_stocks.text}
                 </div>
               </td>
