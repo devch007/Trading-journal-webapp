@@ -148,12 +148,11 @@ function cleanAndParseJson(raw: string): any {
  * Attempt extraction with Groq Vision
  */
 async function extractWithGroq(base64Data: string, mimeType: string, apiKey: string): Promise<{ trades: ExtractedTrade[]; error?: string }> {
-  // Try available active vision models on Groq
+  // Official active vision models on Groq
   const models = [
+    "qwen/qwen3.8-27b",
     "qwen-2.5-32b",
-    "meta-llama/llama-4-scout-17b-vision",
-    "llama-3.2-11b-vision-preview",
-    "llama-3.2-90b-vision-preview"
+    "meta-llama/llama-4-scout-17b-vision"
   ];
 
   let lastErr = "";
