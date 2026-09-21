@@ -132,6 +132,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           error: userErr.message || String(userErr),
         });
       }
+    }
+
     return res.status(200).json({
       message: `Daily summary cron completed. Sent: ${summaryResults.successful}, Skipped: ${summaryResults.skipped}, Failed: ${summaryResults.failed}.`,
       results: summaryResults,
