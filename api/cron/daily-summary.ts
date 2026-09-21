@@ -71,17 +71,39 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }).format(now);
 
         // Fetch user profile/auth email
-        const { data: userData, error: userError } = await supabase.auth.admin.getUserById(user_id);
-        const user = userData?.user;
+        let userEmail = '';
+        let userName = 'Trader';
 
-        if (userError || !user || !user.email) {
-          console.warn(`[Cron DailySummary] Could not find auth user for ${user_id}:`, userError);
+        try {
+          const { data: userData, error: userError } = await supabase.auth.admin.getUserById(user_id);
+          if (userData?.user?.email) {
+            userEmail = userData.user.email;
+            userName = userData.user.user_metadata?.full_name || userData.user.user_metadata?.name || userEmail.split('@')[0];
+          }
+        } catch (adminErr) {
+          console.warn(`[Cron DailySummary] Admin getUserById failed for ${user_id}, checking profile tables:`, adminErr);
+        }
+
+        // Fallback: check profiles or users table if admin auth API didn't return email
+        if (!userEmail) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('email, full_name, name')
+            .eq('id', user_id)
+            .maybeSingle();
+
+          if (profile?.email) {
+            userEmail = profile.email;
+            userName = profile.full_name || profile.name || userEmail.split('@')[0];
+          }
+        }
+
+        if (!userEmail) {
+          console.warn(`[Cron DailySummary] Could not find auth email for user ${user_id}`);
           summaryResults.failed++;
           summaryResults.details.push({ userId: user_id, status: 'failed', error: 'User email not found' });
           continue;
         }
-
-        const userName = user.user_metadata?.full_name || user.user_metadata?.name || user.email.split('@')[0];
 
         // Dispatch summary
         const result = await dispatchDailySummaryForUser({
