@@ -3,11 +3,12 @@ import { getSupabaseServerClient } from '../lib/supabaseServer';
 import { dispatchDailySummaryForUser } from '../lib/resendClient';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // 1. Validate Cron Secret if configured
+  // 1. Validate Cron Secret if configured (Vercel automatic crons pass Authorization: Bearer <CRON_SECRET>)
   const cronSecret = process.env.CRON_SECRET;
   const authHeader = req.headers.authorization;
 
-  if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+  // If CRON_SECRET is set in Vercel and auth header is provided, verify it matches
+  if (cronSecret && authHeader && authHeader !== `Bearer ${cronSecret}`) {
     return res.status(401).json({ error: 'Unauthorized cron trigger.' });
   }
 
@@ -52,15 +53,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const { user_id, daily_summary_time = '21:00', timezone = 'Asia/Kolkata' } = setting;
 
       try {
-        // Calculate user's current local time
         const now = new Date();
-        const localHourStr = new Intl.DateTimeFormat('en-US', {
-          timeZone: timezone,
-          hour: '2-digit',
-          hour12: false,
-        }).format(now);
-
-        const targetHourStr = daily_summary_time.split(':')[0];
 
         // Format today's date in user's timezone
         const userDateStr = new Intl.DateTimeFormat('en-CA', {
@@ -75,7 +68,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         let userName = 'Trader';
 
         try {
-          const { data: userData, error: userError } = await supabase.auth.admin.getUserById(user_id);
+          const { data: userData } = await supabase.auth.admin.getUserById(user_id);
           if (userData?.user?.email) {
             userEmail = userData.user.email;
             userName = userData.user.user_metadata?.full_name || userData.user.user_metadata?.name || userEmail.split('@')[0];
@@ -108,7 +101,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         // Dispatch summary
         const result = await dispatchDailySummaryForUser({
           userId: user_id,
-          userEmail: user.email,
+          userEmail,
           userName,
           summaryDateStr: userDateStr,
           timezone,
@@ -125,7 +118,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         summaryResults.details.push({
           userId: user_id,
-          email: user.email,
+          email: userEmail,
           status: result.status,
           date: userDateStr,
           error: result.error,
@@ -139,8 +132,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           error: userErr.message || String(userErr),
         });
       }
-    }
-
     return res.status(200).json({
       message: `Daily summary cron completed. Sent: ${summaryResults.successful}, Skipped: ${summaryResults.skipped}, Failed: ${summaryResults.failed}.`,
       results: summaryResults,
