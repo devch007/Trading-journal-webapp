@@ -73,36 +73,37 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       year: 'numeric',
     });
 
-    // 3. Query Trades (Supports both userId and user_id columns)
+    // 3. Query Trades (Supports both userId and user_id columns safely without proof payload)
     let rawUserTrades: any[] = [];
-    const { data: orTrades } = await supabase
-      .from('trades')
-      .select('*')
-      .or(`user_id.eq.${user.id},userId.eq.${user.id}`);
+    
+    // Probe columns to avoid massive base64 proof payload
+    const { data: schemaProbe } = await supabase.from('trades').select('*').limit(1);
+    let selectCols = '*';
+    if (schemaProbe && schemaProbe.length > 0) {
+      selectCols = Object.keys(schemaProbe[0]).filter(c => c !== 'proof').join(', ');
+    }
 
-    if (orTrades && orTrades.length > 0) {
-      rawUserTrades = orTrades;
+    const { data: userTradesCamel } = await supabase
+      .from('trades')
+      .select(selectCols)
+      .eq('userId', user.id);
+
+    if (userTradesCamel && userTradesCamel.length > 0) {
+      rawUserTrades = userTradesCamel;
     } else {
-      const { data: camelTrades } = await supabase
+      const { data: userTradesSnake } = await supabase
         .from('trades')
-        .select('*')
-        .eq('userId', user.id);
-      
-      if (camelTrades && camelTrades.length > 0) {
-        rawUserTrades = camelTrades;
-      } else {
-        const { data: snakeTrades } = await supabase
-          .from('trades')
-          .select('*')
-          .eq('user_id', user.id);
-        if (snakeTrades) rawUserTrades = snakeTrades;
-      }
+        .select(selectCols)
+        .eq('user_id', user.id);
+      if (userTradesSnake) rawUserTrades = userTradesSnake;
     }
 
     const getTradeDateStr = (t: any): string => {
       const dStr = t.close_date || t.open_date || t.date || t.createdAt || t.created_at || '';
       if (!dStr) return '';
-      if (typeof dStr === 'string' && dStr.startsWith('Today')) return todayStr;
+      if (typeof dStr === 'string' && (dStr.startsWith('Today') || dStr.toLowerCase().includes('today'))) {
+        return todayStr;
+      }
       const mt5Match = String(dStr).match(/^(\d{4})[./-](\d{2})[./-](\d{2})/);
       if (mt5Match) return `${mt5Match[1]}-${mt5Match[2]}-${mt5Match[3]}`;
       try {

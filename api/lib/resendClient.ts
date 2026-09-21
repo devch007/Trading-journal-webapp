@@ -56,31 +56,29 @@ export async function dispatchDailySummaryForUser(options: DispatchSummaryOption
   }
 
   try {
-    // 2. Query today's completed trades for this user (supports both user_id and userId columns)
+    // 2. Query today's completed trades for this user (safely without heavy proof payload)
     let rawTrades: any[] = [];
-    const { data: tradesByUserId, error: err1 } = await supabase
+    
+    // Probe columns to avoid massive base64 proof payload
+    const { data: schemaProbe } = await supabase.from('trades').select('*').limit(1);
+    let selectCols = '*';
+    if (schemaProbe && schemaProbe.length > 0) {
+      selectCols = Object.keys(schemaProbe[0]).filter(c => c !== 'proof').join(', ');
+    }
+
+    const { data: userTradesCamel } = await supabase
       .from('trades')
-      .select('*')
-      .or(`user_id.eq.${userId},userId.eq.${userId}`);
+      .select(selectCols)
+      .eq('userId', userId);
 
-    if (tradesByUserId && tradesByUserId.length > 0) {
-      rawTrades = tradesByUserId;
+    if (userTradesCamel && userTradesCamel.length > 0) {
+      rawTrades = userTradesCamel;
     } else {
-      // Fallback query single column if OR query failed
-      const { data: userTrades } = await supabase
+      const { data: userTradesSnake } = await supabase
         .from('trades')
-        .select('*')
-        .eq('userId', userId);
-
-      if (userTrades && userTrades.length > 0) {
-        rawTrades = userTrades;
-      } else {
-        const { data: snakeTrades } = await supabase
-          .from('trades')
-          .select('*')
-          .eq('user_id', userId);
-        if (snakeTrades) rawTrades = snakeTrades;
-      }
+        .select(selectCols)
+        .eq('user_id', userId);
+      if (userTradesSnake) rawTrades = userTradesSnake;
     }
 
     const allUserTrades: any[] = rawTrades || [];
@@ -91,7 +89,7 @@ export async function dispatchDailySummaryForUser(options: DispatchSummaryOption
       if (!dStr) return '';
 
       // If already formatted like "Today, 14:30"
-      if (typeof dStr === 'string' && dStr.startsWith('Today')) {
+      if (typeof dStr === 'string' && (dStr.startsWith('Today') || dStr.toLowerCase().includes('today'))) {
         return summaryDateStr;
       }
 
