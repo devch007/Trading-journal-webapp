@@ -56,24 +56,80 @@ export async function dispatchDailySummaryForUser(options: DispatchSummaryOption
   }
 
   try {
-    // 2. Query today's completed trades for this user
-    // Query trades by user_id
-    const { data: rawTrades, error: tradesError } = await supabase
+    // 2. Query today's completed trades for this user (supports both user_id and userId columns)
+    let rawTrades: any[] = [];
+    const { data: tradesByUserId, error: err1 } = await supabase
       .from('trades')
       .select('*')
-      .eq('user_id', userId);
+      .or(`user_id.eq.${userId},userId.eq.${userId}`);
 
-    if (tradesError) {
-      console.warn(`[DailySummary] Error querying trades for user ${userId}:`, tradesError);
+    if (tradesByUserId && tradesByUserId.length > 0) {
+      rawTrades = tradesByUserId;
+    } else {
+      // Fallback query single column if OR query failed
+      const { data: userTrades } = await supabase
+        .from('trades')
+        .select('*')
+        .eq('userId', userId);
+
+      if (userTrades && userTrades.length > 0) {
+        rawTrades = userTrades;
+      } else {
+        const { data: snakeTrades } = await supabase
+          .from('trades')
+          .select('*')
+          .eq('user_id', userId);
+        if (snakeTrades) rawTrades = snakeTrades;
+      }
     }
 
-    const allUserTrades: RawTrade[] = rawTrades || [];
+    const allUserTrades: any[] = rawTrades || [];
 
-    // Filter today's trades safely in JS matching summaryDateStr (YYYY-MM-DD)
-    const trades = allUserTrades.filter((t: any) => {
-      const dateStr = t.close_date || t.open_date || t.date || t.created_at || '';
-      return String(dateStr).startsWith(summaryDateStr);
-    });
+    // Helper to get YYYY-MM-DD in the user's timezone from any trade date format
+    const getTradeDateStr = (t: any): string => {
+      const dStr = t.close_date || t.open_date || t.date || t.createdAt || t.created_at || '';
+      if (!dStr) return '';
+
+      // If already formatted like "Today, 14:30"
+      if (typeof dStr === 'string' && dStr.startsWith('Today')) {
+        return summaryDateStr;
+      }
+
+      // If MT5 format "2026.09.21 14:30"
+      const mt5Match = String(dStr).match(/^(\d{4})[./-](\d{2})[./-](\d{2})/);
+      if (mt5Match) {
+        return `${mt5Match[1]}-${mt5Match[2]}-${mt5Match[3]}`;
+      }
+
+      try {
+        const parsed = new Date(dStr);
+        if (!isNaN(parsed.getTime())) {
+          return new Intl.DateTimeFormat('en-CA', {
+            timeZone: timezone,
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+          }).format(parsed);
+        }
+      } catch {}
+
+      return String(dStr).substring(0, 10);
+    };
+
+    // Filter today's trades safely matching summaryDateStr (YYYY-MM-DD)
+    const trades = allUserTrades
+      .filter((t: any) => getTradeDateStr(t) === summaryDateStr)
+      .map((t: any) => ({
+        ...t,
+        symbol: t.symbol || 'UNKNOWN',
+        type: t.type || t.action || 'BUY',
+        pnl: Number(t.net_pnl ?? t.pnl ?? 0),
+        entry_price: t.entry_price ?? (t.entry ? parseFloat(t.entry) : null),
+        exit_price: t.exit_price ?? (t.exit ? parseFloat(t.exit) : null),
+        setup: t.setup || t.strategy || (Array.isArray(t.tags) ? t.tags[0] : t.tag) || 'Standard Execution',
+        emotions: t.emotions || [],
+        session: t.session || 'Else',
+      }));
 
     // 3. Deterministic calculation
     const stats = calculateDailyStats(trades);

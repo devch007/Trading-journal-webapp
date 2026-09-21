@@ -73,16 +73,53 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       year: 'numeric',
     });
 
-    // 3. Query Trades
-    const { data: userTrades } = await supabase
+    // 3. Query Trades (Supports both userId and user_id columns)
+    let rawUserTrades: any[] = [];
+    const { data: orTrades } = await supabase
       .from('trades')
       .select('*')
-      .eq('user_id', user.id);
+      .or(`user_id.eq.${user.id},userId.eq.${user.id}`);
 
-    const trades = (userTrades || []).filter((t: any) => {
-      const d = t.close_date || t.open_date || t.date || t.created_at || '';
-      return String(d).startsWith(todayStr);
-    });
+    if (orTrades && orTrades.length > 0) {
+      rawUserTrades = orTrades;
+    } else {
+      const { data: camelTrades } = await supabase
+        .from('trades')
+        .select('*')
+        .eq('userId', user.id);
+      
+      if (camelTrades && camelTrades.length > 0) {
+        rawUserTrades = camelTrades;
+      } else {
+        const { data: snakeTrades } = await supabase
+          .from('trades')
+          .select('*')
+          .eq('user_id', user.id);
+        if (snakeTrades) rawUserTrades = snakeTrades;
+      }
+    }
+
+    const getTradeDateStr = (t: any): string => {
+      const dStr = t.close_date || t.open_date || t.date || t.createdAt || t.created_at || '';
+      if (!dStr) return '';
+      if (typeof dStr === 'string' && dStr.startsWith('Today')) return todayStr;
+      const mt5Match = String(dStr).match(/^(\d{4})[./-](\d{2})[./-](\d{2})/);
+      if (mt5Match) return `${mt5Match[1]}-${mt5Match[2]}-${mt5Match[3]}`;
+      try {
+        const parsed = new Date(dStr);
+        if (!isNaN(parsed.getTime())) {
+          return new Intl.DateTimeFormat('en-CA', {
+            timeZone: timezone,
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+          }).format(parsed);
+        }
+      } catch {}
+      return String(dStr).substring(0, 10);
+    };
+
+    const trades = (rawUserTrades || []).filter((t: any) => getTradeDateStr(t) === todayStr);
 
     // 4. Calculate Stats & Identify Best / Review Trades
     let grossProfit = 0;
