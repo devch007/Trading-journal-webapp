@@ -148,7 +148,10 @@ function cleanAndParseJson(raw: string): any {
  * Attempt extraction with Groq Vision
  */
 async function extractWithGroq(base64Data: string, mimeType: string, apiKey: string): Promise<{ trades: ExtractedTrade[]; error?: string }> {
+  // Try available active vision models on Groq
   const models = [
+    "qwen-2.5-32b",
+    "meta-llama/llama-4-scout-17b-vision",
     "llama-3.2-11b-vision-preview",
     "llama-3.2-90b-vision-preview"
   ];
@@ -209,9 +212,10 @@ async function extractWithGroq(base64Data: string, mimeType: string, apiKey: str
  */
 async function extractWithGemini(base64Data: string, mimeType: string, apiKey: string): Promise<{ trades: ExtractedTrade[]; error?: string }> {
   const geminiModels = [
-    'gemini-2.5-flash',
+    'gemini-1.5-flash',
     'gemini-2.0-flash',
-    'gemini-1.5-flash'
+    'gemini-2.5-flash',
+    'gemini-1.5-pro'
   ];
   let lastErr = "";
 

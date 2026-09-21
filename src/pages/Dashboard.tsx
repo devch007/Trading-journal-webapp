@@ -1472,15 +1472,33 @@ export function Dashboard() {
               </div>
 
               {extractionError && (
-                <div 
-                  onClick={() => setIsAiConfigOpen(true)}
-                  className="flex items-center justify-between gap-1.5 text-xs text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 p-3 rounded-2xl border border-rose-200 dark:border-rose-900/50 font-normal cursor-pointer hover:bg-rose-100/60 dark:hover:bg-rose-900/30 transition-all"
-                >
-                  <div className="flex items-center gap-2">
+                <div className="flex items-center justify-between gap-1.5 text-xs text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 p-3 rounded-2xl border border-rose-200 dark:border-rose-900/50 font-normal">
+                  <div 
+                    onClick={() => setIsAiConfigOpen(true)}
+                    className="flex items-center gap-2 flex-1 cursor-pointer hover:underline"
+                  >
                     <AlertCircle className="w-4 h-4 shrink-0 text-rose-500" />
-                    <span>{extractionError}</span>
+                    <span className="leading-snug">{extractionError}</span>
                   </div>
-                  <span className="text-[11px] font-semibold underline shrink-0">Configure</span>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => setIsAiConfigOpen(true)}
+                      className="text-[11px] font-bold text-rose-600 dark:text-rose-300 hover:underline px-1.5 py-0.5 rounded bg-rose-100/50 dark:bg-rose-900/40 cursor-pointer"
+                    >
+                      Configure
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setExtractionError(null);
+                      }}
+                      className="p-1 hover:bg-rose-200/50 dark:hover:bg-rose-900/60 rounded-lg text-rose-400 hover:text-rose-600 dark:hover:text-rose-200 cursor-pointer"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
