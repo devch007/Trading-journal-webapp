@@ -5,6 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useAccountContext } from '../contexts/AccountContext';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
+import { useTrades } from '../hooks/useTrades';
 import {
   Palette, Globe, BarChart2, Bell, Shield, Download, Trash2,
   Check, ChevronRight, Monitor, Zap, BookOpen, DollarSign,
@@ -124,6 +125,7 @@ const DEFAULT_PREFS = {
 export function Settings() {
   const { user, logout } = useAuth();
   const { selectedAccount, accounts } = useAccountContext();
+  const { trades: allTrades } = useTrades();
   const navigate = useNavigate();
 
   const [prefs, setPrefs] = useState<Record<string, any>>(() => {
@@ -221,6 +223,45 @@ export function Settings() {
         throw new Error('Please sign in to send a test summary email.');
       }
 
+      // Filter today's trades on client as direct source of truth
+      const now = new Date();
+      const todayFormatted = new Intl.DateTimeFormat('en-CA', {
+        timeZone: emailSettings.timezone,
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+      }).format(now);
+
+      const clientTodayTrades = (allTrades || []).filter(t => {
+        const dStr = t.date || t.createdAt || '';
+        if (typeof dStr === 'string' && (dStr.startsWith('Today') || dStr.toLowerCase().includes('today'))) return true;
+        const mt5Match = String(dStr).match(/^(\d{4})[./-](\d{2})[./-](\d{2})/);
+        if (mt5Match) return `${mt5Match[1]}-${mt5Match[2]}-${mt5Match[3]}` === todayFormatted;
+        try {
+          const parsed = new Date(dStr);
+          if (!isNaN(parsed.getTime())) {
+            const tradeDateStr = new Intl.DateTimeFormat('en-CA', {
+              timeZone: emailSettings.timezone,
+              year: 'numeric',
+              month: '2-digit',
+              day: '2-digit',
+            }).format(parsed);
+            return tradeDateStr === todayFormatted;
+          }
+        } catch {}
+        return false;
+      }).map(t => ({
+        symbol: t.symbol,
+        type: t.action || 'BUY',
+        pnl: Number(t.pnl || 0),
+        entry_price: t.entry ? parseFloat(t.entry) : null,
+        exit_price: t.exit ? parseFloat(t.exit) : null,
+        setup: t.strategy || (Array.isArray(t.tags) ? t.tags[0] : t.tag) || 'Standard Execution',
+        emotions: t.emotions || [],
+        session: t.session || 'Else',
+        rules_followed: t.checklist ? t.checklist.every(c => c.checked) : true,
+      }));
+
       const response = await fetch('/api/email/daily-summary', {
         method: 'POST',
         headers: {
@@ -230,6 +271,7 @@ export function Settings() {
         body: JSON.stringify({
           timezone: emailSettings.timezone,
           isTest: true,
+          clientTrades: clientTodayTrades.length > 0 ? clientTodayTrades : undefined,
         }),
       });
 

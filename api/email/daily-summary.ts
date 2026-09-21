@@ -54,7 +54,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     const userName = user.user_metadata?.full_name || user.user_metadata?.name || userEmail.split('@')[0] || 'Trader';
-    const { timezone = 'Asia/Kolkata' } = req.body || {};
+    const { timezone = 'Asia/Kolkata', clientTrades } = req.body || {};
 
     // 2. Format Date
     let todayStr = new Date().toISOString().split('T')[0];
@@ -73,34 +73,38 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       year: 'numeric',
     });
 
-    // 3. Query Trades (Supports both userId and user_id columns safely without proof payload)
+    // 3. Query Trades (Supports client-provided trades for test preview + database query)
     let rawUserTrades: any[] = [];
-    
-    // Probe columns to avoid massive base64 proof payload
-    const { data: schemaProbe } = await supabase.from('trades').select('*').limit(1);
-    let selectCols = '*';
-    if (schemaProbe && schemaProbe.length > 0) {
-      selectCols = Object.keys(schemaProbe[0]).filter(c => c !== 'proof').join(', ');
-    }
 
-    const { data: userTradesCamel } = await supabase
-      .from('trades')
-      .select(selectCols)
-      .eq('userId', user.id);
-
-    if (userTradesCamel && userTradesCamel.length > 0) {
-      rawUserTrades = userTradesCamel;
+    if (Array.isArray(clientTrades) && clientTrades.length > 0) {
+      rawUserTrades = clientTrades;
     } else {
-      const { data: userTradesSnake } = await supabase
+      // Probe columns to avoid massive base64 proof payload
+      const { data: schemaProbe } = await supabase.from('trades').select('*').limit(1);
+      let selectCols = '*';
+      if (schemaProbe && schemaProbe.length > 0) {
+        selectCols = Object.keys(schemaProbe[0]).filter(c => c !== 'proof').join(', ');
+      }
+
+      const { data: userTradesCamel } = await supabase
         .from('trades')
         .select(selectCols)
-        .eq('user_id', user.id);
-      if (userTradesSnake) rawUserTrades = userTradesSnake;
+        .eq('userId', user.id);
+
+      if (userTradesCamel && userTradesCamel.length > 0) {
+        rawUserTrades = userTradesCamel;
+      } else {
+        const { data: userTradesSnake } = await supabase
+          .from('trades')
+          .select(selectCols)
+          .eq('user_id', user.id);
+        if (userTradesSnake) rawUserTrades = userTradesSnake;
+      }
     }
 
     const getTradeDateStr = (t: any): string => {
       const dStr = t.close_date || t.open_date || t.date || t.createdAt || t.created_at || '';
-      if (!dStr) return '';
+      if (!dStr) return todayStr; // If no date field, assume today's batch
       if (typeof dStr === 'string' && (dStr.startsWith('Today') || dStr.toLowerCase().includes('today'))) {
         return todayStr;
       }
@@ -120,7 +124,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return String(dStr).substring(0, 10);
     };
 
-    const trades = (rawUserTrades || []).filter((t: any) => getTradeDateStr(t) === todayStr);
+    // If client provided pre-filtered today trades, use them directly; otherwise filter by todayStr
+    const trades = (Array.isArray(clientTrades) && clientTrades.length > 0)
+      ? clientTrades
+      : (rawUserTrades || []).filter((t: any) => getTradeDateStr(t) === todayStr);
 
     // 4. Calculate Stats & Identify Best / Review Trades
     let grossProfit = 0;
