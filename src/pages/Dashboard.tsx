@@ -122,7 +122,7 @@ const TradeXChartTooltip = ({ active, payload }: any) => {
 };
 
 export function Dashboard() {
-  const { user } = useAuth();
+  const { user, userProfile } = useAuth();
   const navigate = useNavigate();
   const { trades: allTrades, loading, addTrade } = useTrades();
   const { selectedAccountId, selectedAccount, accounts, setSelectedAccountId } = useAccountContext();
