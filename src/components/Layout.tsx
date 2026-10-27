@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
+import { motion } from 'motion/react';
 import { Sidebar } from '../lib/Sidebar';
 import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
 
@@ -38,7 +39,15 @@ export function Layout() {
       
       <main className="flex-1 flex flex-col h-full overflow-hidden relative z-10 w-full max-w-full min-w-0">
         <div className="flex-1 overflow-y-auto overflow-x-hidden no-scrollbar pb-16 w-full max-w-full min-w-0">
-          <Outlet />
+          <motion.div
+            key={location.pathname}
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+            className="w-full h-full min-w-0"
+          >
+            <Outlet />
+          </motion.div>
         </div>
       </main>
     </div>
