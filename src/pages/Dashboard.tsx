@@ -41,7 +41,8 @@ import {
   Activity,
   Award,
   Flame,
-  TriangleAlert
+  TriangleAlert,
+  Clock
 } from "lucide-react";
 import { 
   AreaChart, 
@@ -1044,18 +1045,23 @@ export function Dashboard() {
                   </div>
                 </div>
 
-                {/* 5 Key Metric Cards (8 cols) */}
-                <div className="md:col-span-8 grid grid-cols-2 sm:grid-cols-3 gap-3 font-mono">
+                {/* 6 High-Class Metric Cards (8 cols) */}
+                <div className="md:col-span-8 grid grid-cols-2 sm:grid-cols-3 gap-3">
                   {/* Net P&L */}
-                  <div className="bg-gray-50/80 dark:bg-neutral-900/50 rounded-2xl p-3.5 border border-gray-100 dark:border-neutral-800/60 flex flex-col justify-between">
-                    <span className="text-[11px] text-gray-400 dark:text-gray-400 font-sans font-medium uppercase tracking-wider">
-                      Net P&amp;L
-                    </span>
-                    <div className={`text-lg sm:text-xl font-bold tracking-tight mt-1 ${
+                  <div className="bg-gradient-to-b from-gray-50/90 to-white/60 dark:from-neutral-900/70 dark:to-[#16181f]/70 rounded-2xl p-4 border border-gray-200/60 dark:border-neutral-800/80 shadow-2xs hover:shadow-xs transition-all duration-200 flex flex-col justify-between group">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] text-gray-400 font-medium uppercase tracking-wider">
+                        Net P&amp;L
+                      </span>
+                      <div className="w-7 h-7 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center transition-transform group-hover:scale-105">
+                        <TrendingUp className="w-3.5 h-3.5" />
+                      </div>
+                    </div>
+                    <div className={`text-xl sm:text-2xl font-bold tracking-tight mt-2 tabular-nums ${
                       stats.periodPnl > 0 
-                        ? 'text-emerald-600 dark:text-emerald-400' 
+                        ? 'text-emerald-500' 
                         : stats.periodPnl < 0 
-                          ? 'text-rose-600 dark:text-rose-400' 
+                          ? 'text-rose-500' 
                           : 'text-gray-900 dark:text-white'
                     }`}>
                       {stats.periodPnl >= 0 ? `+$${stats.periodPnl.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : `-$${Math.abs(stats.periodPnl).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
@@ -1063,25 +1069,35 @@ export function Dashboard() {
                   </div>
 
                   {/* Profit Factor */}
-                  <div className="bg-gray-50/80 dark:bg-neutral-900/50 rounded-2xl p-3.5 border border-gray-100 dark:border-neutral-800/60 flex flex-col justify-between">
-                    <span className="text-[11px] text-gray-400 dark:text-gray-400 font-sans font-medium uppercase tracking-wider">
-                      Profit Factor
-                    </span>
-                    <div className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white tracking-tight mt-1">
+                  <div className="bg-gradient-to-b from-gray-50/90 to-white/60 dark:from-neutral-900/70 dark:to-[#16181f]/70 rounded-2xl p-4 border border-gray-200/60 dark:border-neutral-800/80 shadow-2xs hover:shadow-xs transition-all duration-200 flex flex-col justify-between group">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] text-gray-400 font-medium uppercase tracking-wider">
+                        Profit Factor
+                      </span>
+                      <div className="w-7 h-7 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center transition-transform group-hover:scale-105">
+                        <Scale className="w-3.5 h-3.5" />
+                      </div>
+                    </div>
+                    <div className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white tracking-tight mt-2 tabular-nums">
                       {stats.periodProfitFactor.toFixed(2)}
                     </div>
                   </div>
 
                   {/* Avg R */}
-                  <div className="bg-gray-50/80 dark:bg-neutral-900/50 rounded-2xl p-3.5 border border-gray-100 dark:border-neutral-800/60 flex flex-col justify-between">
-                    <span className="text-[11px] text-gray-400 dark:text-gray-400 font-sans font-medium uppercase tracking-wider">
-                      Avg R
-                    </span>
-                    <div className={`text-lg sm:text-xl font-bold tracking-tight mt-1 ${
+                  <div className="bg-gradient-to-b from-gray-50/90 to-white/60 dark:from-neutral-900/70 dark:to-[#16181f]/70 rounded-2xl p-4 border border-gray-200/60 dark:border-neutral-800/80 shadow-2xs hover:shadow-xs transition-all duration-200 flex flex-col justify-between group">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] text-gray-400 font-medium uppercase tracking-wider">
+                        Avg Risk:Reward
+                      </span>
+                      <div className="w-7 h-7 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center transition-transform group-hover:scale-105">
+                        <Target className="w-3.5 h-3.5" />
+                      </div>
+                    </div>
+                    <div className={`text-xl sm:text-2xl font-bold tracking-tight mt-2 tabular-nums ${
                       stats.avgR > 0 
-                        ? 'text-emerald-600 dark:text-emerald-400' 
+                        ? 'text-emerald-500' 
                         : stats.avgR < 0 
-                          ? 'text-rose-600 dark:text-rose-400' 
+                          ? 'text-rose-500' 
                           : 'text-gray-900 dark:text-white'
                     }`}>
                       {stats.avgR >= 0 ? `+${stats.avgR.toFixed(1)}R` : `${stats.avgR.toFixed(1)}R`}
@@ -1089,33 +1105,48 @@ export function Dashboard() {
                   </div>
 
                   {/* Total Trades */}
-                  <div className="bg-gray-50/80 dark:bg-neutral-900/50 rounded-2xl p-3.5 border border-gray-100 dark:border-neutral-800/60 flex flex-col justify-between">
-                    <span className="text-[11px] text-gray-400 dark:text-gray-400 font-sans font-medium uppercase tracking-wider">
-                      Trades
-                    </span>
-                    <div className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white tracking-tight mt-1">
+                  <div className="bg-gradient-to-b from-gray-50/90 to-white/60 dark:from-neutral-900/70 dark:to-[#16181f]/70 rounded-2xl p-4 border border-gray-200/60 dark:border-neutral-800/80 shadow-2xs hover:shadow-xs transition-all duration-200 flex flex-col justify-between group">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] text-gray-400 font-medium uppercase tracking-wider">
+                        Executions
+                      </span>
+                      <div className="w-7 h-7 rounded-xl bg-purple-500/10 text-purple-500 flex items-center justify-center transition-transform group-hover:scale-105">
+                        <Layers className="w-3.5 h-3.5" />
+                      </div>
+                    </div>
+                    <div className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white tracking-tight mt-2 tabular-nums">
                       {stats.periodTradeCount}
                     </div>
                   </div>
 
                   {/* Win / Loss Split */}
-                  <div className="bg-gray-50/80 dark:bg-neutral-900/50 rounded-2xl p-3.5 border border-gray-100 dark:border-neutral-800/60 flex flex-col justify-between">
-                    <span className="text-[11px] text-gray-400 dark:text-gray-400 font-sans font-medium uppercase tracking-wider">
-                      W / L Ratio
-                    </span>
-                    <div className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white tracking-tight mt-1">
-                      <span className="text-emerald-600 dark:text-emerald-400">{stats.periodWinsCount}</span>
+                  <div className="bg-gradient-to-b from-gray-50/90 to-white/60 dark:from-neutral-900/70 dark:to-[#16181f]/70 rounded-2xl p-4 border border-gray-200/60 dark:border-neutral-800/80 shadow-2xs hover:shadow-xs transition-all duration-200 flex flex-col justify-between group">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] text-gray-400 font-medium uppercase tracking-wider">
+                        W / L Ratio
+                      </span>
+                      <div className="w-7 h-7 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center transition-transform group-hover:scale-105">
+                        <Award className="w-3.5 h-3.5" />
+                      </div>
+                    </div>
+                    <div className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white tracking-tight mt-2 tabular-nums">
+                      <span className="text-emerald-500">{stats.periodWinsCount}</span>
                       <span className="text-gray-400 font-normal mx-1">/</span>
-                      <span className="text-rose-600 dark:text-rose-400">{stats.periodLossesCount}</span>
+                      <span className="text-rose-500">{stats.periodLossesCount}</span>
                     </div>
                   </div>
 
                   {/* Best Symbol / Edge */}
-                  <div className="bg-gray-50/80 dark:bg-neutral-900/50 rounded-2xl p-3.5 border border-gray-100 dark:border-neutral-800/60 flex flex-col justify-between">
-                    <span className="text-[11px] text-gray-400 dark:text-gray-400 font-sans font-medium uppercase tracking-wider">
-                      Top Asset
-                    </span>
-                    <div className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white tracking-tight mt-1 truncate">
+                  <div className="bg-gradient-to-b from-gray-50/90 to-white/60 dark:from-neutral-900/70 dark:to-[#16181f]/70 rounded-2xl p-4 border border-gray-200/60 dark:border-neutral-800/80 shadow-2xs hover:shadow-xs transition-all duration-200 flex flex-col justify-between group">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] text-gray-400 font-medium uppercase tracking-wider">
+                        Prime Asset
+                      </span>
+                      <div className="w-7 h-7 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center transition-transform group-hover:scale-105">
+                        <Zap className="w-3.5 h-3.5" />
+                      </div>
+                    </div>
+                    <div className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white tracking-tight mt-2 truncate">
                       {stats.bestPair || '—'}
                     </div>
                   </div>
@@ -1379,24 +1410,26 @@ export function Dashboard() {
           <div className="lg:col-span-4 flex flex-col gap-6">
             
             {/* Card 1: My balance / Trading Capital */}
-            <div className="bg-white dark:bg-[#16181f] rounded-3xl p-6 border border-gray-200/80 dark:border-neutral-800/80 shadow-2xs space-y-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="p-2 rounded-xl bg-gray-50 dark:bg-neutral-800 text-gray-900 dark:text-white">
-                    <Wallet className="w-4 h-4" />
+            <div className="bg-gradient-to-b from-white via-white to-gray-50/50 dark:from-[#16181f] dark:via-[#16181f] dark:to-neutral-900/60 rounded-3xl p-6 border border-gray-200/80 dark:border-neutral-800/80 shadow-2xs hover:shadow-xs transition-all space-y-6 relative overflow-hidden group">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full blur-2xl pointer-events-none"></div>
+
+              <div className="flex items-center justify-between relative z-10">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-blue-500/10 text-blue-500 flex items-center justify-center shadow-xs">
+                    <Wallet className="w-5 h-5" />
                   </div>
                   <div className="flex flex-col">
-                    <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                    <span className="text-sm font-bold text-gray-900 dark:text-white">
                       Trading Capital & Balance
                     </span>
                     <div className="relative mt-0.5">
                       <select 
                         value={selectedAccountId || ''}
                         onChange={(e) => setSelectedAccountId(e.target.value)}
-                        className="appearance-none bg-transparent text-xs font-medium text-blue-600 dark:text-blue-400 pr-4 cursor-pointer outline-none focus:ring-0"
+                        className="appearance-none bg-transparent text-xs font-semibold text-blue-600 dark:text-blue-400 pr-4 cursor-pointer outline-none focus:ring-0"
                       >
                         {accounts.filter(acc => acc.status === 'ACTIVE').map(acc => (
-                          <option key={acc.id} value={acc.id} className="text-gray-900 dark:text-gray-900">
+                          <option key={acc.id} value={acc.id} className="text-gray-900 dark:text-gray-900 font-medium">
                             {acc.name}
                           </option>
                         ))}
@@ -1407,40 +1440,41 @@ export function Dashboard() {
                 </div>
                 <button 
                   onClick={() => navigate('/accounts')}
-                  className="w-7 h-7 rounded-full border border-gray-200 dark:border-neutral-700 flex items-center justify-center text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+                  className="w-8 h-8 rounded-xl border border-gray-200/80 dark:border-neutral-700/80 flex items-center justify-center text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-neutral-800 transition-all cursor-pointer shadow-2xs"
+                  title="View Accounts"
                 >
-                  <ArrowUpRight className="w-3.5 h-3.5" />
+                  <ArrowUpRight className="w-4 h-4" />
                 </button>
               </div>
 
               {/* Big Balance Amount -> 700 + tabular-nums */}
-              <div className="space-y-1">
+              <div className="space-y-1 relative z-10">
                 <div className="flex items-baseline justify-between">
-                  <h2 className="text-3xl font-bold tabular-nums text-gray-900 dark:text-white tracking-tight font-headline">
+                  <h2 className="text-3xl sm:text-4xl font-extrabold tabular-nums text-gray-900 dark:text-white tracking-tight font-headline">
                     ${Number(stats.balance).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </h2>
-                  <span className="text-xs font-medium text-gray-400 flex items-center gap-0.5">
-                    USD <ChevronDown className="w-3 h-3" />
+                  <span className="text-xs font-bold text-gray-400 flex items-center gap-0.5 bg-gray-100 dark:bg-neutral-800 px-2 py-0.5 rounded-lg">
+                    USD
                   </span>
                 </div>
 
                 {/* Sub metrics row */}
-                <div className="grid grid-cols-3 gap-2 pt-3 border-t border-gray-100 dark:border-neutral-800/80 text-left">
-                  <div>
-                    <p className="text-[10px] text-gray-400 font-medium">Net Profit</p>
-                    <p className={`text-xs font-bold tabular-nums ${stats.totalProfit >= 0 ? 'text-emerald-600' : 'text-rose-500'}`}>
+                <div className="grid grid-cols-3 gap-2 pt-4 border-t border-gray-100 dark:border-neutral-800/80 text-left">
+                  <div className="space-y-0.5">
+                    <p className="text-[10px] text-gray-400 font-medium uppercase tracking-wider">Net Profit</p>
+                    <p className={`text-xs sm:text-sm font-bold tabular-nums ${stats.totalProfit >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
                       {stats.totalProfit >= 0 ? `+$${stats.totalProfit.toLocaleString()}` : `-$${Math.abs(stats.totalProfit).toLocaleString()}`}
                     </p>
                   </div>
-                  <div>
-                    <p className="text-[10px] text-gray-400 font-medium">Win Rate</p>
-                    <p className="text-xs font-bold tabular-nums text-gray-900 dark:text-white">
+                  <div className="space-y-0.5">
+                    <p className="text-[10px] text-gray-400 font-medium uppercase tracking-wider">Win Rate</p>
+                    <p className="text-xs sm:text-sm font-bold tabular-nums text-gray-900 dark:text-white">
                       {stats.winRate.toFixed(1)}%
                     </p>
                   </div>
-                  <div>
-                    <p className="text-[10px] text-gray-400 font-medium">Profit Factor</p>
-                    <p className="text-xs font-bold tabular-nums text-gray-900 dark:text-white truncate">
+                  <div className="space-y-0.5">
+                    <p className="text-[10px] text-gray-400 font-medium uppercase tracking-wider">Factor</p>
+                    <p className="text-xs sm:text-sm font-bold tabular-nums text-gray-900 dark:text-white truncate">
                       {stats.profitFactor.toFixed(2)}
                     </p>
                   </div>
@@ -1583,11 +1617,16 @@ export function Dashboard() {
             {/* Card 3: Buy vs Sell Order Bias Circle Card */}
             <div className="bg-white dark:bg-[#16181f] rounded-3xl p-6 border border-gray-200/80 dark:border-neutral-800/80 shadow-2xs space-y-4">
               <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-                    Order Direction & Bias
-                  </h3>
-                  <p className="text-[11px] text-gray-400">Buy vs Sell Execution Ratio</p>
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center">
+                    <Activity className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-gray-900 dark:text-white">
+                      Order Bias
+                    </h3>
+                    <p className="text-[11px] text-gray-400">Long vs Short Distribution</p>
+                  </div>
                 </div>
                 <span className={`px-2.5 py-1 rounded-full text-[11px] font-bold ${orderBiasStats.biasColor}`}>
                   {orderBiasStats.biasLabel}
@@ -1684,11 +1723,16 @@ export function Dashboard() {
             {/* Card 4: Session Performance Breakdown Card (Asian, London, NY, Out of Session) */}
             <div className="bg-white dark:bg-[#16181f] rounded-3xl p-6 border border-gray-200/80 dark:border-neutral-800/80 shadow-2xs space-y-4">
               <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-                    Trading Session Analysis
-                  </h3>
-                  <p className="text-[11px] text-gray-400">Asian • London • NY • Out of Session</p>
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-purple-500/10 text-purple-500 flex items-center justify-center">
+                    <Clock className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-gray-900 dark:text-white">
+                      Session Performance
+                    </h3>
+                    <p className="text-[11px] text-gray-400">Asian • London • NY Windows</p>
+                  </div>
                 </div>
                 {sessionStats.bestSession ? (
                   <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/40">
