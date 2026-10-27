@@ -551,39 +551,19 @@ export function Journal() {
                         </div>
                       </div>
 
-                      {/* Card Content Footer */}
-                      <div className="p-4 flex flex-col justify-between flex-1 gap-3">
-                        <div>
-                          <div className="flex items-center justify-between text-xs text-gray-400 mb-1">
-                            <span>{formatDate(trade)}</span>
-                            <span>{trade.strategy || "Manual Scalp"}</span>
-                          </div>
-                          <p className="text-xs text-gray-700 dark:text-gray-300 font-medium line-clamp-2">
-                            {trade.notes || "No notes written yet. Click to inspect & write reflections."}
-                          </p>
-                        </div>
-
-                        <div className="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-neutral-800 text-xs">
-                          {trade.rating ? (
-                            <div className="flex items-center gap-1 text-amber-500 font-bold text-[11px]">
-                              <Star className="w-3 h-3 fill-amber-500" />
-                              <span>{trade.rating}/10 Quality</span>
-                            </div>
-                          ) : (
-                            <span className="text-[11px] text-gray-400">Not scored</span>
+                      {/* Card Content Footer - Minimal & Clean */}
+                      <div className="p-3.5 flex flex-col justify-between flex-1 gap-2">
+                        <div className="flex items-center justify-between text-[11px] text-gray-400">
+                          <span>{formatDate(trade)}</span>
+                          {trade.strategy && (
+                            <span className="font-semibold text-gray-500 dark:text-gray-400">{trade.strategy}</span>
                           )}
-
-                          <button
-                            onClick={() => {
-                              setSelectedId(trade.id);
-                              setActiveView("journal");
-                            }}
-                            className="text-blue-600 dark:text-blue-400 hover:underline font-semibold text-[11px] flex items-center gap-1 cursor-pointer"
-                          >
-                            <span>Inspect</span>
-                            <ArrowRight className="w-3 h-3" />
-                          </button>
                         </div>
+                        {trade.notes ? (
+                          <p className="text-xs text-gray-700 dark:text-gray-300 font-medium line-clamp-2">
+                            {trade.notes}
+                          </p>
+                        ) : null}
                       </div>
                     </motion.div>
                   );
