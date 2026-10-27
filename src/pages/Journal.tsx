@@ -31,7 +31,9 @@ import {
   CheckCircle2,
   Percent,
   Clock,
-  ArrowRight
+  ArrowRight,
+  LayoutGrid,
+  List
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { 
@@ -62,6 +64,7 @@ export function Journal() {
   
   // Gallery / Journal state
   const [activeTab, setActiveTab] = useState<"All" | "WithScreenshots" | "Journaled">("All");
+  const [galleryDisplayMode, setGalleryDisplayMode] = useState<"grid" | "list">("grid");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [proofCache, setProofCache] = useState<Record<string, string>>({});
@@ -437,7 +440,7 @@ export function Journal() {
         {activeView === "gallery" && (
           <div className="space-y-6">
             
-            {/* Filter Sub-bar */}
+            {/* Filter Sub-bar & Grid/List View Toggle */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div className="flex items-center gap-2">
                 {(["All", "WithScreenshots", "Journaled"] as const).map(tab => (
@@ -456,27 +459,171 @@ export function Journal() {
                 ))}
               </div>
 
-              {/* Search */}
-              <div className="relative w-full sm:w-64">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
-                <input
-                  type="text"
-                  placeholder="Search symbol, notes..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full bg-white dark:bg-[#16181f] border border-gray-200/80 dark:border-neutral-800 rounded-2xl pl-9 pr-3 py-1.5 text-xs text-gray-900 dark:text-white placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                />
+              <div className="flex items-center gap-2.5">
+                {/* Search */}
+                <div className="relative w-full sm:w-64">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
+                  <input
+                    type="text"
+                    placeholder="Search symbol, notes..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full bg-white dark:bg-[#16181f] border border-gray-200/80 dark:border-neutral-800 rounded-2xl pl-9 pr-3 py-1.5 text-xs text-gray-900 dark:text-white placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  />
+                </div>
+
+                {/* Display Mode Toggle (Grid vs List) */}
+                <div className="flex items-center p-1 bg-gray-100/80 dark:bg-neutral-900/80 rounded-xl border border-gray-200/60 dark:border-neutral-800 shrink-0">
+                  <button
+                    onClick={() => setGalleryDisplayMode("grid")}
+                    className={cn(
+                      "p-1.5 rounded-lg transition-all cursor-pointer",
+                      galleryDisplayMode === "grid"
+                        ? "bg-white dark:bg-[#1f222e] text-blue-600 dark:text-blue-400 shadow-2xs"
+                        : "text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+                    )}
+                    title="Grid view"
+                  >
+                    <LayoutGrid className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    onClick={() => setGalleryDisplayMode("list")}
+                    className={cn(
+                      "p-1.5 rounded-lg transition-all cursor-pointer",
+                      galleryDisplayMode === "list"
+                        ? "bg-white dark:bg-[#1f222e] text-blue-600 dark:text-blue-400 shadow-2xs"
+                        : "text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+                    )}
+                    title="List view"
+                  >
+                    <List className="w-3.5 h-3.5" />
+                  </button>
+                </div>
               </div>
             </div>
 
-            {/* Gallery Grid */}
+            {/* Gallery Content (Grid or List Mode) */}
             {entries.length === 0 ? (
               <div className="py-20 text-center flex flex-col items-center justify-center p-8 bg-white dark:bg-[#16181f] rounded-3xl border border-dashed border-gray-200 dark:border-neutral-800">
                 <ImageIcon className="w-12 h-12 text-gray-300 dark:text-gray-600 mb-3" />
                 <h4 className="text-sm font-bold text-gray-900 dark:text-white mb-1">No trades match this filter</h4>
                 <p className="text-xs text-gray-400 max-w-sm">Attach chart screenshots to your trades to build a visual playbook of your setups and execution.</p>
               </div>
+            ) : galleryDisplayMode === "list" ? (
+              /* Sleek, Premium List Mode with Chart Thumbnail, P&L badge, tags, and quick review */
+              <div className="bg-white dark:bg-[#16181f] rounded-3xl border border-gray-200/80 dark:border-neutral-800/80 shadow-2xs overflow-hidden divide-y divide-gray-100/80 dark:divide-neutral-800/60">
+                {entries.map((trade) => {
+                  const proofImg = proofCache[trade.id] || trade.proof;
+                  const pnlNum = Number(trade.pnl) || 0;
+                  const isPos = pnlNum >= 0;
+                  const isBuy = (trade.action || 'BUY').toUpperCase() === 'BUY';
+
+                  return (
+                    <div
+                      key={trade.id}
+                      className="p-3.5 sm:p-4 hover:bg-gray-50/70 dark:hover:bg-neutral-800/30 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3 group cursor-pointer"
+                      onClick={() => {
+                        setSelectedId(trade.id);
+                        if (proofImg) setExpandedImage(proofImg);
+                        else setActiveView("journal");
+                      }}
+                    >
+                      {/* Left: Thumbnail + Symbol + Direction + Strategy */}
+                      <div className="flex items-center gap-3.5 min-w-0">
+                        {/* Thumbnail / Upload placeholder */}
+                        <div 
+                          className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gray-100 dark:bg-neutral-900/80 border border-gray-200/60 dark:border-neutral-800 overflow-hidden shrink-0 relative flex items-center justify-center group/thumb"
+                          onClick={(e) => {
+                            if (proofImg) {
+                              e.stopPropagation();
+                              setExpandedImage(proofImg);
+                            }
+                          }}
+                        >
+                          {proofImg ? (
+                            <>
+                              <img 
+                                src={proofImg} 
+                                alt={`${trade.symbol} chart thumbnail`} 
+                                className="w-full h-full object-cover group-hover/thumb:scale-110 transition-transform duration-200"
+                              />
+                              <div className="absolute inset-0 bg-black/30 opacity-0 group-hover/thumb:opacity-100 transition-opacity flex items-center justify-center text-white">
+                                <Maximize2 className="w-3.5 h-3.5" />
+                              </div>
+                            </>
+                          ) : (
+                            <UploadCloud className="w-5 h-5 text-gray-300 dark:text-gray-600" />
+                          )}
+                        </div>
+
+                        {/* Trade Metadata */}
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap mb-1">
+                            <span className="text-sm font-bold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                              {trade.symbol}
+                            </span>
+                            <span className={cn(
+                              "px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider",
+                              isBuy ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20" : "bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20"
+                            )}>
+                              {trade.action || "BUY"}
+                            </span>
+                            {trade.strategy && (
+                              <span className="px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 text-[10px] font-semibold border border-blue-200/40 dark:border-blue-800/30 truncate max-w-[140px]">
+                                {trade.strategy}
+                              </span>
+                            )}
+                            {trade.rating ? (
+                              <span className="flex items-center gap-0.5 text-[10px] font-bold text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded-md">
+                                <Star className="w-2.5 h-2.5 fill-amber-500" />
+                                <span>{trade.rating}/10</span>
+                              </span>
+                            ) : null}
+                          </div>
+
+                          <div className="flex items-center gap-3 text-xs text-gray-400">
+                            <span className="tabular-nums font-medium">{formatDate(trade)}</span>
+                            {trade.size && <span className="font-mono text-[11px] text-gray-500 dark:text-gray-400">{trade.size}</span>}
+                            {trade.session && <span>• {trade.session}</span>}
+                            {trade.notes && (
+                              <span className="hidden md:inline-block text-gray-500 dark:text-gray-400 truncate max-w-sm font-medium">
+                                • {trade.notes}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Right: P&L Badge + Review CTA */}
+                      <div className="flex items-center justify-between sm:justify-end gap-4 shrink-0 pl-16 sm:pl-0">
+                        <div className="text-left sm:text-right">
+                          <span className={cn(
+                            "text-sm sm:text-base font-extrabold tabular-nums tracking-tight font-headline block",
+                            isPos ? "text-emerald-600 dark:text-emerald-400" : "text-rose-500"
+                          )}>
+                            {pnlNum > 0 ? `+$${pnlNum.toFixed(2)}` : pnlNum < 0 ? `-$${Math.abs(pnlNum).toFixed(2)}` : '$0.00'}
+                          </span>
+                          <span className="text-[10px] text-gray-400 font-medium">Net Realized</span>
+                        </div>
+
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedId(trade.id);
+                            setActiveView("journal");
+                          }}
+                          className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-gray-100 hover:bg-blue-600 hover:text-white dark:bg-neutral-800 dark:hover:bg-blue-600 text-gray-700 dark:text-gray-200 transition-colors flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                        >
+                          <span>Deep Dive</span>
+                          <ChevronRight className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             ) : (
+              /* Grid Mode */
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
                 {entries.map((trade) => {
                   const proofImg = proofCache[trade.id] || trade.proof;
@@ -645,42 +792,98 @@ export function Journal() {
             </div>
 
             {/* Week's Executed Trades List */}
-            <div className="bg-white dark:bg-[#16181f] rounded-3xl border border-gray-200/80 dark:border-neutral-800/80 shadow-2xs p-6 space-y-4">
-              <h3 className="text-base font-bold text-gray-900 dark:text-white">Week's Closed Positions</h3>
+            <div className="bg-white dark:bg-[#16181f] rounded-3xl border border-gray-200/80 dark:border-neutral-800/80 shadow-2xs p-5 sm:p-6 space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-base font-bold text-gray-900 dark:text-white">Week's Closed Positions</h3>
+                  <p className="text-xs text-gray-400">All executions finalized during this 7-day period</p>
+                </div>
+                <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-gray-100 dark:bg-neutral-800 text-gray-600 dark:text-gray-300">
+                  {weeklyData.trades.length} {weeklyData.trades.length === 1 ? 'Trade' : 'Trades'}
+                </span>
+              </div>
+
               {weeklyData.trades.length === 0 ? (
-                <p className="text-xs text-gray-400 py-6 text-center">No trades logged for this specific week.</p>
+                <div className="py-12 text-center flex flex-col items-center justify-center p-6 bg-gray-50/50 dark:bg-neutral-900/30 rounded-2xl border border-dashed border-gray-200 dark:border-neutral-800">
+                  <Clock className="w-8 h-8 text-gray-300 dark:text-gray-600 mb-2" />
+                  <p className="text-xs text-gray-400">No trades logged for this specific week.</p>
+                </div>
               ) : (
-                <div className="divide-y divide-gray-100 dark:divide-neutral-800">
-                  {weeklyData.trades.map(t => (
-                    <div key={t.id} className="py-3 flex items-center justify-between text-xs">
-                      <div className="flex items-center gap-3">
-                        <span className={cn(
-                          "w-2 h-2 rounded-full",
-                          (Number(t.pnl) || 0) >= 0 ? "bg-emerald-500" : "bg-rose-500"
-                        )} />
-                        <span className="font-bold text-gray-900 dark:text-white">{t.symbol}</span>
-                        <span className="text-gray-400">{formatDate(t)}</span>
-                        <span className="text-gray-400 px-2 py-0.5 rounded bg-gray-100 dark:bg-neutral-800 text-[10px] uppercase font-bold">{t.action}</span>
+                <div className="space-y-2">
+                  {weeklyData.trades.map(t => {
+                    const pnlNum = Number(t.pnl) || 0;
+                    const isPos = pnlNum >= 0;
+                    const isBuy = (t.action || 'BUY').toUpperCase() === 'BUY';
+                    const hasProof = Boolean(t.proof || proofCache[t.id]);
+
+                    return (
+                      <div 
+                        key={t.id} 
+                        className="p-3.5 sm:p-4 rounded-2xl bg-gray-50/60 dark:bg-neutral-900/40 hover:bg-white dark:hover:bg-[#1c1e28] border border-gray-200/60 dark:border-neutral-800/60 hover:border-gray-300 dark:hover:border-neutral-700 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 group cursor-pointer shadow-2xs"
+                        onClick={() => {
+                          setSelectedId(t.id);
+                          setActiveView("journal");
+                        }}
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <span className={cn(
+                            "w-8 h-8 rounded-xl flex items-center justify-center text-[10px] font-black uppercase tracking-wider shrink-0",
+                            isBuy 
+                              ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20" 
+                              : "bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20"
+                          )}>
+                            {t.action || 'BUY'}
+                          </span>
+
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="font-bold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors text-sm">
+                                {t.symbol}
+                              </span>
+                              <span className="text-[11px] text-gray-400 tabular-nums font-medium">
+                                {formatDate(t)}
+                              </span>
+                              {t.strategy && (
+                                <span className="px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 text-[10px] font-semibold">
+                                  {t.strategy}
+                                </span>
+                              )}
+                              {hasProof && (
+                                <span className="inline-flex items-center gap-1 text-[10px] text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-1.5 py-0.5 rounded font-medium">
+                                  <ImageIcon className="w-2.5 h-2.5" /> Proof
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-3 text-[11px] text-gray-400 mt-0.5">
+                              {t.size && <span className="font-mono">{t.size}</span>}
+                              {t.entry && <span>Entry: {t.entry}</span>}
+                              {t.exit && <span>Exit: {t.exit}</span>}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0 pl-11 sm:pl-0">
+                          <span className={cn(
+                            "text-sm font-extrabold tabular-nums tracking-tight font-headline",
+                            isPos ? "text-emerald-600 dark:text-emerald-400" : "text-rose-500"
+                          )}>
+                            {pnlNum > 0 ? `+$${pnlNum.toFixed(2)}` : pnlNum < 0 ? `-$${Math.abs(pnlNum).toFixed(2)}` : '$0.00'}
+                          </span>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedId(t.id);
+                              setActiveView("journal");
+                            }}
+                            className="px-2.5 py-1 rounded-xl text-xs font-semibold text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/50 transition-colors flex items-center gap-1"
+                          >
+                            <span>Inspect</span>
+                            <ArrowRight className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-4">
-                        <span className={cn(
-                          "font-bold tabular-nums",
-                          (Number(t.pnl) || 0) >= 0 ? "text-emerald-500" : "text-rose-500"
-                        )}>
-                          {(Number(t.pnl) || 0) >= 0 ? `+$${Number(t.pnl).toFixed(2)}` : `-$${Math.abs(Number(t.pnl)).toFixed(2)}`}
-                        </span>
-                        <button
-                          onClick={() => {
-                            setSelectedId(t.id);
-                            setActiveView("journal");
-                          }}
-                          className="text-blue-500 hover:underline font-semibold"
-                        >
-                          Review
-                        </button>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -833,18 +1036,22 @@ export function Journal() {
                       <motion.div 
                         key={entry.id} 
                         onClick={() => setSelectedId(entry.id)}
+                        whileHover={{ x: 2 }}
+                        transition={{ duration: 0.15 }}
                         className={cn(
-                          "p-4 rounded-3xl border transition-all duration-200 cursor-pointer shadow-2xs group relative",
+                          "p-3.5 sm:p-4 rounded-2xl border transition-all duration-200 cursor-pointer shadow-2xs group relative",
                           isSelected 
-                            ? "bg-white dark:bg-[#16181f] border-blue-500 shadow-md ring-1 ring-blue-500/20" 
+                            ? "bg-blue-50/70 dark:bg-blue-950/30 border-blue-500 shadow-sm ring-1 ring-blue-500/20" 
                             : "bg-white dark:bg-[#16181f] border-gray-200/80 dark:border-neutral-800/80 hover:border-gray-300 dark:hover:border-neutral-700"
                         )}
                       >
-                        <div className="flex justify-between items-start mb-2">
+                        <div className="flex justify-between items-start mb-2.5">
                           <div className="flex items-center gap-2.5">
                             <div className={cn(
-                              "w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold text-white shadow-2xs",
-                              isBuy ? "bg-emerald-500" : "bg-rose-500"
+                              "w-8 h-8 rounded-xl flex items-center justify-center text-[10px] font-black uppercase tracking-wider shrink-0",
+                              isBuy 
+                                ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20" 
+                                : "bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20"
                             )}>
                               {isBuy ? "BUY" : "SELL"}
                             </div>
@@ -858,13 +1065,13 @@ export function Journal() {
 
                           <div className="text-right">
                             <span className={cn(
-                              "text-xs font-black tabular-nums tracking-tight",
+                              "text-xs font-black tabular-nums tracking-tight font-headline block",
                               isPos ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-500'
                             )}>
                               {pnlNum > 0 ? `+$${pnlNum.toFixed(2)}` : pnlNum < 0 ? `-$${Math.abs(pnlNum).toFixed(2)}` : '$0.00'}
                             </span>
                             {entry.rating ? (
-                              <div className="flex items-center justify-end gap-0.5 text-[10px] font-bold text-amber-500">
+                              <div className="flex items-center justify-end gap-0.5 text-[10px] font-bold text-amber-500 mt-0.5">
                                 <Star className="w-2.5 h-2.5 fill-amber-500" />
                                 <span>{entry.rating}/10</span>
                               </div>
@@ -872,18 +1079,12 @@ export function Journal() {
                           </div>
                         </div>
                         
-                        <div className="flex items-center gap-2 pt-1 border-t border-gray-100/80 dark:border-neutral-800/60">
-                          <span className={cn(
-                            "px-2 py-0.5 rounded-md text-[9px] font-bold uppercase",
-                            isBuy ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40" : "bg-rose-50 text-rose-600 dark:bg-rose-950/40"
-                          )}>
-                            {isBuy ? 'LONG' : 'SHORT'}
-                          </span>
-                          <span className="text-[10px] text-gray-400 font-medium truncate max-w-[120px]">
-                            {entry.strategy || entry.tag || "Scalp"}
+                        <div className="flex items-center gap-2 pt-2 border-t border-gray-100 dark:border-neutral-800/60 text-[10px]">
+                          <span className="text-gray-400 font-medium truncate max-w-[120px]">
+                            {entry.strategy || entry.tag || "Manual Execution"}
                           </span>
                           {(entry.proof || proofCache[entry.id]) && (
-                            <span className="text-[10px] text-emerald-500 bg-emerald-50 dark:bg-emerald-950/40 px-1.5 py-0.2 rounded font-medium ml-auto flex items-center gap-1">
+                            <span className="text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-1.5 py-0.5 rounded font-semibold ml-auto flex items-center gap-1">
                               <ImageIcon className="w-3 h-3" /> Proof
                             </span>
                           )}
