@@ -33,46 +33,48 @@ export interface Trade {
   sentiment?: 'positive' | 'negative' | 'neutral';
 }
 
+const TRADES_CACHE_KEY = 'tradex_trades_cache_';
+const TRADES_SELECT_COLUMNS = 'id, userId, accountId, date, symbol, action, size, result, isPositive, pnl, createdAt, entry, exit, duration, session, confidence, tag, commission, strategy, notes, emotions, tags, rating, checklist, tradeType, sentiment';
+
 export function useTrades() {
-  const [trades, setTrades] = useState<Trade[]>([]);
-  const [loading, setLoading] = useState(true);
   const { user } = useAuth();
 
-  const fetchTrades = useCallback(async () => {
+  // Instant retrieval from cache
+  const [trades, setTrades] = useState<Trade[]>(() => {
+    if (typeof window !== 'undefined' && user?.id) {
+      try {
+        const cached = localStorage.getItem(`${TRADES_CACHE_KEY}${user.id}`);
+        if (cached) return JSON.parse(cached);
+      } catch (e) {}
+    }
+    return [];
+  });
+
+  const [loading, setLoading] = useState(() => trades.length === 0);
+
+  const fetchTrades = useCallback(async (isInitial = false) => {
     if (!user) return;
     
-    // Probe the schema safely to get real columns without hardcoding, to avoid schema mismatch errors
-    const { data: schemaProbe } = await supabase
-      .from('trades')
-      .select('*')
-      .limit(1);
-
-    let columnsToSelect = '*';
-    if (schemaProbe && schemaProbe.length > 0) {
-      const realCols = Object.keys(schemaProbe[0]);
-      // Ensure specific journaling fields are included even if they are null in the first row
-      const requiredFields = ['rating', 'notes', 'emotions', 'tags', 'checklist', 'tradeType', 'sentiment', 'strategy'];
-      requiredFields.forEach(field => {
-        if (!realCols.includes(field)) {
-          realCols.push(field);
-        }
-      });
-      columnsToSelect = realCols.filter(col => col !== 'proof').join(', ');
+    if (isInitial && trades.length === 0) {
+      setLoading(true);
     }
 
     const { data, error } = await supabase
       .from('trades')
-      .select(columnsToSelect)
+      .select(TRADES_SELECT_COLUMNS)
       .eq('userId', user.id)
       .order('createdAt', { ascending: false });
 
     if (error) {
       console.error('Error fetching trades:', error);
-    } else {
+    } else if (data) {
       setTrades(data as unknown as Trade[]);
+      try {
+        localStorage.setItem(`${TRADES_CACHE_KEY}${user.id}`, JSON.stringify(data));
+      } catch (e) {}
     }
     setLoading(false);
-  }, [user]);
+  }, [user, trades.length]);
 
   const fetchTradeProof = useCallback(async (tradeId: string) => {
     if (!user) return null;
@@ -96,7 +98,16 @@ export function useTrades() {
       return;
     }
 
-    fetchTrades();
+    // Read cache if user changed
+    try {
+      const cached = localStorage.getItem(`${TRADES_CACHE_KEY}${user.id}`);
+      if (cached) {
+        setTrades(JSON.parse(cached));
+        setLoading(false);
+      }
+    } catch (e) {}
+
+    fetchTrades(true);
 
     // Subscribe to changes (wrapped in try-catch to prevent fatal React crashes during WS disconnects)
     let channel: any = null;

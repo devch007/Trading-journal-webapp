@@ -30,27 +30,52 @@ export interface Account {
   dateClosed?: string;
 }
 
-export function useAccounts() {
-  const [accounts, setAccounts] = useState<Account[]>([]);
-  const [loading, setLoading] = useState(true);
-  const { user } = useAuth();
+const ACCOUNTS_CACHE_KEY = 'tradex_accounts_cache_';
 
-  const fetchAccounts = useCallback(async () => {
+export function useAccounts() {
+  const { user } = useAuth();
+  
+  // Instant retrieval from localStorage cache if available
+  const [accounts, setAccounts] = useState<Account[]>(() => {
+    if (typeof window !== 'undefined' && user?.id) {
+      try {
+        const cached = localStorage.getItem(`${ACCOUNTS_CACHE_KEY}${user.id}`);
+        if (cached) return JSON.parse(cached);
+      } catch (e) {
+        // ignore parse error
+      }
+    }
+    return [];
+  });
+  
+  const [loading, setLoading] = useState(() => accounts.length === 0);
+
+  const fetchAccounts = useCallback(async (isInitial = false) => {
     if (!user) return;
+    
+    // Only show loading spinner if we don't already have cached accounts
+    if (isInitial && accounts.length === 0) {
+      setLoading(true);
+    }
     
     const { data, error } = await supabase
       .from('accounts')
-      .select('*')
+      .select('id, userId, name, firm, type, badge, initialCapital, currentEquity, status, maxDrawdown, dailyDrawdown, commissionForex, commissionMetals, rules, createdAt, dateClosed')
       .eq('userId', user.id)
       .order('createdAt', { ascending: false });
 
     if (error) {
       console.error('Error fetching accounts:', error);
-    } else {
+    } else if (data) {
       setAccounts(data as Account[]);
+      try {
+        localStorage.setItem(`${ACCOUNTS_CACHE_KEY}${user.id}`, JSON.stringify(data));
+      } catch (e) {
+        // storage quota exceeded or disabled
+      }
     }
     setLoading(false);
-  }, [user]);
+  }, [user, accounts.length]);
 
   useEffect(() => {
     if (!user) {
@@ -59,7 +84,16 @@ export function useAccounts() {
       return;
     }
 
-    fetchAccounts();
+    // Try reading user cache if user changed
+    try {
+      const cached = localStorage.getItem(`${ACCOUNTS_CACHE_KEY}${user.id}`);
+      if (cached) {
+        setAccounts(JSON.parse(cached));
+        setLoading(false);
+      }
+    } catch (e) {}
+
+    fetchAccounts(true);
 
     // Subscribe to changes (wrapped in try-catch to prevent fatal React crashes during WS disconnects)
     let channel: any = null;
