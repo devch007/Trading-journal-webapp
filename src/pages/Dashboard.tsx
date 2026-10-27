@@ -917,6 +917,46 @@ export function Dashboard() {
           )}
         </AnimatePresence>
 
+        {/* Modern Welcome & Command Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-1 border-b border-gray-100/80 dark:border-neutral-800/80">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2.5">
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight font-headline">
+                Welcome back, {userProfile?.email ? userProfile.email.split('@')[0] : 'Trader'}
+              </h1>
+              <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                LIVE DISCIPLINE
+              </span>
+            </div>
+            <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">
+              Review your risk parameters, trade executions, and playbook performance.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2.5">
+            <button
+              onClick={() => setIsTradeModalOpen(true)}
+              className="btn-primary px-4 py-2 text-xs font-semibold rounded-2xl flex items-center gap-2 shadow-xs group"
+            >
+              <Plus className="w-4 h-4 group-hover:rotate-90 transition-transform duration-200" />
+              <span>Log Trade (N)</span>
+            </button>
+            <button
+              onClick={handleImportClick}
+              disabled={isExtracting}
+              className="btn-secondary px-3.5 py-2 text-xs font-semibold rounded-2xl flex items-center gap-2 border border-gray-200/80 dark:border-neutral-700 shadow-2xs group"
+            >
+              {isExtracting ? (
+                <Loader2 className="w-4 h-4 animate-spin text-blue-500" />
+              ) : (
+                <Upload className="w-4 h-4 text-gray-400 group-hover:text-blue-500 transition-colors" />
+              )}
+              <span>Import OCR</span>
+            </button>
+          </div>
+        </div>
+
         {/* 2-Column Responsive Grid Layout (~68% Left / ~32% Right) */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-7">
           
