@@ -521,16 +521,16 @@ export function Trades() {
           <div className="md:hidden flex flex-col gap-3">
             {loading ? (
               Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="p-4 rounded-2xl bg-gray-50/70 dark:bg-neutral-800/40 border border-gray-100 dark:border-neutral-800 space-y-3 animate-pulse">
+                <div key={i} className="p-4 rounded-3xl bg-gray-50/70 dark:bg-neutral-900/40 border border-gray-100 dark:border-neutral-800 space-y-3 animate-pulse">
                   <div className="flex justify-between items-center">
-                    <div className="w-24 h-5 rounded bg-gray-200 dark:bg-neutral-700" />
-                    <div className="w-16 h-5 rounded bg-gray-200 dark:bg-neutral-700" />
+                    <div className="w-24 h-5 rounded-xl bg-gray-200 dark:bg-neutral-800" />
+                    <div className="w-16 h-5 rounded-xl bg-gray-200 dark:bg-neutral-800" />
                   </div>
-                  <div className="w-full h-10 rounded bg-gray-200 dark:bg-neutral-700" />
+                  <div className="w-full h-10 rounded-xl bg-gray-200 dark:bg-neutral-800" />
                 </div>
               ))
             ) : (trades || []).length === 0 ? (
-              <div className="py-10 text-center flex flex-col items-center justify-center p-6 bg-gray-50/50 dark:bg-neutral-900/30 rounded-2xl border border-dashed border-gray-200 dark:border-neutral-800">
+              <div className="py-12 text-center flex flex-col items-center justify-center p-6 bg-gray-50/50 dark:bg-neutral-900/30 rounded-3xl border border-dashed border-gray-200 dark:border-neutral-800">
                 <div className="w-10 h-10 rounded-2xl bg-blue-500/10 text-blue-500 flex items-center justify-center mb-3">
                   <Sparkles className="w-5 h-5" />
                 </div>
@@ -538,7 +538,7 @@ export function Trades() {
                 <p className="text-xs text-gray-400 mb-4 max-w-xs">Try resetting your filters or log a new trade execution.</p>
                 <button
                   onClick={() => { setEditingTrade(null); setIsTradeModalOpen(true); }}
-                  className="btn-primary px-4 py-2 text-xs font-semibold"
+                  className="btn-primary px-4 py-2 text-xs font-semibold rounded-2xl shadow-xs"
                 >
                   <Plus className="w-3.5 h-3.5" /> Log Trade
                 </button>
@@ -547,83 +547,97 @@ export function Trades() {
               (trades || []).map((trade, index) => {
                 const isSelected = selectedTradeIds.includes(trade.id);
                 const isPos = trade.isPositive || Number(trade.pnl) >= 0;
+                const isBuy = trade.action?.toUpperCase() === 'BUY';
                 return (
                   <div
                     key={trade.id}
                     onClick={() => handleOpenEditTrade(trade)}
-                    className={`p-4 rounded-2xl border transition-all flex flex-col gap-3 cursor-pointer ${
+                    className={`p-4 rounded-3xl border transition-all duration-200 flex flex-col gap-3.5 cursor-pointer shadow-2xs hover:shadow-xs group ${
                       isSelected 
-                        ? 'bg-blue-50/80 dark:bg-blue-950/30 border-blue-300 dark:border-blue-700/60 shadow-xs' 
-                        : 'bg-gray-50/50 dark:bg-neutral-900/30 border-gray-100 dark:border-neutral-800/60 hover:bg-gray-50 dark:hover:bg-neutral-800/40'
+                        ? 'bg-blue-50/80 dark:bg-blue-950/40 border-blue-400 dark:border-blue-600/70 ring-1 ring-blue-500/20' 
+                        : 'bg-white dark:bg-[#16181f] border-gray-200/70 dark:border-neutral-800 hover:border-gray-300 dark:hover:border-neutral-700'
                     }`}
                   >
                     {/* Top Row: Checkbox, #, Symbol, Action Pill, P&L */}
                     <div className="flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-2 min-w-0">
+                      <div className="flex items-center gap-2.5 min-w-0">
                         <button
                           onClick={(e) => toggleSelectTrade(trade.id, e)}
-                          className="p-0.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                          className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-lg"
                         >
                           {isSelected ? (
                             <CheckSquare className="w-4 h-4 text-blue-500" />
                           ) : (
-                            <Square className="w-4 h-4" />
+                            <Square className="w-4 h-4 text-gray-300 dark:text-gray-600" />
                           )}
                         </button>
-                        <span className="text-xs font-bold text-gray-400 tabular-nums">#{index + 1}</span>
-                        <span className="text-sm font-bold text-gray-900 dark:text-white truncate">
-                          {trade.symbol}
-                        </span>
-                        <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase ${
-                          trade.action?.toUpperCase() === 'BUY'
-                            ? 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400'
-                            : 'bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400'
+                        <span className={`w-7 h-7 rounded-xl flex items-center justify-center text-[10px] font-black uppercase tracking-wider ${
+                          isBuy 
+                            ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' 
+                            : 'bg-rose-500/10 text-rose-500 border border-rose-500/20'
                         }`}>
-                          {trade.action}
+                          {isBuy ? 'B' : 'S'}
                         </span>
+                        <div>
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-sm font-bold text-gray-900 dark:text-white truncate">
+                              {trade.symbol}
+                            </span>
+                            <span className={`px-1.5 py-0.2 rounded-md text-[9px] font-extrabold uppercase ${
+                              isBuy 
+                                ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400' 
+                                : 'bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400'
+                            }`}>
+                              {trade.action}
+                            </span>
+                          </div>
+                          <span className="text-[10px] text-gray-400 font-medium tabular-nums">
+                            {getTradeDate(trade.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                          </span>
+                        </div>
                       </div>
 
-                      <div className={`text-sm font-extrabold tabular-nums tracking-tight px-2 py-0.5 rounded-lg ${
+                      <div className={`text-sm font-black tabular-nums tracking-tight px-2.5 py-1 rounded-xl ${
                         isPos 
-                          ? 'text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50' 
-                          : 'text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/50'
+                          ? 'text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/50 dark:border-emerald-800/40' 
+                          : 'text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 border border-rose-200/50 dark:border-rose-800/40'
                       }`}>
                         {formatCurrency(trade.pnl)}
                       </div>
                     </div>
 
                     {/* Middle details row: Entry, Exit, Volume, Confidence */}
-                    <div className="grid grid-cols-3 gap-2 pt-2 border-t border-gray-100 dark:border-neutral-800/60 text-xs">
+                    <div className="grid grid-cols-3 gap-2 p-2.5 rounded-2xl bg-gray-50/70 dark:bg-neutral-900/50 border border-gray-100 dark:border-neutral-800/50 text-xs">
                       <div>
-                        <span className="text-[10px] text-gray-400 font-medium block">Entry / Exit</span>
-                        <span className="text-[11px] font-semibold text-gray-700 dark:text-gray-300 tabular-nums truncate block">
+                        <span className="text-[10px] text-gray-400 font-medium block uppercase tracking-wider">Prices</span>
+                        <span className="text-[11px] font-semibold text-gray-700 dark:text-gray-300 tabular-nums truncate block mt-0.5">
                           {trade.entry || '—'} ➔ {trade.exit || '—'}
                         </span>
                       </div>
                       <div>
-                        <span className="text-[10px] text-gray-400 font-medium block">Size</span>
-                        <span className="text-[11px] font-semibold text-gray-700 dark:text-gray-300 tabular-nums block">
+                        <span className="text-[10px] text-gray-400 font-medium block uppercase tracking-wider">Lot Size</span>
+                        <span className="text-[11px] font-semibold text-gray-700 dark:text-gray-300 tabular-nums block mt-0.5">
                           {trade.size || '1.0 Lot'}
                         </span>
                       </div>
                       <div>
-                        <span className="text-[10px] text-gray-400 font-medium block">Date</span>
-                        <span className="text-[11px] font-semibold text-gray-700 dark:text-gray-300 tabular-nums truncate block">
-                          {getTradeDate(trade.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                        <span className="text-[10px] text-gray-400 font-medium block uppercase tracking-wider">Session</span>
+                        <span className="text-[11px] font-semibold text-gray-700 dark:text-gray-300 tabular-nums truncate block mt-0.5">
+                          {trade.session || 'Else'}
                         </span>
                       </div>
                     </div>
 
                     {/* Bottom tag / strategy badges if present */}
                     {(trade.strategy || (trade.tags && trade.tags.length > 0)) && (
-                      <div className="flex items-center gap-1.5 flex-wrap pt-1 border-t border-gray-100 dark:border-neutral-800/40">
+                      <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
                         {trade.strategy && (
-                          <span className="px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 text-[10px] font-semibold">
+                          <span className="px-2 py-0.5 rounded-lg bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 text-[10px] font-semibold border border-blue-200/50 dark:border-blue-800/30">
                             {trade.strategy}
                           </span>
                         )}
                         {trade.tags && Array.isArray(trade.tags) && trade.tags.map((tag: string) => (
-                          <span key={tag} className="px-2 py-0.5 rounded-md bg-gray-100 dark:bg-neutral-800 text-gray-600 dark:text-gray-400 text-[10px]">
+                          <span key={tag} className="px-2 py-0.5 rounded-lg bg-gray-100 dark:bg-neutral-800 text-gray-600 dark:text-gray-400 text-[10px] font-medium border border-gray-200/40 dark:border-neutral-700/40">
                             {tag}
                           </span>
                         ))}
@@ -635,66 +649,64 @@ export function Trades() {
             )}
           </div>
 
-          {/* Desktop Table View (hidden md:block) */}
-          <div className="hidden md:block overflow-x-auto">
-            <table className="w-full text-left">
+          {/* Desktop Table View (hidden md:block) - Modern Sleek Data Grid */}
+          <div className="hidden md:block overflow-x-auto -mx-2 px-2">
+            <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="text-[11px] font-semibold text-gray-400 dark:text-gray-500 border-b border-gray-100 dark:border-neutral-800">
-                  <th className="pb-3 pl-2 w-10">
+                <tr className="text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider border-b border-gray-100 dark:border-neutral-800">
+                  <th className="py-3 pl-3 w-10">
                     <button 
                       onClick={toggleSelectAll}
-                      className="p-1 hover:bg-gray-100 dark:hover:bg-neutral-800 rounded-lg transition-colors"
+                      className="p-1 hover:bg-gray-100 dark:hover:bg-neutral-800 rounded-lg transition-colors cursor-pointer"
                     >
                       {selectedTradeIds.length === trades.length && trades.length > 0 ? (
                         <CheckSquare className="w-4 h-4 text-blue-500" />
                       ) : (
-                        <Square className="w-4 h-4" />
+                        <Square className="w-4 h-4 text-gray-300 dark:text-gray-600" />
                       )}
                     </button>
                   </th>
-                  <th className="pb-3 font-medium">#</th>
-                  <th className="pb-3 font-medium">DATE</th>
-                  <th className="pb-3 font-medium">SYMBOL</th>
-                  <th className="pb-3 font-medium">SIDE</th>
-                  <th className="pb-3 font-medium">SIZE</th>
-                  <th className="pb-3 font-medium">ENTRY</th>
-                  <th className="pb-3 font-medium">EXIT</th>
-                  <th className="pb-3 font-medium">SESSION</th>
-                  <th className="pb-3 font-medium">DURATION</th>
-                  <th className="pb-3 font-medium">STRATEGY</th>
-                  <th className="pb-3 font-medium text-right pr-2">NET P&L</th>
+                  <th className="py-3 px-2 font-semibold">#</th>
+                  <th className="py-3 px-3 font-semibold">DATE</th>
+                  <th className="py-3 px-3 font-semibold">SYMBOL</th>
+                  <th className="py-3 px-2 font-semibold">SIDE</th>
+                  <th className="py-3 px-3 font-semibold">SIZE</th>
+                  <th className="py-3 px-3 font-semibold">ENTRY</th>
+                  <th className="py-3 px-3 font-semibold">EXIT</th>
+                  <th className="py-3 px-3 font-semibold">SESSION</th>
+                  <th className="py-3 px-3 font-semibold">STRATEGY</th>
+                  <th className="py-3 pr-4 font-semibold text-right">NET P&L</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100 dark:divide-neutral-800/40 text-xs">
+              <tbody className="divide-y divide-gray-100/80 dark:divide-neutral-800/50 text-xs">
                 {loading ? (
                   Array.from({ length: 5 }).map((_, i) => (
                     <tr key={i} className="animate-pulse">
-                      <td className="py-4 pl-2"><div className="w-4 h-4 rounded bg-gray-200 dark:bg-neutral-700" /></td>
-                      <td className="py-4"><div className="w-6 h-4 rounded bg-gray-200 dark:bg-neutral-700" /></td>
-                      <td className="py-4"><div className="w-20 h-4 rounded bg-gray-200 dark:bg-neutral-700" /></td>
-                      <td className="py-4"><div className="w-16 h-4 rounded bg-gray-200 dark:bg-neutral-700" /></td>
-                      <td className="py-4"><div className="w-12 h-5 rounded-full bg-gray-200 dark:bg-neutral-700" /></td>
-                      <td className="py-4"><div className="w-12 h-4 rounded bg-gray-200 dark:bg-neutral-700" /></td>
-                      <td className="py-4"><div className="w-16 h-4 rounded bg-gray-200 dark:bg-neutral-700" /></td>
-                      <td className="py-4"><div className="w-16 h-4 rounded bg-gray-200 dark:bg-neutral-700" /></td>
-                      <td className="py-4"><div className="w-14 h-4 rounded bg-gray-200 dark:bg-neutral-700" /></td>
-                      <td className="py-4"><div className="w-16 h-4 rounded bg-gray-200 dark:bg-neutral-700" /></td>
-                      <td className="py-4"><div className="w-16 h-4 rounded bg-gray-200 dark:bg-neutral-700" /></td>
-                      <td className="py-4"><div className="w-20 h-4 rounded bg-gray-200 dark:bg-neutral-700 ml-auto" /></td>
+                      <td className="py-4 pl-3"><div className="w-4 h-4 rounded bg-gray-200 dark:bg-neutral-800" /></td>
+                      <td className="py-4 px-2"><div className="w-5 h-4 rounded bg-gray-200 dark:bg-neutral-800" /></td>
+                      <td className="py-4 px-3"><div className="w-20 h-4 rounded bg-gray-200 dark:bg-neutral-800" /></td>
+                      <td className="py-4 px-3"><div className="w-16 h-4 rounded bg-gray-200 dark:bg-neutral-800" /></td>
+                      <td className="py-4 px-2"><div className="w-12 h-5 rounded-full bg-gray-200 dark:bg-neutral-800" /></td>
+                      <td className="py-4 px-3"><div className="w-12 h-4 rounded bg-gray-200 dark:bg-neutral-800" /></td>
+                      <td className="py-4 px-3"><div className="w-16 h-4 rounded bg-gray-200 dark:bg-neutral-800" /></td>
+                      <td className="py-4 px-3"><div className="w-16 h-4 rounded bg-gray-200 dark:bg-neutral-800" /></td>
+                      <td className="py-4 px-3"><div className="w-14 h-4 rounded bg-gray-200 dark:bg-neutral-800" /></td>
+                      <td className="py-4 px-3"><div className="w-20 h-4 rounded bg-gray-200 dark:bg-neutral-800" /></td>
+                      <td className="py-4 pr-4"><div className="w-20 h-4 rounded bg-gray-200 dark:bg-neutral-800 ml-auto" /></td>
                     </tr>
                   ))
                 ) : (trades || []).length === 0 ? (
                   <tr>
-                    <td colSpan={12} className="py-12 text-center">
+                    <td colSpan={11} className="py-16 text-center">
                       <div className="flex flex-col items-center justify-center p-6">
-                        <div className="w-10 h-10 rounded-2xl bg-blue-500/10 text-blue-500 flex items-center justify-center mb-3">
-                          <Sparkles className="w-5 h-5" />
+                        <div className="w-12 h-12 rounded-2xl bg-blue-500/10 text-blue-500 flex items-center justify-center mb-3">
+                          <Sparkles className="w-6 h-6" />
                         </div>
-                        <h4 className="text-sm font-bold text-gray-900 dark:text-white mb-1">No trades found matching current filter</h4>
-                        <p className="text-xs text-gray-400 mb-4 max-w-sm">Try resetting your filters or log a new execution for this account.</p>
+                        <h4 className="text-sm font-bold text-gray-900 dark:text-white mb-1">No trades match this filter</h4>
+                        <p className="text-xs text-gray-400 mb-4 max-w-sm">Try resetting pair/strategy filters or log a new execution.</p>
                         <button
                           onClick={() => { setEditingTrade(null); setIsTradeModalOpen(true); }}
-                          className="btn-primary px-4 py-2 text-xs font-semibold"
+                          className="btn-primary px-4 py-2 text-xs font-semibold rounded-2xl shadow-xs"
                         >
                           <Plus className="w-3.5 h-3.5" /> Log New Trade (N)
                         </button>
@@ -705,14 +717,19 @@ export function Trades() {
                   (trades || []).map((trade, index) => {
                     const isSelected = selectedTradeIds.includes(trade.id);
                     const isPos = trade.isPositive || Number(trade.pnl) >= 0;
+                    const isBuy = trade.action?.toUpperCase() === 'BUY';
                     return (
                       <tr 
                         key={trade.id} 
-                        className={`hover:bg-gray-50/70 dark:hover:bg-neutral-800/40 transition-colors group cursor-pointer ${isSelected ? 'bg-blue-50/60 dark:bg-blue-950/20' : ''}`}
+                        className={`transition-colors duration-150 group cursor-pointer ${
+                          isSelected 
+                            ? 'bg-blue-50/70 dark:bg-blue-950/30' 
+                            : 'hover:bg-gray-50/80 dark:hover:bg-neutral-800/40'
+                        }`}
                         onClick={() => handleOpenEditTrade(trade)}
                       >
-                        <td className="py-3.5 pl-2" onClick={(e) => toggleSelectTrade(trade.id, e)}>
-                          <button className="p-1 hover:bg-gray-200 dark:hover:bg-neutral-700 rounded-lg transition-colors">
+                        <td className="py-3.5 pl-3" onClick={(e) => toggleSelectTrade(trade.id, e)}>
+                          <button className="p-1 hover:bg-gray-200 dark:hover:bg-neutral-700 rounded-lg transition-colors cursor-pointer">
                             {isSelected ? (
                               <CheckSquare className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                             ) : (
@@ -720,45 +737,60 @@ export function Trades() {
                             )}
                           </button>
                         </td>
-                        <td className="py-3.5 text-gray-400 tabular-nums">{trades.length - index}</td>
-                        <td className="py-3.5 text-gray-500 dark:text-gray-400 font-normal tabular-nums">
+                        <td className="py-3.5 px-2 text-gray-400 font-semibold tabular-nums text-[11px]">
+                          {trades.length - index}
+                        </td>
+                        <td className="py-3.5 px-3 text-gray-500 dark:text-gray-400 font-medium tabular-nums whitespace-nowrap">
                           {getTradeDate(trade.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                         </td>
-                        <td className="py-3.5 font-semibold text-gray-900 dark:text-white">{trade.symbol}</td>
-                        <td className="py-3.5">
-                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${trade.action === 'BUY' ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400' : 'bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400'}`}>
+                        <td className="py-3.5 px-3">
+                          <span className="font-bold text-gray-900 dark:text-white group-hover:text-blue-500 transition-colors">
+                            {trade.symbol}
+                          </span>
+                        </td>
+                        <td className="py-3.5 px-2">
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-black uppercase tracking-wider ${
+                            isBuy 
+                              ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20' 
+                              : 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20'
+                          }`}>
                             {trade.action}
                           </span>
                         </td>
-                        <td className="py-3.5 text-gray-600 dark:text-gray-300 tabular-nums">{trade.entry || "—"}</td>
-                        <td className="py-3.5 text-gray-600 dark:text-gray-300 tabular-nums">{trade.exit || "—"}</td>
-                        <td className="py-3.5 text-gray-600 dark:text-gray-300 tabular-nums">{trade.size}</td>
-                        <td className="py-3.5 text-gray-400 font-medium text-[11px]">{trade.session || "Else"}</td>
-                        <td className="py-3.5">
-                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${
-                            trade.confidence === 'High' ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40' : 
-                            trade.confidence === 'Medium' ? 'bg-amber-50 text-amber-600 dark:bg-amber-950/40' : 
-                            'bg-rose-50 text-rose-600 dark:bg-rose-950/40'
-                          }`}>
-                            {trade.confidence || "High"}
+                        <td className="py-3.5 px-3 text-gray-600 dark:text-gray-300 font-mono text-[11px] tabular-nums whitespace-nowrap">
+                          {trade.size || '1.0 Lot'}
+                        </td>
+                        <td className="py-3.5 px-3 text-gray-600 dark:text-gray-300 tabular-nums whitespace-nowrap font-medium">
+                          {trade.entry || "—"}
+                        </td>
+                        <td className="py-3.5 px-3 text-gray-600 dark:text-gray-300 tabular-nums whitespace-nowrap font-medium">
+                          {trade.exit || "—"}
+                        </td>
+                        <td className="py-3.5 px-3 whitespace-nowrap">
+                          <span className="px-2 py-0.5 rounded-md bg-gray-100 dark:bg-neutral-800 text-gray-500 dark:text-gray-400 font-medium text-[10px]">
+                            {trade.session || "Else"}
                           </span>
                         </td>
-                        <td className={`py-3.5 font-bold tabular-nums ${isPos ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-500'}`}>
-                          {formatCurrency(trade.pnl)}
-                        </td>
-                        <td className="py-3.5 pr-2">
-                          <div className="flex flex-wrap gap-1">
+                        <td className="py-3.5 px-3">
+                          <div className="flex items-center gap-1.5 flex-wrap max-w-[200px]">
                             {trade.strategy && (
-                              <span className="px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 text-[10px] font-semibold">
+                              <span className="px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 text-[10px] font-semibold border border-blue-200/40 dark:border-blue-800/30 truncate">
                                 {trade.strategy}
                               </span>
                             )}
-                            {trade.tags && Array.isArray(trade.tags) && trade.tags.map((tag: string) => (
-                              <span key={tag} className="px-2 py-0.5 rounded-md bg-gray-100 dark:bg-neutral-800 text-gray-600 dark:text-gray-400 text-[10px] font-normal">
+                            {trade.tags && Array.isArray(trade.tags) && trade.tags.slice(0, 2).map((tag: string) => (
+                              <span key={tag} className="px-1.5 py-0.5 rounded-md bg-gray-100 dark:bg-neutral-800 text-gray-500 dark:text-gray-400 text-[10px] font-normal truncate">
                                 {tag}
                               </span>
                             ))}
                           </div>
+                        </td>
+                        <td className="py-3.5 pr-4 text-right">
+                          <span className={`text-xs sm:text-sm font-extrabold tabular-nums tracking-tight font-headline ${
+                            isPos ? 'text-emerald-500' : 'text-rose-500'
+                          }`}>
+                            {formatCurrency(trade.pnl)}
+                          </span>
                         </td>
                       </tr>
                     );
